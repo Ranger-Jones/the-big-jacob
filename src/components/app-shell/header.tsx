@@ -1,0 +1,36 @@
+import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { Avatar } from '@/components/ui/avatar';
+import { Logo } from '@/components/ui/logo';
+import { GATE_COOKIE, verifyGateToken } from '@/lib/gate';
+import { getCurrentUser } from '@/lib/supabase/server';
+import { NavLink } from './nav-link';
+
+export async function Header() {
+  const user = await getCurrentUser();
+  const unlocked = await verifyGateToken((await cookies()).get(GATE_COOKIE)?.value, process.env.SUPABASE_SECRET_KEY);
+  return (
+    <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4">
+      <Link href="/" aria-label="Startseite" className="shrink-0">
+        <span className="hidden sm:inline"><Logo /></span>
+        <span className="sm:hidden"><Logo compact /></span>
+      </Link>
+      {user ? (
+        <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">
+          <NavLink href="/decks" icon="🎴">Decks</NavLink>
+          <NavLink href="/freunde" icon="🤝">Freunde</NavLink>
+          <NavLink href="/bestenliste" icon="🏆">Bestenliste</NavLink>
+          <NavLink href="/regeln" icon="📜">Regeln</NavLink>
+          <Link href={`/profil/${user.username}`} className="ml-1 shrink-0 rounded-full" aria-label="Dein Profil">
+            <Avatar profile={user} size="sm" />
+          </Link>
+        </nav>
+      ) : unlocked && (
+        <nav className="flex items-center gap-1">
+          <NavLink href="/regeln" icon="📜">Regeln</NavLink>
+          <NavLink href="/login" icon="🔑">Einloggen</NavLink>
+        </nav>
+      )}
+    </header>
+  );
+}
