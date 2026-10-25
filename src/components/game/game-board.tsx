@@ -135,11 +135,11 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
             aria-label="Deine Hand"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className={cx('min-w-0 flex-1 font-bold', myTurn ? 'text-gold-soft' : 'text-parchment/80')} aria-live="polite">
+              <p className={cx('min-w-0 basis-full font-bold sm:basis-auto sm:flex-1', myTurn ? 'text-gold-soft' : 'text-parchment/80')} aria-live="polite">
                 {status}
                 {myTurn && secondsLeft !== null && <span className={cx('tabular ml-2 rounded-full px-2 text-sm', secondsLeft <= 5 ? 'bg-wax' : 'bg-white/10')}>{secondsLeft} s</span>}
               </p>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
                 {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>Abwählen</Button>}
                 {state.phase === 'play' && myTurn && state.trick && (
                   <Button variant="velvet" onClick={() => { setSelection({}); void g.dispatch({ type: 'pass' }, { move: true }); }} disabled={g.busy}>

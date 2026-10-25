@@ -21,33 +21,33 @@ export default async function LeaderboardPage() {
         {rows.length === 0 ? (
           <p className="p-6 text-ink-soft">Noch keine beendeten Spiele. Das erste Spiel bringt dich auf Platz 1.</p>
         ) : (
-          <table className="w-full min-w-[38rem] text-left">
+          <table className="w-full text-left sm:min-w-[38rem]">
             <thead>
               <tr className="text-sm text-ink-soft">
-                <th scope="col" className="px-5 py-3 font-bold">Platz</th>
+                <th scope="col" className="px-3 py-3 font-bold sm:px-5">Platz</th>
                 <th scope="col" className="py-3 font-bold">Spieler</th>
                 <th scope="col" className="py-3 text-right font-bold">Siege</th>
-                <th scope="col" className="py-3 text-right font-bold" title="Runden als Großer Jakob">👑</th>
-                <th scope="col" className="py-3 text-right font-bold" title="Revolutionen">✊</th>
-                <th scope="col" className="py-3 text-right font-bold">Spiele</th>
-                <th scope="col" className="px-5 py-3 text-right font-bold">Ø Platz</th>
+                <th scope="col" className="px-3 py-3 text-right font-bold sm:px-0" title="Runden als Großer Jakob">👑</th>
+                <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell" title="Revolutionen">✊</th>
+                <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell">Spiele</th>
+                <th scope="col" className="hidden px-5 py-3 text-right font-bold sm:table-cell">Ø Platz</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r, i) => (
                 <tr key={r.user_id} className={cx('border-t border-line', r.user_id === me.id && 'bg-gold/20')}>
-                  <td className="tabular px-5 py-3 font-display text-2xl font-bold">{i < 3 ? MEDALS[i] : i + 1}</td>
+                  <td className="tabular px-3 py-3 font-display text-2xl font-bold sm:px-5">{i < 3 ? MEDALS[i] : i + 1}</td>
                   <td className="py-3">
-                    <Link href={`/profil/${r.username}`} className="flex items-center gap-3 font-bold hover:underline">
+                    <Link href={`/profil/${r.username}`} className="flex min-w-0 items-center gap-2 font-bold hover:underline sm:gap-3">
                       <Avatar profile={r} size="sm" />
-                      {r.username}
+                      <span className="truncate">{r.username}</span>
                     </Link>
                   </td>
                   <td className="tabular py-3 text-right font-bold">{r.wins}</td>
-                  <td className="tabular py-3 text-right">{r.crowns}</td>
-                  <td className="tabular py-3 text-right">{r.revolutions + r.grand_revolutions}</td>
-                  <td className="tabular py-3 text-right">{r.games_played}</td>
-                  <td className="tabular px-5 py-3 text-right">{r.avg_place.toLocaleString('de-DE', { maximumFractionDigits: 1 })}</td>
+                  <td className="tabular px-3 py-3 text-right sm:px-0">{r.crowns}</td>
+                  <td className="tabular hidden py-3 text-right sm:table-cell">{r.revolutions + r.grand_revolutions}</td>
+                  <td className="tabular hidden py-3 text-right sm:table-cell">{r.games_played}</td>
+                  <td className="tabular hidden px-5 py-3 text-right sm:table-cell">{r.avg_place.toLocaleString('de-DE', { maximumFractionDigits: 1 })}</td>
                 </tr>
               ))}
             </tbody>

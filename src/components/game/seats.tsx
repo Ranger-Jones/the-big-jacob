@@ -1,5 +1,6 @@
 'use client';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
 import { CardBack } from '@/components/deck/playing-card';
 import { Avatar } from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
@@ -33,8 +34,17 @@ export function Seats({ timer }: { timer: number | null }) {
   const order = state.order.length ? state.order : state.players.map((p) => p.id);
   const waiting = new Set(waitingOn(state));
   const present = order.filter((id) => !state.players.find((p) => p.id === id)?.left);
+  const list = useRef<HTMLUListElement>(null);
+  const focus = state.phase === 'play' ? state.turn : null;
+  // On phones the seats scroll sideways: keep whoever is on turn in view.
+  useEffect(() => {
+    const ul = list.current;
+    const li = focus ? ul?.querySelector<HTMLElement>(`[data-seat="${focus}"]`) : null;
+    if (!ul || !li || ul.scrollWidth <= ul.clientWidth) return;
+    ul.scrollTo({ left: li.offsetLeft - (ul.clientWidth - li.clientWidth) / 2, behavior: 'smooth' });
+  }, [focus]);
   return (
-    <ul className="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label="Spieler am Tisch">
+    <ul ref={list} className="no-scrollbar relative -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label="Spieler am Tisch">
       {order.map((id) => {
         const p = state.players.find((x) => x.id === id);
         if (!p) return null;
@@ -49,6 +59,7 @@ export function Seats({ timer }: { timer: number | null }) {
         return (
           <li
             key={id}
+            data-seat={id}
             className={cx(
               'relative flex w-[6.6rem] shrink-0 snap-start flex-col items-center gap-1 rounded-2xl px-1.5 pb-2 pt-2.5 text-center transition-all',
               isTurn ? 'bg-gold/20 ring-2 ring-gold' : 'bg-velvet-deep/60 ring-2 ring-white/10',

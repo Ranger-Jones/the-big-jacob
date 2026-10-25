@@ -88,7 +88,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
             return (
               <li key={p.id} className="relative flex items-center gap-2.5 rounded-2xl bg-parchment-dark/70 p-2.5 ring-2 ring-line">
                 <span className="relative">
-                  <Avatar profile={avatarOf(p.id)} ring={colorOf(p.id)} size="md" />
+                  <Avatar profile={avatarOf(p.id)} ring={colorOf(p.id)} size="sm" />
                   {!p.bot && (
                     <span
                       className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-parchment', g.online.has(p.id) ? 'bg-vert' : 'bg-ink-soft/40')}
@@ -96,7 +96,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                     />
                   )}
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className={cx('min-w-0 flex-1', isHost && p.id !== me && 'pr-4')}>
                   <span className="block truncate font-bold leading-tight">{nameOf(p.id)}</span>
                   <span className="block truncate text-xs text-ink-soft">
                     {p.id === state.hostId ? '👑 Host' : p.bot ? (p.bot.level === 'sly' ? '🦊 Gerissener Bot' : '🙂 Einfacher Bot') : p.id === me ? 'Du' : 'Höfling'}
