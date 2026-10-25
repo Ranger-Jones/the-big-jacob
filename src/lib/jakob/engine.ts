@@ -58,6 +58,7 @@ export function createGameState(hostId: string, settings: Settings = DEFAULT_SET
     played: [],
     moveSeq: 0,
     deadline: null,
+    waitSince: null,
     log: [],
     history: [],
     stats: {},
@@ -115,6 +116,15 @@ function ruleCtx(state: GameState): RuleContext {
 function deadlineIn(seconds: number | null, now: number): string | null {
   return seconds === null ? null : new Date(now + seconds * 1000).toISOString();
 }
+
+/** Starts a new wait: optional deadline plus the moment from which "skip" becomes available. */
+function setWait(state: GameState, seconds: number | null, now: number) {
+  state.deadline = deadlineIn(seconds, now);
+  state.waitSince = new Date(now).toISOString();
+}
+
+/** Seconds anyone at the table has to wait before they may skip an idle player. */
+export const SKIP_AFTER_SECONDS = 30;
 
 function log(state: GameState, kind: LogKind, extra: Omit<LogEntry, 'seq' | 'kind'> = {}) {
   state.log = [...state.log, { seq: state.moveSeq, kind, ...extra }].slice(-LOG_LIMIT);
@@ -209,7 +219,7 @@ function startDraw(state: GameState, rand: RandInt, now: number) {
   state.draws = {};
   state.drawOrder = [];
   for (const p of state.players) if (p.bot && !p.left) drawFor(state, p.id, rand);
-  state.deadline = deadlineIn(DRAW_SECONDS, now);
+  setWait(state, DRAW_SECONDS, now);
   maybeFinishDraw(state, rand, now);
 }
 
@@ -254,7 +264,7 @@ function beginRound(state: GameState, order: string[], rand: RandInt, now: numbe
 
   state.phase = 'court';
   state.ready = order.filter((id) => isBot(player(state, id)));
-  state.deadline = deadlineIn(COURT_SECONDS, now);
+  setWait(state, COURT_SECONDS, now);
   if (settings.revolution) {
     for (const id of state.ready) {
       if (holdsBothJesters(state, id) && wantsRevolution(order.indexOf(id), order.length)) declareRevolution(state, id);
@@ -310,7 +320,7 @@ function startTax(state: GameState, now: number) {
     log(state, 'tax', { by: pair.from, to: pair.to, count: pair.count });
   }
   const seconds = getSettings(state).turnSeconds;
-  state.deadline = deadlineIn(seconds ? Math.max(seconds, 30) : 60, now);
+  setWait(state, seconds ? Math.max(seconds, 30) : 60, now);
   for (const pair of pairs) {
     if (isBot(player(state, pair.to))) returnTax(state, pair.to, chooseBotTaxReturn(state.hands[pair.to], pair.count, ctx));
   }
@@ -321,7 +331,8 @@ function returnTax(state: GameState, id: string, cards: number[]) {
   const pair = state.tax.find((t) => t.to === id && !t.done);
   if (!pair) return;
   state.hands[id] = removeCards(state.hands[id], cards);
-  state.hands[pair.from] = sortHand([...state.hands[pair.from], ...cards]);
+  // Cards returned to a servant who already left are discarded with the rest of their hand.
+  if (isPresent(state, pair.from)) state.hands[pair.from] = sortHand([...state.hands[pair.from], ...cards]);
   state.notes[id] = { ...(state.notes[id] ?? { received: [] }), gave: cards };
   state.notes[pair.from] = { ...(state.notes[pair.from] ?? { gave: [] }), received: cards };
   pair.done = true;
@@ -341,7 +352,7 @@ function startPlay(state: GameState, now: number) {
 }
 
 function setTurnDeadline(state: GameState, now: number) {
-  state.deadline = deadlineIn(getSettings(state).turnSeconds, now);
+  setWait(state, getSettings(state).turnSeconds, now);
 }
 
 /** Clears the trick; the player who laid it leads, or the next one if they are out. */
@@ -414,7 +425,7 @@ function finishRound(state: GameState, rand: RandInt, now: number) {
 
   state.phase = 'roundEnd';
   state.ready = state.players.filter((p) => p.bot && !p.left).map((p) => p.id);
-  state.deadline = deadlineIn(ROUND_END_SECONDS, now);
+  setWait(state, ROUND_END_SECONDS, now);
   maybeFinishRoundEnd(state, rand, now);
 }
 
@@ -431,6 +442,7 @@ function finishGame(state: GameState) {
   state.status = 'finished';
   state.phase = null;
   state.deadline = null;
+  state.waitSince = null;
   state.turn = null;
   state.trick = null;
   state.ready = [];
@@ -767,8 +779,9 @@ export function applyAction(
     }
 
     case 'skip': {
-      if (!isHost) return fail('Nur der Host kann überspringen.');
+      if (!me || me.left || me.bot) return fail('Du bist nicht in diesem Spiel.');
       if (state.status !== 'playing') return fail('Das Spiel läuft nicht.');
+      if (!canSkip(state, now)) return fail(`Überspringen geht erst nach ${SKIP_AFTER_SECONDS} Sekunden Wartezeit.`);
       resolveWaiting(state, rand, now);
       return done();
     }
@@ -793,6 +806,12 @@ export function applyAction(
 export function botToMove(state: Pick<PublicState, 'phase' | 'turn' | 'players' | 'status'>): string | null {
   if (state.status !== 'playing' || state.phase !== 'play' || !state.turn) return null;
   return state.players.find((p) => p.id === state.turn)?.bot ? state.turn : null;
+}
+
+/** True once the current wait has lasted long enough for anyone to skip it. */
+export function canSkip(state: Pick<PublicState, 'status' | 'waitSince'>, now: number): boolean {
+  if (state.status !== 'playing' || !state.waitSince) return false;
+  return now >= Date.parse(state.waitSince) + SKIP_AFTER_SECONDS * 1000;
 }
 
 /** Players the game is currently waiting on (for timers and "waiting for" labels). */

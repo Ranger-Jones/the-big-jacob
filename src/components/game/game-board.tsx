@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { useNow } from '@/hooks/use-now';
 import { cx } from '@/lib/cx';
 import { countBy, JESTER } from '@/lib/jakob/cards';
-import { getSettings, waitingOn } from '@/lib/jakob/engine';
+import { canSkip as skipAllowed, getSettings, waitingOn } from '@/lib/jakob/engine';
 import { judgePlay, legalPlays } from '@/lib/jakob/rules';
 import { describeCards } from '@/lib/jakob/texts';
 import { isMuted, onMutedChange, setMuted } from '@/lib/sound';
@@ -28,10 +28,10 @@ function useMuted() {
 
 export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode; chat: ReactNode; chatButton: ReactNode }) {
   const router = useRouter();
-  const { g, state, me, isHost, nameOf, deckOf } = useTable();
+  const { g, state, me, nameOf, deckOf } = useTable();
   const settings = getSettings(state);
   const muted = useMuted();
-  const now = useNow(g.clockOffset, !!state.deadline);
+  const now = useNow(g.clockOffset, !!state.deadline || !!state.waitSince);
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [skipping, setSkipping] = useState(false);
@@ -72,7 +72,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   const secondsLeft = state.deadline ? Math.max(0, Math.ceil((Date.parse(state.deadline) - now) / 1000)) : null;
 
   const waiting = waitingOn(state).filter((id) => id !== me);
-  const canSkip = isHost && waiting.length > 0;
+  const canSkip = waiting.length > 0 && skipAllowed(state, now);
   const deck = deckOf(me);
   const myIndex = state.order.indexOf(me);
 

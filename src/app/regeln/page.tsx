@@ -102,7 +102,7 @@ export default function RulesPage() {
           <li>Deine Hand liegt als Stapel pro Zahl vor dir. Ein Tipp wählt passend viele Karten aus, jeder weitere Tipp eine weniger.</li>
           <li>Narren tippst du extra dazu. Ausgegraute Karten passen gerade nicht auf den Stich.</li>
           <li>🧠 zeigt das Kartengedächtnis, 💬 öffnet den Chat, die Emoji-Leiste schickt Reaktionen an alle.</li>
-          <li>Hängt jemand fest, kann der Host ihn überspringen. Mit Zugzeit entscheidet der Hof nach Ablauf automatisch.</li>
+          <li>Hängt jemand fest, kann ihn nach 30 Sekunden jeder am Tisch überspringen. Mit Zugzeit entscheidet der Hof nach Ablauf automatisch.</li>
         </ul>
       </Card>
     </main>

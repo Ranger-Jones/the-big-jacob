@@ -20,7 +20,6 @@ type Row = { id: string; code: string; version: number; state: unknown; rematch_
 const toView = (r: Row): GameView => ({
   id: r.id, code: r.code, version: r.version, state: r.state as PublicState, rematchGameId: r.rematch_game_id,
 });
-const EMPTY_HAND: PrivateHand = { cards: [], received: [], gave: [] };
 
 interface Options {
   initial: GameView;
@@ -68,11 +67,12 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       supabase.from('game_hands').select('hand, version').eq('game_id', initial.id).eq('user_id', me).maybeSingle(),
     ]);
     if (data) {
-      // A refetch is authoritative: replace optimistic state even at the same version.
-      setGame(toView(data));
-      setHand({ ...((own?.hand as PrivateHand | undefined) ?? EMPTY_HAND), version: own?.version ?? data.version });
+      // Replaces optimistic state at the same version, but never a newer realtime update.
+      const view = toView(data);
+      setGame((cur) => (!cur || view.version >= cur.version ? view : cur));
+      if (own) applyHand(own.hand as unknown as PrivateHand, own.version);
     } else setGame(null);
-  }, [initial.id, me, supabase]);
+  }, [applyHand, initial.id, me, supabase]);
 
   // Load profiles of newly joined players.
   const playerIds = game?.state.players.filter((p) => !p.bot).map((p) => p.id).join(',') ?? '';
@@ -113,7 +113,15 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       channelRef.current = ch;
       ch
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${initial.id}` },
-          (payload) => apply(toView(payload.new as Row)))
+          (payload) => {
+            const row = payload.new as Partial<Row>;
+            // Unchanged large columns (the state) are left out of the event, e.g. when only the rematch link changes.
+            if (!row.state) {
+              setGame((cur) => (cur ? { ...cur, rematchGameId: row.rematch_game_id ?? cur.rematchGameId } : cur));
+              return;
+            }
+            apply(toView(row as Row));
+          })
         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'games', filter: `id=eq.${initial.id}` },
           () => setGame(null))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'game_hands', filter: `game_id=eq.${initial.id}` },
@@ -201,7 +209,7 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
     try {
       const res = await gameAction(cur.id, action, expected);
       if (res.ok) {
-        setGame((g) => (!g || res.data.version >= g.version ? { ...cur, version: res.data.version, state: res.data.state } : g));
+        setGame((g) => (!g || res.data.version >= g.version ? { ...(g ?? cur), version: res.data.version, state: res.data.state } : g));
         applyHand(res.data.hand, res.data.version);
         return true;
       }
@@ -235,8 +243,18 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
   useEffect(() => {
     if (!bot || driverRank < 0) return;
     const delay = 850 + Math.random() * 600 + driverRank * 2500;
-    const t = setTimeout(() => void dispatch({ type: 'botMove' }, { move: true, silent: true }), delay);
-    return () => clearTimeout(t);
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const fire = () => {
+      void dispatch({ type: 'botMove' }, { move: true, silent: true }).then((okay) => {
+        // A lost request must not freeze the table: nudge again while the bot is still on turn.
+        if (!okay && gameRef.current?.state.moveSeq === moveSeq) retry = setTimeout(fire, 2500);
+      });
+    };
+    const t = setTimeout(fire, delay);
+    return () => {
+      clearTimeout(t);
+      if (retry) clearTimeout(retry);
+    };
   }, [bot, moveSeq, driverRank, dispatch]);
 
   const deadline = state?.deadline ? Date.parse(state.deadline) : null;

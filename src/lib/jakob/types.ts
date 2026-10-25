@@ -146,6 +146,8 @@ export interface PublicState {
   played: number[];
   moveSeq: number;
   deadline: string | null;
+  /** When the current wait (turn or phase) began. */
+  waitSince: string | null;
   log: LogEntry[];
   history: RoundResult[];
   stats: Record<string, PlayerStats>;

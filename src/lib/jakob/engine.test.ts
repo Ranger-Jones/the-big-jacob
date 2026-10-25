@@ -269,6 +269,16 @@ describe('playing tricks', () => {
     expect(s.trick).toMatchObject({ cards: [9], by: 'a' });
   });
 
+  it('skip only works after the idle wait – and for any player, not just the host', () => {
+    let s = playing({ a: [9, 5], b: [10, 4], c: [12, 3] });
+    s = { ...s, waitSince: new Date(NOW).toISOString() };
+    expect(applyAction(s, 'a', { type: 'skip' }, seeded(1), NOW + 5_000).ok).toBe(false);
+    s = must(s, 'c', { type: 'skip' }, seeded(1), NOW + 31_000);
+    expect(s.trick).toMatchObject({ cards: [9], by: 'a' });
+    // The new turn starts a fresh wait.
+    expect(applyAction(s, 'a', { type: 'skip' }, seeded(1), NOW + 32_000).ok).toBe(false);
+  });
+
   it('leaving mid-trick moves the game on', () => {
     let s = playing({ a: [9, 5], b: [10, 4], c: [12, 3] });
     s = must(s, 'a', { type: 'play', cards: [9] });
