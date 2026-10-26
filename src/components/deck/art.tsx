@@ -390,7 +390,7 @@ export function FullCardArt({ id, rank, bg, className }: { id: string; rank: num
             <polygon key={i} points="50,88 45,-60 55,-60" fill="#ffffff" opacity="0.06" transform={`rotate(${i * 22.5} 50 88)`} />
           ))}
           <RankNumeral rank={rank} id={id} />
-          <g transform="translate(8 50) scale(0.84)">{ART[id]}</g>
+          <g transform="translate(11 56) scale(0.78)">{ART[id]}</g>
         </g>
       )}
     </svg>

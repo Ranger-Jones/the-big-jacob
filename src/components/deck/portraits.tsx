@@ -49,18 +49,18 @@ export function RankNumeral({ rank, id }: { rank: number; id: string }) {
           <stop offset="1" stopColor={GOLD_DARK} />
         </linearGradient>
       </defs>
-      <path d="M10 26 H30 M70 26 H90 M14 31 H28 M72 31 H86" stroke={GOLD} strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
-      <path d="M30 26 l3 -3 l3 3 l-3 3 Z M64 26 l3 -3 l3 3 l-3 3 Z" fill={GOLD} opacity="0.9" />
+      <path d="M6 30 H20 M80 30 H94 M9 36 H18 M82 36 H91" stroke={GOLD} strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
+      <path d="M20 30 l3.5 -3.5 l3.5 3.5 l-3.5 3.5 Z M73 30 l3.5 -3.5 l3.5 3.5 l-3.5 3.5 Z" fill={GOLD} opacity="0.95" />
       {label ? (
         <text
-          x="50" y="45" textAnchor="middle" fontSize={label.length > 1 ? 44 : 50} fontWeight="700"
-          fill={`url(#${grad})`} stroke={INK} strokeWidth="1.6" paintOrder="stroke"
+          x="50" y="54" textAnchor="middle" fontSize={label.length > 1 ? 58 : 66} fontWeight="700"
+          fill={`url(#${grad})`} stroke={INK} strokeWidth="2.2" paintOrder="stroke"
           style={{ fontFamily: 'var(--font-grenze), Georgia, serif' }}
         >
           {label}
         </text>
       ) : (
-        <text x="50" y="38" textAnchor="middle" fontSize="20" fontWeight="700" fill={`url(#${grad})`} stroke={INK} strokeWidth="1.2" paintOrder="stroke" style={{ fontFamily: 'var(--font-grenze), Georgia, serif' }}>
+        <text x="50" y="42" textAnchor="middle" fontSize="27" fontWeight="700" fill={`url(#${grad})`} stroke={INK} strokeWidth="1.6" paintOrder="stroke" style={{ fontFamily: 'var(--font-grenze), Georgia, serif' }}>
           Narr
         </text>
       )}
@@ -113,7 +113,7 @@ function CardPortrait(p: PortraitSpec) {
       ))}
       <circle cx="50" cy="80" r="38" fill="#ffffff" opacity="0.08" />
       <RankNumeral rank={p.rank ?? 1} id={p.id} />
-      <g transform="translate(-7.5 27) scale(1.15)">
+      <g transform="translate(-7.5 32) scale(1.15)">
         <Figure {...p} />
       </g>
     </g>
