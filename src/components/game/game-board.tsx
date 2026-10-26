@@ -20,6 +20,7 @@ import { deadlineFraction, Seats } from './seats';
 import { useTable } from './table-context';
 import { TrickArea } from './trick-area';
 import { TurnBanner } from './turn-banner';
+import { Icon, MISSION_ICONS } from '@/components/ui/icons';
 
 const DRAW_SECONDS = 30;
 const COURT_SECONDS = 20;
@@ -109,8 +110,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
-            {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment">⚔️ Station {state.modeRef}</span>}
-            {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment">📅 Tagesaufgabe</span>}
+            {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="sword" /> Station {state.modeRef}</span>}
+            {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="calendar" /> Tagesaufgabe</span>}
             {state.phase === 'draw' ? 'Auslosung' : (
               <>
                 <span className="sm:hidden">R{state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
@@ -124,24 +125,24 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
           <div className="flex shrink-0 items-center gap-1">
             {g.spectators.length > 0 && (
               <span className="rounded-xl bg-velvet-soft px-2 py-1 text-sm font-bold" title={`Es schauen zu: ${g.spectators.map((id) => g.profiles[id]?.username ?? '…').join(', ')}`}>
-                👀 {g.spectators.length}
+                <Icon name="eye" /> {g.spectators.length}
               </span>
             )}
             {chatButton}
             {settings.missions && mission && (
               <Button variant="velvet" size="sm" onClick={() => setMissionOpen(true)} aria-label="Deine Mission" className={cx(mission.done && 'ring-gold')}>
-                {mission.done ? '✅' : '🎯'}
+                <Icon name={mission.done ? 'check-circle' : 'target'} className="size-5" />
               </Button>
             )}
             {settings.tracker && state.phase === 'play' && (
-              <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis">🧠</Button>
+              <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis"><Icon name="book" className="size-5" /></Button>
             )}
-            <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? 'Ton an' : 'Ton aus'}>{muted ? '🔇' : '🔊'}</Button>
+            <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? 'Ton an' : 'Ton aus'}><Icon name={muted ? 'volume-off' : 'volume'} className="size-5" /></Button>
 <MusicToggle className="bg-velvet-soft ring-2 ring-inset ring-white/10" />
-            <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label="Regeln">📜</Link>
+            <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label="Regeln"><Icon name="scroll" className="size-5" /></Link>
             {canSkip && (
               <Button variant="velvet" size="sm" onClick={() => setSkipping(true)} aria-label="Überspringen">
-                ⏭<span className="hidden sm:inline">Überspringen</span>
+                <Icon name="skip" className="size-5" /><span className="hidden sm:inline">Überspringen</span>
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={() => setLeaving(true)}>Gehen</Button>
@@ -170,8 +171,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               <p className="pt-2 text-sm font-bold text-gold-soft sm:text-base" aria-live="polite">{status}</p>
             )}
             {myTurn && verdict && !verdict.ok && <p className="-mt-1 text-sm font-bold text-wax brightness-150">{verdict.error}</p>}
-            {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft">💣 Bombe! Damit gewinnst du den Stich sofort.</p>}
-            {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft">⚡ Schnapp! Der Nächste muss aussetzen.</p>}
+            {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bomb" /> Bombe! Damit gewinnst du den Stich sofort.</p>}
+            {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bolt" /> Schnapp! Der Nächste muss aussetzen.</p>}
             <Hand
               key={state.round}
               cards={hand}
@@ -243,7 +244,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
           <Button variant="secondary" onClick={async () => { setSkipping(false); await g.dispatch({ type: 'skip' }, { move: true }); }}>Einmal überspringen</Button>
           {waiting.filter((id) => !state.players.find((p) => p.id === id)?.bot).map((id) => (
             <Button key={id} onClick={async () => { setSkipping(false); await g.dispatch({ type: 'takeover', playerId: id }, { move: true }); }}>
-              🤖 Bot für {nameOf(id)}
+              <Icon name="bot" /> Bot für {nameOf(id)}
             </Button>
           ))}
         </div>
@@ -252,12 +253,12 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
       <Modal open={missionOpen} onClose={() => setMissionOpen(false)} title="Deine geheime Mission">
         {mission && (
           <div className="flex items-center gap-4 rounded-2xl bg-parchment-dark/70 p-4">
-            <span className="text-5xl" aria-hidden>{MISSION_TEXT[mission.id].emoji}</span>
+            <Icon name={MISSION_ICONS[mission.id] ?? 'target'} className="size-14 text-gold-soft" />
             <span>
               <span className="block font-display text-3xl font-bold">{MISSION_TEXT[mission.id].title}</span>
               <span className="block">{MISSION_TEXT[mission.id].text}</span>
               <span className={cx('mt-1 block font-bold', mission.done ? 'text-vert' : 'text-ink-soft')}>
-                {mission.done ? '✅ Erfüllt – +3 Punkte!' : 'Noch offen · bringt 3 Bonuspunkte'}
+                {mission.done ? <><Icon name="check-circle" /> Erfüllt – +3 Punkte!</> : 'Noch offen · bringt 3 Bonuspunkte'}
               </span>
             </span>
           </div>

@@ -11,6 +11,7 @@ import { PRESETS, type DeckEntry } from '@/lib/decks';
 import { copyDeckAction, deleteDeckAction, setDeckPublicAction, setDefaultDeckAction, toggleDeckLikeAction } from '@/server/deck-actions';
 import type { GalleryDeck, GallerySort } from '@/server/deck-service';
 import { DeckFan } from './deck-fan';
+import { Icon } from '@/components/ui/icons';
 
 function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; isDefault: boolean; children: React.ReactNode; subtitle?: string }) {
   return (
@@ -21,7 +22,7 @@ function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; is
         </div>
         <div className="min-w-0">
           <h3 className="truncate text-2xl font-bold">{deck.name}</h3>
-          <p className="text-sm text-ink-soft">{isDefault ? '⭐ Dein Standard-Deck' : subtitle ?? ' '}</p>
+          <p className="text-sm text-ink-soft">{isDefault ? <><Icon name="star" className="text-gold-deep" /> Dein Standard-Deck</> : subtitle ?? '\u00a0'}</p>
         </div>
         <div className="mt-auto flex flex-wrap gap-2">{children}</div>
       </Card>
@@ -98,7 +99,7 @@ export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, share
   const sortTab = (active: boolean) => cx('rounded-xl px-3 py-1.5 text-sm font-bold', active ? 'bg-gold text-ink' : 'bg-velvet-deep/60 text-parchment/80 hover:bg-white/10');
 
   const defaultButton = (id: string) => effectiveDefault !== id && (
-    <Button size="sm" variant="ghost" onClick={() => makeDefault(id)}>⭐ Als Standard</Button>
+    <Button size="sm" variant="ghost" onClick={() => makeDefault(id)}><Icon name="star" /> Als Standard</Button>
   );
 
   return (

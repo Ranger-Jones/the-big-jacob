@@ -16,6 +16,7 @@ import { inviteAction } from '@/server/game-actions';
 import type { ProfileLite } from '@/server/social-service';
 import { SettingsPanel } from './settings-panel';
 import { useTable } from './table-context';
+import { Icon, TEAM_ICONS } from '@/components/ui/icons';
 
 export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: DeckEntry[] }) {
   const router = useRouter();
@@ -102,12 +103,12 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                 <span className={cx('min-w-0 flex-1', isHost && p.id !== me && 'pr-4')}>
                   <span className="block truncate font-bold leading-tight">{nameOf(p.id)}</span>
                   <span className="block truncate text-xs text-ink-soft">
-                    {p.id === state.hostId ? '👑 Host' : p.bot ? (p.bot.level === 'sly' ? '🦊 Gerissener Bot' : '🙂 Einfacher Bot') : p.id === me ? 'Du' : 'Höfling'}
+                    {p.id === state.hostId ? <><Icon name="crown" /> Host</> : p.bot ? (p.bot.level === 'sly' ? <><Icon name="fox" /> Gerissener Bot</> : <><Icon name="smile" /> Einfacher Bot</>) : p.id === me ? 'Du' : 'Höfling'}
                   </span>
-                  <span className="block truncate text-xs text-ink-soft">🎴 {deck.name}</span>
+                  <span className="block truncate text-xs text-ink-soft"><Icon name="cards" /> {deck.name}</span>
                   {teamMode && (
                     <span className="mt-0.5 inline-block rounded-full px-1.5 text-[0.7rem] font-bold text-parchment" style={{ backgroundColor: TEAM_INFO[(seat % 2) as 0 | 1].color }}>
-                      {TEAM_INFO[(seat % 2) as 0 | 1].emoji} {TEAM_INFO[(seat % 2) as 0 | 1].name}
+                      <Icon name={TEAM_ICONS[(seat % 2) as 0 | 1]} /> {TEAM_INFO[(seat % 2) as 0 | 1].name}
                     </span>
                   )}
                 </span>
@@ -118,7 +119,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                     onClick={() => (p.bot ? void g.dispatch({ type: 'removePlayer', playerId: p.id }, { versioned: true }) : setRemoving(p.id))}
                     className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full text-lg leading-none text-ink-soft hover:bg-white/10 hover:text-wax"
                   >
-                    ×
+                    <Icon name="close" className="size-4" strokeWidth={2.2} />
                   </button>
                 )}
               </li>
@@ -129,8 +130,8 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
         {isHost && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-ink-soft">Bot an den Tisch holen:</span>
-            <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'easy' })}>🙂 Einfach</Button>
-            <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'sly' })}>🦊 Gerissen</Button>
+            <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'easy' })}><Icon name="smile" /> Einfach</Button>
+            <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'sly' })}><Icon name="fox" /> Gerissen</Button>
           </div>
         )}
 

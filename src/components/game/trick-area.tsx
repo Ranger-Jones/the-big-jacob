@@ -7,6 +7,7 @@ import { describeCards, describeLog, EVENT_TEXT } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
 import { BURST_KINDS, TableBurst, type BurstKind } from './table-burst';
 import type { LogEntry } from '@/lib/jakob/types';
+import { EVENT_ICONS, Icon, LOG_ICONS, stripEmoji } from '@/components/ui/icons';
 
 function tilt(seq: number, i: number) {
   return (((seq * 37 + i * 53) % 17) - 8) * 0.9;
@@ -70,7 +71,7 @@ export function TrickArea() {
           className="absolute left-1/2 top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-velvet-deep px-3 py-1 text-xs font-bold text-gold-soft ring-2 ring-gold/50 shadow-[0_3px_0_rgb(0_0_0/0.4)]"
           title={EVENT_TEXT[state.event].text}
         >
-          {EVENT_TEXT[state.event].emoji} {EVENT_TEXT[state.event].title}
+          <Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} /> {EVENT_TEXT[state.event].title}
         </span>
       )}
 
@@ -156,7 +157,8 @@ export function TrickArea() {
                     exit={{ opacity: 0 }}
                     className="max-w-full truncate"
                   >
-                    {e.text}
+                    {LOG_ICONS[e.kind] && <Icon name={LOG_ICONS[e.kind]} className="mr-1 text-gold-soft" />}
+                    {stripEmoji(e.text ?? '')}
                   </motion.li>
                 ))}
               </AnimatePresence>

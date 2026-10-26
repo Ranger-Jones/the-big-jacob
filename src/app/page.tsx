@@ -17,6 +17,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { listFriendTables } from '@/server/spectate-service';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { listPendingInvites } from '@/server/social-service';
+import { Icon, STAGE_ICONS } from '@/components/ui/icons';
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -101,7 +102,7 @@ export default async function Home() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link href="/kampagne" className="group">
           <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
-            <span className="text-5xl" aria-hidden>{CAMPAIGN[Math.min(level, CAMPAIGN.length - 1)].emoji}</span>
+            <Icon name={STAGE_ICONS[CAMPAIGN[Math.min(level, CAMPAIGN.length - 1)].level] ?? 'crown'} className="size-12 text-gold-soft" />
             <span>
               <span className="block font-display text-3xl font-bold">Kampagne</span>
               <span className="block text-parchment/75">Vom Bauern zum König · Station {Math.min(level + 1, CAMPAIGN.length)} von {CAMPAIGN.length}</span>
@@ -111,7 +112,7 @@ export default async function Home() {
         </Link>
         <Link href="/herausforderung" className="group">
           <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
-            <span className="text-5xl" aria-hidden>📅</span>
+            <Icon name="calendar" className="size-12 text-gold-soft" />
             <span>
               <span className="block font-display text-3xl font-bold">Tägliche Herausforderung</span>
               <span className="block text-parchment/75">Dieselbe Hand für alle – wer holt heute die meisten Punkte?</span>
@@ -128,7 +129,7 @@ export default async function Home() {
             {friendTables.map((t) => (
               <li key={t.code} className="flex flex-wrap items-center gap-3">
                 <span className="min-w-0 flex-1 truncate"><b>{t.friend.username}</b> spielt gerade · Runde {t.round} · {t.players} am Tisch</span>
-                <Link href={`/spiel/${t.code}/zuschauen`} className={buttonClass('secondary', 'sm')}>👀 Zuschauen</Link>
+                <Link href={`/spiel/${t.code}/zuschauen`} className={buttonClass('secondary', 'sm')}><Icon name="eye" /> Zuschauen</Link>
               </li>
             ))}
           </ul>

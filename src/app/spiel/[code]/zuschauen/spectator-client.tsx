@@ -17,6 +17,7 @@ import { getSettings } from '@/lib/jakob/engine';
 import { EVENT_TEXT } from '@/lib/jakob/texts';
 import type { GameView } from '@/server/game-service';
 import type { ProfileLite } from '@/server/social-service';
+import { EVENT_ICONS, Icon } from '@/components/ui/icons';
 
 interface Props {
   initial: GameView;
@@ -41,8 +42,8 @@ function Phase() {
             : state.phase === 'tax' ? 'Steuern werden gezahlt …'
               : state.phase === 'roundEnd' ? `Runde ${last?.round ?? ''} ist vorbei` : 'Gleich geht es los'}
       </h2>
-      {state.event && <p className="text-sm"><b>{EVENT_TEXT[state.event].emoji} {EVENT_TEXT[state.event].title}:</b> {EVENT_TEXT[state.event].text}</p>}
-      {state.revolution && <p className="font-bold text-wax">{state.revolution.grand ? '🔥 Große Revolution' : '✊ Revolution'} von {nameOf(state.revolution.by)}!</p>}
+      {state.event && <p className="text-sm"><b><Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} /> {EVENT_TEXT[state.event].title}:</b> {EVENT_TEXT[state.event].text}</p>}
+      {state.revolution && <p className="font-bold text-wax"><Icon name={state.revolution.grand ? 'flame' : 'fist'} /> {state.revolution.grand ? 'Große Revolution' : 'Revolution'} von {nameOf(state.revolution.by)}!</p>}
       {state.teams && <TeamScore />}
       <RankLadder order={state.phase === 'roundEnd' && last ? last.finish : present} />
     </Card>
@@ -71,14 +72,14 @@ export function SpectatorClient(props: Props) {
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 px-4 pb-8 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-5">
         <div className="flex min-w-0 flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-display text-2xl text-gold-soft">👀 Du schaust zu · Runde {g.game.state.round}</p>
+            <p className="font-display text-2xl text-gold-soft"><Icon name="eye" /> Du schaust zu · Runde {g.game.state.round}</p>
             <Link href="/" className={buttonClass('ghost', 'sm')}>Zurück</Link>
           </div>
           <Seats timer={null} />
           {finished ? (
             <Card className="flex flex-col items-center gap-3 text-center">
               <h2 className="text-3xl font-bold">Das Spiel ist vorbei</h2>
-              <Link href={`/spiel/${g.game.code}/wiederholung`} className={buttonClass('primary')}>🎞️ Wiederholung ansehen</Link>
+              <Link href={`/spiel/${g.game.code}/wiederholung`} className={buttonClass('primary')}><Icon name="film" /> Wiederholung ansehen</Link>
             </Card>
           ) : <Phase />}
           <p className="text-center text-sm text-parchment/70">Die Karten der Spieler bleiben für Zuschauer verdeckt. Reaktionen sehen alle.</p>

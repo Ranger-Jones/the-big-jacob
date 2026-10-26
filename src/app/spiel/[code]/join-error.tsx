@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 
 export function JoinError({ message, spectateHref }: { message: string; spectateHref?: string }) {
   return (
@@ -9,7 +10,7 @@ export function JoinError({ message, spectateHref }: { message: string; spectate
         <h1 className="text-4xl font-bold">Kein Platz am Tisch</h1>
         <p className="text-ink-soft">{message}</p>
         <div className="flex flex-wrap gap-2">
-          {spectateHref && <Link href={spectateHref} className={buttonClass('primary')}>👀 Zuschauen</Link>}
+          {spectateHref && <Link href={spectateHref} className={buttonClass('primary')}><Icon name="eye" /> Zuschauen</Link>}
           <Link href="/" className={buttonClass(spectateHref ? 'secondary' : 'primary')}>Zur Startseite</Link>
         </div>
       </Card>

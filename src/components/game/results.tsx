@@ -18,11 +18,12 @@ import { CAMPAIGN } from '@/lib/campaign';
 import { rematchAction } from '@/server/game-actions';
 import { startCampaignAction } from '@/server/solo-actions';
 import { useTable } from './table-context';
+import { Icon, type IconName, Medal, MISSION_ICONS, STAGE_ICONS, TEAM_ICONS } from '@/components/ui/icons';
 
 const PODIUM = [
-  { place: 2, height: 'h-20', color: '#c9c9d6', medal: '🥈' },
-  { place: 1, height: 'h-28', color: '#f4b73a', medal: '🥇' },
-  { place: 3, height: 'h-14', color: '#c98a52', medal: '🥉' },
+  { place: 2, height: 'h-20', color: '#c9c9d6' },
+  { place: 1, height: 'h-28', color: '#f4b73a' },
+  { place: 3, height: 'h-14', color: '#c98a52' },
 ];
 
 /** End of a campaign stage or the daily challenge. */
@@ -37,7 +38,7 @@ function SoloOutcome({ won }: { won: boolean }) {
         <p className="text-ink-soft">Schau nach, wie du im Vergleich zu deinen Freunden abschneidest.</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Link href="/herausforderung" className={buttonClass('primary', 'lg')}>Zur Tagesrangliste</Link>
-          <Link href={`/spiel/${code}/wiederholung`} className={buttonClass('secondary', 'lg')}>🎞️ Wiederholung</Link>
+          <Link href={`/spiel/${code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> Wiederholung</Link>
         </div>
       </Card>
     );
@@ -53,7 +54,7 @@ function SoloOutcome({ won }: { won: boolean }) {
   }
   return (
     <Card className="flex flex-col items-center gap-3 text-center">
-      <h2 className="text-4xl font-bold">{won ? `${stage?.emoji ?? '🏆'} ${stage?.place ?? 'Station'} gemeistert!` : 'Diesmal nicht …'}</h2>
+      <h2 className="text-4xl font-bold">{won ? <><Icon name={stage ? STAGE_ICONS[stage.level] ?? 'trophy' : 'trophy'} className="text-gold-soft" /> {stage?.place ?? 'Station'} gemeistert!</> : 'Diesmal nicht …'}</h2>
       <p className="text-ink-soft">
         {won
           ? nextStage ? `Neuer Titel: ${stage?.title}. Als Nächstes wartet: ${nextStage.place}.` : 'Du hast die ganze Kampagne gewonnen. Lang lebe der Große Jakob!'
@@ -96,15 +97,15 @@ export function Results() {
 
   const stat = (id: string) => state.stats[id] ?? EMPTY_STATS;
   const highlights = [
-    { label: 'Meiste Kronen', emoji: '👑', key: 'crowns' as const },
-    { label: 'Revolutionen', emoji: '✊', key: 'revolutions' as const },
-    { label: 'Große Revolutionen', emoji: '🔥', key: 'grandRevolutions' as const },
-    { label: 'Bomben', emoji: '💣', key: 'bombs' as const },
-    { label: 'Aufstiege', emoji: '🪜', key: 'rises' as const },
+    { label: 'Meiste Kronen', icon: 'crown' as IconName, key: 'crowns' as const },
+    { label: 'Revolutionen', icon: 'fist' as IconName, key: 'revolutions' as const },
+    { label: 'Große Revolutionen', icon: 'flame' as IconName, key: 'grandRevolutions' as const },
+    { label: 'Bomben', icon: 'bomb' as IconName, key: 'bombs' as const },
+    { label: 'Aufstiege', icon: 'ladder' as IconName, key: 'rises' as const },
   ].map((h) => {
     const best = [...state.players].sort((a, b) => stat(b.id)[h.key] - stat(a.id)[h.key])[0];
     return best && stat(best.id)[h.key] > 0 ? { ...h, id: best.id, value: stat(best.id)[h.key] } : null;
-  }).filter(Boolean) as { label: string; emoji: string; id: string; value: number }[];
+  }).filter(Boolean) as { label: string; icon: IconName; id: string; value: number }[];
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-4 pb-12">
@@ -112,12 +113,12 @@ export function Results() {
         <CrownMark className="mx-auto size-14" />
         <h1 className="gold-text text-6xl font-bold">
           {state.teams
-            ? `${winningTeam === null ? 'Unentschieden!' : `${TEAM_INFO[winningTeam].emoji} ${TEAM_INFO[winningTeam].name} gewinnt!`}`
+            ? `${winningTeam === null ? 'Unentschieden!' : `${TEAM_INFO[winningTeam].name} gewinnt!`}`
             : iWon ? 'Lang lebe Jakob – also du!' : `${nameOf(ranked[0]?.id ?? '')} regiert!`}
         </h1>
         <p className="mt-1 text-parchment/80">
           {state.throneWinner
-            ? `🏰 Thronfolge: ${nameOf(state.throneWinner, true)} ${state.throneWinner === me ? 'warst' : 'war'} dreimal in Folge Großer Jakob.`
+            ? `Thronfolge: ${nameOf(state.throneWinner, true)} ${state.throneWinner === me ? 'warst' : 'war'} dreimal in Folge Großer Jakob.`
             : `Nach ${state.history.length} ${state.history.length === 1 ? 'Runde' : 'Runden'} steht der Hof fest.`}
         </p>
       </div>
@@ -138,7 +139,7 @@ export function Results() {
               <span className="w-full truncate text-center font-bold">{nameOf(p.id, true)}</span>
               <span className="tabular font-display text-2xl text-gold-soft">{state.points[p.id] ?? 0} P.</span>
               <span className={cx('flex w-full items-start justify-center rounded-t-xl pt-2 text-3xl shadow-[inset_0_-6px_0_rgb(0_0_0/0.2)]', slot.height)} style={{ backgroundColor: slot.color }}>
-                {slot.medal}
+                <Medal place={slot.place} className="text-[1.6rem]" />
               </span>
             </motion.div>
           );
@@ -169,7 +170,7 @@ export function Results() {
                   const pos = r.finish.indexOf(p.id);
                   return (
                     <td key={r.round} className="tabular py-2.5 text-center text-sm" title={pos >= 0 ? `${pos + 1}. Platz` : 'nicht dabei'}>
-                      {pos === 0 ? '👑' : pos >= 0 ? `+${r.points[p.id] ?? 0}` : '·'}
+                      {pos === 0 ? <Icon name="crown" className="text-gold-soft" /> : pos >= 0 ? `+${r.points[p.id] ?? 0}` : '·'}
                     </td>
                   );
                 })}
@@ -184,7 +185,7 @@ export function Results() {
         <div className="grid grid-cols-2 gap-3">
           {([0, 1] as const).map((t) => (
             <div key={t} className={cx('rounded-2xl p-4 text-center text-parchment ring-4', winningTeam === t ? 'ring-gold' : 'ring-transparent')} style={{ backgroundColor: TEAM_INFO[t].color }}>
-              <span className="block font-bold">{TEAM_INFO[t].emoji} {TEAM_INFO[t].name}</span>
+              <span className="block font-bold"><Icon name={TEAM_ICONS[t]} /> {TEAM_INFO[t].name}</span>
               <span className="tabular block font-display text-5xl font-bold">{totals[t]}</span>
               <span className="block text-sm">{state.players.filter((p) => state.teams?.[p.id] === t).map((p) => nameOf(p.id, true)).join(', ')}</span>
             </div>
@@ -200,12 +201,12 @@ export function Results() {
               const m = state.missionsRevealed![p.id];
               return (
                 <li key={p.id} className={cx('flex items-center gap-3 rounded-xl p-2', m.done ? 'bg-vert/15' : 'bg-parchment-dark/60')}>
-                  <span className="text-2xl" aria-hidden>{MISSION_TEXT[m.id].emoji}</span>
+                  <Icon name={MISSION_ICONS[m.id] ?? 'target'} className="size-7 text-gold-soft" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold">{nameOf(p.id, true)}: {MISSION_TEXT[m.id].title}</span>
                     <span className="block text-sm text-ink-soft">{MISSION_TEXT[m.id].text}</span>
                   </span>
-                  <span className="font-bold">{m.done ? '✅ +3' : '✗'}</span>
+                  <span className="font-bold">{m.done ? <><Icon name="check-circle" /> +3</> : <Icon name="close" />}</span>
                 </li>
               );
             })}
@@ -217,7 +218,7 @@ export function Results() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {highlights.map((h) => (
             <li key={h.label} className="flex items-center gap-3 rounded-2xl bg-velvet-deep/70 p-3 ring-2 ring-white/10">
-              <span className="text-3xl" aria-hidden>{h.emoji}</span>
+              <Icon name={h.icon} className="size-8 text-gold-soft" />
               <span className="min-w-0">
                 <span className="block text-xs text-parchment/70">{h.label}</span>
                 <span className="block truncate font-bold">{nameOf(h.id, true)} · {h.value}</span>
@@ -230,7 +231,7 @@ export function Results() {
       {state.mode === 'normal' ? (
         <div className="flex flex-wrap justify-center gap-3">
           <Button size="lg" onClick={rematch} disabled={busy}>{game.rematchGameId ? 'Zur Revanche' : 'Revanche'}</Button>
-          <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}>🎞️ Wiederholung</Link>
+          <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> Wiederholung</Link>
           <Link href="/" className={buttonClass('velvet', 'lg')}>Zur Startseite</Link>
         </div>
       ) : (

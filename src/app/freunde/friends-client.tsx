@@ -67,7 +67,7 @@ export function FriendsClient({ me, lists }: { me: string; lists: FriendLists })
   async function request(username: string) {
     const res = await sendFriendRequestAction(username);
     if (!res.ok) return toast.error(res.error);
-    toast.success(res.data.status === 'accepted' ? `Ihr seid jetzt Freunde! 🎉` : `Anfrage an ${username} gesendet`);
+    toast.success(res.data.status === 'accepted' ? 'Ihr seid jetzt Freunde!' : `Anfrage an ${username} gesendet`);
     setQuery('');
     router.refresh();
   }

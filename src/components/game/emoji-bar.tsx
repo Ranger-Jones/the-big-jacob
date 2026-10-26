@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
 import { EMOJI_CATALOG, QUICK_EMOJI_COUNT } from '@/lib/emojis';
 import { setQuickEmojisAction } from '@/server/profile-actions';
+import { Icon } from '@/components/ui/icons';
 
 /** Six favourites plus a picker; the favourites are saved in the account. */
 export function EmojiBar({ onSend, initialQuick }: { onSend: (emoji: string) => void; initialQuick: string[] }) {
@@ -42,7 +43,7 @@ export function EmojiBar({ onSend, initialQuick }: { onSend: (emoji: string) => 
           className="flex size-9 items-center justify-center rounded-full text-lg font-bold text-parchment/80 hover:bg-white/10 sm:size-11 sm:text-xl"
           aria-label="Mehr Reaktionen"
         >
-          ＋
+          <Icon name="plus" className="size-5" strokeWidth={2.2} />
         </button>
       </div>
       <Modal open={open} onClose={() => { setOpen(false); setEditing(null); }} title={editing ? 'Schnellwahl anpassen' : 'Reaktion senden'}>

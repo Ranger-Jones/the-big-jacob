@@ -19,6 +19,7 @@ import { updateDeckAction } from '@/server/deck-actions';
 import { ART_GROUPS, CardArt, hasArt } from './art';
 import { CardStudio, type DesignChange } from './card-studio';
 import { CardBack, PlayingCard } from './playing-card';
+import { Icon } from '@/components/ui/icons';
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
@@ -236,8 +237,8 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
             <span className="font-bold">Wappen-Grafik</span>
             <span className="flex items-center gap-1">
               {hasArt(design.back.art) && <CardArt id={design.back.art} className="size-9" />}
-              <Button size="sm" variant="secondary" onClick={() => setPicking('back')}>🎨 {hasArt(design.back.art) ? 'Ändern' : 'Wählen'}</Button>
-              {design.back.art && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, art: null } })} aria-label="Wappen-Grafik entfernen">✕</Button>}
+              <Button size="sm" variant="secondary" onClick={() => setPicking('back')}><Icon name="palette" /> {hasArt(design.back.art) ? 'Ändern' : 'Wählen'}</Button>
+              {design.back.art && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, art: null } })} aria-label="Wappen-Grafik entfernen"><Icon name="close" /></Button>}
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-parchment-dark/60 px-3 py-2">
@@ -252,16 +253,16 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
                 disabled={uploading !== null}
                 onClick={() => { uploadRank.current = 'back'; fileInput.current?.click(); }}
               >
-                {uploading === 'back' ? 'Lädt …' : design.back.image ? '📷 Ändern' : '📷 Foto'}
+                {uploading === 'back' ? 'Lädt …' : <><Icon name="camera" /> {design.back.image ? 'Ändern' : 'Foto'}</>}
               </Button>
-              {design.back.image && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, image: null } })} aria-label="Rückseitenfoto entfernen">✕</Button>}
+              {design.back.image && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, image: null } })} aria-label="Rückseitenfoto entfernen"><Icon name="close" /></Button>}
             </span>
           </div>
         </Card>
 
         <Card className="flex flex-col gap-3">
           <h2 className="text-3xl font-bold">Die 13 Karten</h2>
-          <p className="text-sm text-ink-soft">Name und Symbol pro Karte, dazu wahlweise eine gezeichnete Grafik 🎨 oder ein Foto 📷. Die Zahl bestimmt den Rang und bleibt fest.</p>
+          <p className="text-sm text-ink-soft">Name und Symbol pro Karte, dazu wahlweise eine gezeichnete Grafik oder ein Foto. Die Zahl bestimmt den Rang und bleibt fest.</p>
           <ul className="flex flex-col gap-2">
             {RANKS.map((rank) => {
               const c = design.cards[rank - 1];
@@ -279,18 +280,18 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
                   <input aria-label={`Symbol Karte ${rank}`} value={c.emoji} maxLength={8} onChange={(e) => updateCard(rank, { emoji: e.target.value }, `${rank}-emoji`)} className={cx(fieldClass, 'w-16 text-center text-xl')} />
                   <span className="flex gap-1">
                     <Button size="sm" variant="secondary" onClick={() => { setActive(rank); setPicking(rank); }} aria-label={`Grafik für Karte ${rank} wählen`}>
-                      {hasArt(c.art) ? <CardArt id={c.art} className="size-6" /> : '🎨'}
+                      {hasArt(c.art) ? <CardArt id={c.art} className="size-6" /> : <Icon name="palette" className="size-5" />}
                     </Button>
-                    {c.art && <Button size="sm" variant="ghost" onClick={() => updateCard(rank, { art: null })} aria-label={`Grafik von Karte ${rank} entfernen`}>✕</Button>}
+                    {c.art && <Button size="sm" variant="ghost" onClick={() => updateCard(rank, { art: null })} aria-label={`Grafik von Karte ${rank} entfernen`}><Icon name="close" /></Button>}
                     <Button
                       size="sm"
                       variant="secondary"
                       disabled={uploading !== null}
                       onClick={() => { uploadRank.current = rank; setActive(rank); fileInput.current?.click(); }}
                     >
-                      {uploading === rank ? 'Lädt …' : c.image ? '📷 Ändern' : '📷 Foto'}
+                      {uploading === rank ? 'Lädt …' : <><Icon name="camera" /> {c.image ? 'Ändern' : 'Foto'}</>}
                     </Button>
-                    {c.image && <Button size="sm" variant="ghost" onClick={() => updateCard(rank, { image: null })} aria-label={`Foto von Karte ${rank} entfernen`}>✕</Button>}
+                    {c.image && <Button size="sm" variant="ghost" onClick={() => updateCard(rank, { image: null })} aria-label={`Foto von Karte ${rank} entfernen`}><Icon name="close" /></Button>}
                   </span>
                 </li>
               );

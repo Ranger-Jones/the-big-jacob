@@ -7,9 +7,9 @@ import { monthLabel, monthOf, monthTitle } from '@/lib/months';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getLeaderboard, getMonthlyChampions, getMonthlyLeaderboard } from '@/server/profile-service';
+import { Icon, Medal } from '@/components/ui/icons';
 
 export const metadata: Metadata = { title: 'Bestenliste' };
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ zeitraum?: string }> }) {
   const me = await requireUser();
@@ -29,7 +29,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
       <h1 className="text-6xl font-bold">Bestenliste</h1>
       {lastChampion && (
         <div className="flex items-center gap-3 rounded-2xl bg-velvet-deep/70 p-3 ring-2 ring-gold/50">
-          <span className="text-3xl" aria-hidden>👑</span>
+          <Icon name="crown" className="size-8 text-gold-soft" />
           <Avatar profile={lastChampion.champion} size="sm" />
           <p><b className="text-gold-soft">{monthTitle(lastChampion.month)}:</b> {lastChampion.champion.username} mit {lastChampion.champion.wins} {lastChampion.champion.wins === 1 ? 'Sieg' : 'Siegen'}</p>
         </div>
@@ -53,7 +53,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                   <th scope="col" className="px-3 py-3 font-bold sm:px-5">Platz</th>
                   <th scope="col" className="py-3 font-bold">Spieler</th>
                   <th scope="col" className="py-3 text-right font-bold">Siege</th>
-                  <th scope="col" className="px-3 py-3 text-right font-bold sm:px-0" title="Runden als Großer Jakob">👑</th>
+                  <th scope="col" className="px-3 py-3 text-right font-bold sm:px-0" title="Runden als Großer Jakob"><Icon name="crown" className="size-5" /></th>
                   <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell">Spiele</th>
                   <th scope="col" className="hidden px-5 py-3 text-right font-bold sm:table-cell">Punkte</th>
                 </tr>
@@ -61,7 +61,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
               <tbody>
                 {monthRows.map((r, i) => (
                   <tr key={r.user_id} className={cx('border-t border-line', r.user_id === me.id && 'bg-gold/20')}>
-                    <td className="tabular px-3 py-3 font-display text-2xl font-bold sm:px-5">{i < 3 ? MEDALS[i] : i + 1}</td>
+                    <td className="tabular px-3 py-3 font-display text-2xl font-bold sm:px-5"><Medal place={i + 1} /></td>
                     <td className="py-3">
                       <Link href={`/profil/${r.username}`} className="flex min-w-0 items-center gap-2 font-bold hover:underline sm:gap-3">
                         <Avatar profile={r} size="sm" />
@@ -86,8 +86,8 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                 <th scope="col" className="px-3 py-3 font-bold sm:px-5">Platz</th>
                 <th scope="col" className="py-3 font-bold">Spieler</th>
                 <th scope="col" className="py-3 text-right font-bold">Siege</th>
-                <th scope="col" className="px-3 py-3 text-right font-bold sm:px-0" title="Runden als Großer Jakob">👑</th>
-                <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell" title="Revolutionen">✊</th>
+                <th scope="col" className="px-3 py-3 text-right font-bold sm:px-0" title="Runden als Großer Jakob"><Icon name="crown" className="size-5" /></th>
+                <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell" title="Revolutionen"><Icon name="fist" className="size-5" /></th>
                 <th scope="col" className="hidden py-3 text-right font-bold sm:table-cell">Spiele</th>
                 <th scope="col" className="hidden px-5 py-3 text-right font-bold sm:table-cell">Ø Platz</th>
               </tr>
@@ -95,7 +95,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
             <tbody>
               {rows.map((r, i) => (
                 <tr key={r.user_id} className={cx('border-t border-line', r.user_id === me.id && 'bg-gold/20')}>
-                  <td className="tabular px-3 py-3 font-display text-2xl font-bold sm:px-5">{i < 3 ? MEDALS[i] : i + 1}</td>
+                  <td className="tabular px-3 py-3 font-display text-2xl font-bold sm:px-5"><Medal place={i + 1} /></td>
                   <td className="py-3">
                     <Link href={`/profil/${r.username}`} className="flex min-w-0 items-center gap-2 font-bold hover:underline sm:gap-3">
                       <Avatar profile={r} size="sm" />

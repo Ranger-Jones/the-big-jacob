@@ -6,6 +6,7 @@ import { Avatar, type AvatarProfile } from '@/components/ui/avatar';
 import { compressImage, IMAGE_UNREADABLE, validateImageFile } from '@/lib/crop-image';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { removeAvatarAction, setAvatarAction } from '@/server/profile-actions';
+import { Icon } from '@/components/ui/icons';
 
 export function AvatarUpload({ me, profile }: { me: string; profile: AvatarProfile }) {
   const router = useRouter();
@@ -57,7 +58,7 @@ export function AvatarUpload({ me, profile }: { me: string; profile: AvatarProfi
         <span className="absolute inset-0 flex items-center justify-center rounded-full bg-velvet-deep/55 text-sm font-bold text-parchment opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           {busy ? 'Lädt …' : 'Bild ändern'}
         </span>
-        <span className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full bg-gold text-lg ring-4 ring-velvet" aria-hidden>📷</span>
+        <span className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full bg-gold text-lg ring-4 ring-velvet text-[#2b1a12]" aria-hidden><Icon name="camera" className="size-5" /></span>
         <input
           ref={input}
           type="file"

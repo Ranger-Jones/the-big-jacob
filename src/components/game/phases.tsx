@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { CrownMark } from '@/components/ui/logo';
 import { cx } from '@/lib/cx';
 import { JESTER } from '@/lib/jakob/cards';
-import { getSettings, rankEmoji, rankTitle, teamPoints } from '@/lib/jakob/engine';
+import { getSettings, rankTitle, teamPoints } from '@/lib/jakob/engine';
 import { describeCards, EVENT_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
+import { EVENT_ICONS, Icon, rankIcon, TEAM_ICONS } from '@/components/ui/icons';
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -24,7 +25,7 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
 
 function Countdown({ seconds }: { seconds: number | null }) {
   if (seconds === null) return null;
-  return <span className={cx('tabular rounded-full px-2.5 py-0.5 text-sm font-bold', seconds <= 5 ? 'bg-wax text-parchment' : 'bg-parchment-dark text-ink-soft')}>⏳ {seconds} s</span>;
+  return <span className={cx('tabular rounded-full px-2.5 py-0.5 text-sm font-bold', seconds <= 5 ? 'bg-wax text-parchment' : 'bg-parchment-dark text-ink-soft')}><Icon name="hourglass" /> {seconds} s</span>;
 }
 
 function ReadyList({ ids }: { ids: string[] }) {
@@ -36,7 +37,7 @@ function ReadyList({ ids }: { ids: string[] }) {
         return (
           <li key={id} className={cx('flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm font-bold ring-2', ready ? 'bg-vert/15 ring-vert' : 'bg-white/5 ring-line text-ink-soft')}>
             <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="xs" />
-            {nameOf(id, true)} {ready ? '✓' : '…'}
+            {nameOf(id, true)} {ready ? <Icon name="check" strokeWidth={2.5} /> : '…'}
           </li>
         );
       })}
@@ -58,7 +59,7 @@ export function RankLadder({ order, showDraws }: { order: string[]; showDraws?: 
           transition={{ delay: i * 0.06 }}
           className={cx('flex items-center gap-3 rounded-2xl px-3 py-1.5', i === 0 ? 'bg-gold/30 ring-2 ring-gold-deep/50' : 'bg-parchment-dark/60')}
         >
-          <span className="w-7 text-center text-xl" aria-hidden>{rankEmoji(i, order.length)}</span>
+          <Icon name={rankIcon(i, order.length)} className="size-6 text-gold-deep" />
           <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="sm" />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold leading-tight">{nameOf(id, true)}</span>
@@ -137,7 +138,7 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
             transition={{ type: 'spring', stiffness: 260, damping: 14 }}
             className="rounded-2xl bg-wax p-4 text-center text-parchment shadow-[0_5px_0_#7f1a22]"
           >
-            <p className="font-display text-4xl font-bold">{rev.grand ? '🔥 Große Revolution!' : '✊ Revolution!'}</p>
+            <p className="font-display text-4xl font-bold"><Icon name={rev.grand ? 'flame' : 'fist'} /> {rev.grand ? 'Große Revolution!' : 'Revolution!'}</p>
             <p className="font-bold">
               {nameOf(rev.by, true)} {rev.by === me ? 'hast' : 'hat'} beide Narren.{' '}
               {rev.grand ? 'Die Rangfolge dreht sich komplett um – und Steuern gibt es keine.' : 'Diese Runde zahlt niemand Steuern.'}
@@ -148,7 +149,7 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
 
       {state.event && (
         <div className="flex items-center gap-3 rounded-2xl bg-velvet p-3 text-parchment">
-          <span className="text-4xl" aria-hidden>{EVENT_TEXT[state.event].emoji}</span>
+          <Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} className="size-10 text-gold-soft" />
           <span>
             <span className="block font-display text-2xl font-bold text-gold-soft">Hofgeflüster: {EVENT_TEXT[state.event].title}</span>
             <span className="block text-sm">{EVENT_TEXT[state.event].text}</span>
@@ -159,28 +160,28 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
       {state.audit && (
         <div className="flex items-center gap-3 rounded-2xl bg-parchment-dark/70 p-3">
           <PlayingCard rank={state.audit.card} deck={deckOf(state.audit.by)} size="sm" />
-          <p className="text-sm"><b>🔍 Steuerprüfung:</b> {nameOf(state.audit.by, true)} {state.audit.by === me ? 'musst' : 'muss'} diese Karte allen zeigen.</p>
+          <p className="text-sm"><b><Icon name="search" /> Steuerprüfung:</b> {nameOf(state.audit.by, true)} {state.audit.by === me ? 'musst' : 'muss'} diese Karte allen zeigen.</p>
         </div>
       )}
 
       {state.mercyRound && (
-        <p className="rounded-2xl bg-azure/15 p-3 font-bold">🙏 {nameOf(present.at(-1) ?? '', true)} hat um Gnade gebeten – die große Steuer entfällt.</p>
+        <p className="rounded-2xl bg-azure/15 p-3 font-bold"><Icon name="dove" /> {nameOf(present.at(-1) ?? '', true)} hat um Gnade gebeten – die große Steuer entfällt.</p>
       )}
-      {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold">🪑 Der Große Jakob hat abgedankt.</p>}
+      {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold"><Icon name="throne" /> Der Große Jakob hat abgedankt.</p>}
 
       <RankLadder order={present} showDraws={state.round === 1} />
 
       {settings.mercy && !rev && !state.mercyRound && present.at(-1) === me && !state.mercyUsed.includes(me) && (
         <div className="rounded-2xl border-2 border-dashed border-azure p-3">
           <p className="mb-2 font-bold">Gnadenrecht: Einmal pro Spiel kannst du die große Steuer verweigern.</p>
-          <Button variant="secondary" onClick={() => g.dispatch({ type: 'mercy' })} disabled={g.busy}>🙏 Um Gnade bitten</Button>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'mercy' })} disabled={g.busy}><Icon name="dove" /> Um Gnade bitten</Button>
         </div>
       )}
 
       {settings.abdicate && !rev && !state.abdicated && present[0] === me && present.length >= 3 && (
         <div className="rounded-2xl border-2 border-dashed border-gold-deep p-3">
           <p className="mb-2 font-bold">Abdankung: Du tauschst den Platz mit einem Bürger. Klug bei schwacher Hand – besonders, wenn der Königssturz droht.</p>
-          <Button variant="secondary" onClick={() => g.dispatch({ type: 'abdicate' })} disabled={g.busy}>🪑 Abdanken</Button>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'abdicate' })} disabled={g.busy}><Icon name="throne" /> Abdanken</Button>
         </div>
       )}
 
@@ -193,14 +194,14 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
               : 'Dann zahlt diese Runde niemand Steuern.'}
           </p>
           <Button variant="danger" onClick={() => g.dispatch({ type: 'revolution' })} disabled={g.busy}>
-            {present.at(-1) === me ? '🔥 Große Revolution!' : '✊ Revolution ausrufen'}
+            <Icon name={present.at(-1) === me ? 'flame' : 'fist'} /> {present.at(-1) === me ? 'Große Revolution!' : 'Revolution ausrufen'}
           </Button>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>
-          {ready ? 'Bereit ✓' : 'Bereit'}
+          {ready ? <>Bereit <Icon name="check" strokeWidth={2.5} /></> : 'Bereit'}
         </Button>
         <p className="text-sm text-ink-soft">Schau dir deine Karten an. Es geht los, sobald alle bereit sind.</p>
       </div>
@@ -223,7 +224,7 @@ export function TaxPhase({ secondsLeft }: { secondsLeft: number | null }) {
       <ul className="flex flex-col gap-1 text-sm">
         {state.tax.map((t) => (
           <li key={t.to} className="flex items-center gap-2">
-            <span aria-hidden>{t.done ? '✅' : '⏳'}</span>
+            <Icon name={t.done ? 'check-circle' : 'hourglass'} className="size-5" />
             <span><b>{nameOf(t.from, true)}</b> {t.from === me ? 'zahlst' : 'zahlt'} {t.count} {t.count === 1 ? 'Karte' : 'Karten'} an <b>{nameOf(t.to, true)}</b>{t.done ? ' – erledigt' : ''}</span>
           </li>
         ))}
@@ -269,7 +270,7 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
             transition={{ delay: 0.08 * i }}
             className={cx('flex items-center gap-3 rounded-2xl px-3 py-1.5', i === 0 ? 'bg-gold/30 ring-2 ring-gold-deep/50' : 'bg-parchment-dark/60')}
           >
-            <span className="w-7 text-center text-xl" aria-hidden>{rankEmoji(i, last.finish.length)}</span>
+            <Icon name={rankIcon(i, last.finish.length)} className="size-6 text-gold-deep" />
             <span className="relative">
               <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="sm" />
               {i === 0 && (
@@ -303,7 +304,7 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
         {' '}Gleich wird neu gemischt und gegeben.
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>{ready ? 'Bereit ✓' : 'Nächste Runde'}</Button>
+        <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>{ready ? <>Bereit <Icon name="check" strokeWidth={2.5} /></> : 'Nächste Runde'}</Button>
       </div>
       <ReadyList ids={present} />
     </Panel>
@@ -319,7 +320,7 @@ export function TeamScore() {
     <div className="grid grid-cols-2 gap-2">
       {([0, 1] as const).map((t) => (
         <div key={t} className="rounded-2xl p-3 text-center text-parchment" style={{ backgroundColor: TEAM_INFO[t].color }}>
-          <span className="block text-sm font-bold">{TEAM_INFO[t].emoji} {TEAM_INFO[t].name}</span>
+          <span className="block text-sm font-bold"><Icon name={TEAM_ICONS[t]} /> {TEAM_INFO[t].name}</span>
           <span className="tabular block font-display text-3xl font-bold">{totals[t]}</span>
         </div>
       ))}

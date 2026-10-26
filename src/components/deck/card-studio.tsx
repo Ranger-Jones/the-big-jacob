@@ -13,6 +13,7 @@ import { EMOJI_CATALOG } from '@/lib/emojis';
 import { JESTER } from '@/lib/jakob/cards';
 import { hasArt } from './art';
 import { defaultLayout, elementHandles, LayoutFace, type ElementKey, type GestureMode } from './card-layout';
+import { Icon } from '@/components/ui/icons';
 
 export type HistoryMode = 'push' | 'coalesce' | 'none';
 export type DesignChange = (fn: (d: DeckDesign) => DeckDesign, opts?: { history?: HistoryMode; key?: string }) => void;
@@ -324,12 +325,13 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
 
   /** Bottom to top, the same order the card draws its layers. */
   const elementOrder: ElementKey[] = ['picture', ...layout.stickers.map((s) => `sticker:${s.id}` as ElementKey), 'name', 'number'];
-  const elementLabel = (key: ElementKey): string => {
-    if (key === 'picture') return `🖼️ Bild${layout.picture.visible ? '' : ' (aus)'}`;
-    if (key === 'number') return `🔢 Zahl${layout.number.style === 'aus' ? ' (aus)' : ''}`;
-    if (key === 'name') return `🏷️ Name${layout.name.style === 'aus' ? ' (aus)' : ''}`;
+  const elementLabel = (key: ElementKey): ReactNode => {
+    if (key === 'picture') return <><Icon name="image" /> Bild{layout.picture.visible ? '' : ' (aus)'}</>;
+    if (key === 'number') return <><Icon name="hash" /> Zahl{layout.number.style === 'aus' ? ' (aus)' : ''}</>;
+    if (key === 'name') return <><Icon name="tag" /> Name{layout.name.style === 'aus' ? ' (aus)' : ''}</>;
     const st = stickerOf(key);
-    return st ? (st.kind === 'emoji' ? st.value : `✏️ ${st.value.slice(0, 10)}`) : '';
+    if (!st) return '';
+    return st.kind === 'emoji' ? st.value : <><Icon name="pencil" /> {st.value.slice(0, 10)}</>;
   };
 
   // Selection overlay: drawn above every layer, outside the card clip, so handles are always reachable.
@@ -362,7 +364,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
             title="Drehen"
             className="pointer-events-auto absolute -top-9 left-1/2 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-white bg-gold text-sm shadow-lg"
           >
-            ↻
+            <Icon name="rotate" className="size-4 text-[#2b1a12]" strokeWidth={2.2} />
           </span>
         )}
       </div>
@@ -381,8 +383,8 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
       <>
         <h3 className="text-2xl font-bold">Bild</h3>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={onUploadPhoto} disabled={uploading}>{uploading ? 'Lädt …' : hasPhoto ? '📷 Foto ändern' : '📷 Foto'}</Button>
-          <Button size="sm" variant="secondary" onClick={onPickArt}>🎨 Grafik</Button>
+          <Button size="sm" variant="secondary" onClick={onUploadPhoto} disabled={uploading}>{uploading ? 'Lädt …' : <><Icon name="camera" /> {hasPhoto ? 'Foto ändern' : 'Foto'}</>}</Button>
+          <Button size="sm" variant="secondary" onClick={onPickArt}><Icon name="palette" /> Grafik</Button>
         </div>
         <Switch label="Ganze Karte füllen" hint="Das Bild bedeckt die komplette Vorderseite." checked={p.fill} onChange={(fill) => setLayout((l) => ({ ...l, picture: { ...l.picture, fill } }), { history: 'push' })} />
         {!p.fill && (
@@ -505,11 +507,11 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="velvet" onClick={undo} disabled={!canUndo} aria-label="Rückgängig">↶</Button>
-        <Button size="sm" variant="velvet" onClick={redo} disabled={!canRedo} aria-label="Wiederholen">↷</Button>
+        <Button size="sm" variant="velvet" onClick={undo} disabled={!canUndo} aria-label="Rückgängig"><Icon name="undo" className="size-5" /></Button>
+        <Button size="sm" variant="velvet" onClick={redo} disabled={!canRedo} aria-label="Wiederholen"><Icon name="redo" className="size-5" /></Button>
         <span className="mx-1 h-6 w-px bg-white/20" aria-hidden />
-        <Button size="sm" variant="velvet" onClick={() => addSticker('emoji')} disabled={layout.stickers.length >= 12}>＋ Sticker</Button>
-        <Button size="sm" variant="velvet" onClick={() => addSticker('text')} disabled={layout.stickers.length >= 12}>＋ Text</Button>
+        <Button size="sm" variant="velvet" onClick={() => addSticker('emoji')} disabled={layout.stickers.length >= 12}><Icon name="star" /> Sticker</Button>
+        <Button size="sm" variant="velvet" onClick={() => addSticker('text')} disabled={layout.stickers.length >= 12}><Icon name="pencil" /> Text</Button>
         <span className="mx-1 h-6 w-px bg-white/20" aria-hidden />
         <Button size="sm" variant="velvet" onClick={() => setCopyOpen(true)}>Auf alle Karten</Button>
         {custom && <Button size="sm" variant="ghost" onClick={() => { change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, layout: null } : c)) }), { history: 'push' }); setSelected(null); }}>Standard-Layout</Button>}

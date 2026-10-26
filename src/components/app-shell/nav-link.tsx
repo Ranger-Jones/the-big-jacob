@@ -3,9 +3,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { cx } from '@/lib/cx';
+import { Icon, type IconName } from '@/components/ui/icons';
 
 /** Icon-only on phones, icon + label from sm upwards. */
-export function NavLink({ href, icon, children, badge = 0 }: { href: string; icon: string; children: ReactNode; badge?: number }) {
+export function NavLink({ href, icon, children, badge = 0 }: { href: string; icon: IconName; children: ReactNode; badge?: number }) {
   const path = usePathname();
   const active = path === href || path.startsWith(`${href}/`);
   return (
@@ -17,7 +18,7 @@ export function NavLink({ href, icon, children, badge = 0 }: { href: string; ico
         active ? 'bg-white/12 text-gold-soft' : 'text-parchment/80 hover:bg-white/10 hover:text-parchment',
       )}
     >
-      <span aria-hidden className="text-lg sm:text-base">{icon}</span>
+      <Icon name={icon} className="size-6 sm:size-5" />
       <span className="sr-only md:not-sr-only">{children}</span>
       {badge > 0 && (
         <span

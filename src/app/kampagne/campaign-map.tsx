@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CAMPAIGN, campaignTitle } from '@/lib/campaign';
 import { cx } from '@/lib/cx';
 import { startCampaignAction } from '@/server/solo-actions';
+import { Icon, STAGE_ICONS } from '@/components/ui/icons';
 
 /** "Vom Bauern zum König": a winding path of eight stages. */
 export function CampaignMap({ level }: { level: number }) {
@@ -54,8 +55,8 @@ export function CampaignMap({ level }: { level: number }) {
                   done ? 'bg-gold ring-gold-deep' : current ? 'animate-pulse-ring bg-parchment ring-gold' : open ? 'bg-parchment ring-line' : 'bg-velvet-soft ring-white/10 grayscale',
                 )}
               >
-                {open ? stage.emoji : '🔒'}
-                {done && <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-vert text-sm text-parchment ring-2 ring-parchment">✓</span>}
+                <Icon name={open ? STAGE_ICONS[stage.level] ?? 'star' : 'lock'} className="size-[1em]" />
+                {done && <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-vert text-sm text-parchment ring-2 ring-parchment"><Icon name="check" className="size-4" strokeWidth={2.5} /></span>}
               </span>
               <div className={cx('parchment flex-1 rounded-[1.4rem] p-4 ring-2', current ? 'ring-gold shadow-[0_6px_0_var(--color-gold-deep)]' : 'ring-line shadow-[0_6px_0_rgb(0_0_0/0.35)]', !open && 'opacity-60')}>
                 <p className="text-sm font-bold text-ink-soft">Station {stage.level} · {stage.twist}</p>
@@ -73,7 +74,7 @@ export function CampaignMap({ level }: { level: number }) {
         })}
       </ol>
       {level >= CAMPAIGN.length && (
-        <p className="rounded-2xl bg-gold/20 p-4 text-center font-display text-3xl text-gold-soft ring-2 ring-gold">👑 Du hast die Kampagne gemeistert – lang lebe der Große Jakob!</p>
+        <p className="rounded-2xl bg-gold/20 p-4 text-center font-display text-3xl text-gold-soft ring-2 ring-gold"><Icon name="crown" /> Du hast die Kampagne gemeistert – lang lebe der Große Jakob!</p>
       )}
     </main>
   );

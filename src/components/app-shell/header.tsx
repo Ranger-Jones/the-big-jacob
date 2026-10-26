@@ -20,11 +20,11 @@ export async function Header() {
       </Link>
       {user ? (
         <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">
-          <NavLink href="/decks" icon="🎴">Decks</NavLink>
-          <NavLink href="/freunde" icon="🤝" badge={requests}>Freunde</NavLink>
-          <NavLink href="/hoefe" icon="🏰">Höfe</NavLink>
-          <NavLink href="/bestenliste" icon="🏆">Bestenliste</NavLink>
-          <NavLink href="/regeln" icon="📜">Regeln</NavLink>
+          <NavLink href="/decks" icon="cards">Decks</NavLink>
+          <NavLink href="/freunde" icon="friends" badge={requests}>Freunde</NavLink>
+          <NavLink href="/hoefe" icon="castle">Höfe</NavLink>
+          <NavLink href="/bestenliste" icon="trophy">Bestenliste</NavLink>
+          <NavLink href="/regeln" icon="scroll">Regeln</NavLink>
           <MusicToggle className="hidden text-parchment/80 sm:flex" />
           <Link href={`/profil/${user.username}`} className="ml-1 shrink-0 rounded-full" aria-label="Dein Profil">
             <Avatar profile={user} size="sm" />
@@ -32,8 +32,8 @@ export async function Header() {
         </nav>
       ) : unlocked && (
         <nav className="flex items-center gap-1">
-          <NavLink href="/regeln" icon="📜">Regeln</NavLink>
-          <NavLink href="/login" icon="🔑">Einloggen</NavLink>
+          <NavLink href="/regeln" icon="scroll">Regeln</NavLink>
+          <NavLink href="/login" icon="key">Einloggen</NavLink>
         </nav>
       )}
     </header>

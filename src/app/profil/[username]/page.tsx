@@ -16,8 +16,8 @@ import { AvatarUpload } from './avatar-upload';
 import { AppSettings } from '@/components/app-shell/pwa';
 import { CosmeticsPicker } from './cosmetics-picker';
 import { RenameForm } from './rename-form';
+import { BADGE_ICONS, Icon, Medal } from '@/components/ui/icons';
 
-const MEDALS = ['🥇', '🥈', '🥉'];
 const dateFmt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
@@ -50,7 +50,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           </p>
           {titles.length > 0 && (
             <ul className="flex flex-wrap gap-1.5">
-              {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60">👑 {t}</li>)}
+              {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60"><Icon name="crown" /> {t}</li>)}
             </ul>
           )}
           {isMe && (
@@ -82,7 +82,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
                 b.earned ? 'bg-gold/20 ring-gold/60' : 'bg-velvet-deep/50 ring-white/10 opacity-55 grayscale',
               )}
             >
-              <span className="text-4xl" aria-hidden>{b.emoji}</span>
+              <Icon name={BADGE_ICONS[b.id] ?? 'star'} className="size-10 text-gold-soft" />
               <span className="font-bold leading-tight">{b.title}</span>
               <span className="text-xs leading-tight text-parchment/70">{b.hint}</span>
             </li>
@@ -134,7 +134,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
                     <ol className="flex flex-col gap-1">
                       {rows.map((p) => (
                         <li key={p.key} className={cx('flex items-center gap-2 rounded-xl px-2 py-1', p.self && 'bg-gold/25', p.left && 'opacity-50')}>
-                          <span className="w-6 text-center">{p.place && p.place <= 3 ? MEDALS[p.place - 1] : p.place ?? '–'}</span>
+                          <span className="flex w-6 justify-center">{p.place ? <Medal place={p.place} /> : '–'}</span>
                           <Avatar profile={p.avatar} size="xs" />
                           <span className="flex-1 truncate font-bold">{p.name}</span>
                           <span className="tabular font-display text-xl font-bold">{p.points}</span>

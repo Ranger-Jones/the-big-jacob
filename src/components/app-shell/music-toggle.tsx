@@ -2,6 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import { cx } from '@/lib/cx';
 import { isMusicOn, onMusicChange, startMusic, stopMusic, wantsMusic } from '@/lib/music';
+import { Icon } from '@/components/ui/icons';
 
 /** Lute music on/off. Browsers need a tap before audio may start, so a remembered "on" pulses until tapped. */
 export function MusicToggle({ className }: { className?: string }) {
@@ -15,7 +16,7 @@ export function MusicToggle({ className }: { className?: string }) {
       title={!on && wanted ? 'Tippen, um die Musik fortzusetzen' : on ? 'Musik aus' : 'Musik an'}
       className={cx('flex min-h-9 min-w-9 items-center justify-center rounded-xl text-lg transition-colors hover:bg-white/10', !on && wanted && 'animate-pulse', className)}
     >
-      {on ? '🎵' : '🎶'}
+      <Icon name={on ? 'music' : 'music-off'} className="size-5" />
     </button>
   );
 }

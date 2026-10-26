@@ -4,9 +4,10 @@ import { useEffect, useRef } from 'react';
 import { CardBack } from '@/components/deck/playing-card';
 import { Avatar } from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
-import { rankEmoji, rankTitle, waitingOn } from '@/lib/jakob/engine';
+import { rankTitle, waitingOn } from '@/lib/jakob/engine';
 import { TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
+import { Icon, rankIcon, TEAM_ICONS } from '@/components/ui/icons';
 
 /** Fraction of the current deadline that is left (1 → 0). */
 export function deadlineFraction(now: number, total: number | null, deadline: string | null) {
@@ -81,16 +82,16 @@ export function Seats({ timer }: { timer: number | null }) {
                 <span className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-velvet-deep', g.online.has(id) ? 'bg-vert' : 'bg-ink-soft')} />
               )}
               {p.autopilot && (
-                <span className="absolute -bottom-1 -left-2 rounded-full bg-velvet-soft px-1 text-xs ring-2 ring-velvet-deep" title="Ein Bot spielt gerade für diese Person">🤖</span>
+                <span className="absolute -bottom-1 -left-2 rounded-full bg-velvet-soft px-1 text-xs ring-2 ring-velvet-deep" title="Ein Bot spielt gerade für diese Person"><Icon name="bot" className="size-4" /></span>
               )}
               {index >= 0 && state.phase && state.phase !== 'draw' && (
                 <span className="absolute -left-2 -top-2 text-lg drop-shadow" title={rankTitle(index, present.length)} aria-hidden>
-                  {rankEmoji(index, present.length)}
+                  <Icon name={rankIcon(index, present.length)} className="size-[1.1em]" />
                 </span>
               )}
             </span>
             <span className={cx('w-full truncate text-xs font-bold leading-tight sm:text-sm', isTurn && 'text-gold-soft')}>
-              {state.teams && state.teams[id] !== undefined && <span aria-label={TEAM_INFO[state.teams[id]].name}>{TEAM_INFO[state.teams[id]].emoji} </span>}
+              {state.teams && state.teams[id] !== undefined && <span aria-label={TEAM_INFO[state.teams[id]].name}><Icon name={TEAM_ICONS[state.teams[id]]} /> </span>}
               {nameOf(id, true)}
             </span>
             <span className="hidden w-full truncate text-[0.7rem] leading-tight text-parchment/70 sm:block">
@@ -105,7 +106,7 @@ export function Seats({ timer }: { timer: number | null }) {
                 <span className="text-xs font-bold text-parchment/75">passt</span>
               ) : out ? (
                 <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#2b1a12]">
-                  {state.shamed.includes(id) ? '🤡 raus' : `${finishedAt + 1}. raus`}
+                  {state.shamed.includes(id) ? <><Icon name="jester" /> raus</> : `${finishedAt + 1}. raus`}
                 </span>
               ) : (
                 <>

@@ -22,6 +22,7 @@ import { describeCards } from '@/lib/jakob/texts';
 import { playSound } from '@/lib/sound';
 import type { GameView } from '@/server/game-service';
 import type { ProfileLite } from '@/server/social-service';
+import { Icon } from '@/components/ui/icons';
 
 interface Props {
   initial: GameView;
@@ -61,8 +62,8 @@ function useTableEffects(state: PublicState | undefined, me: string, name: (id: 
       if (last.finish[0] === me) {
         playSound('crown');
         void fireConfetti('crown');
-        toast.success('👑 Du bist der neue Große Jakob!');
-      } else toast(`👑 ${name(last.finish[0])} ist der neue Große Jakob`);
+        toast.success('Du bist der neue Große Jakob!', { icon: <Icon name="crown" className="size-5 text-gold-deep" /> });
+      } else toast(`${name(last.finish[0])} ist der neue Große Jakob`, { icon: <Icon name="crown" className="size-5 text-gold-deep" /> });
     }
     // Special plays: the table shows a burst, here we add the sound.
     const known = new Set(before.log.map((e) => `${e.kind}-${e.seq}`));
@@ -74,7 +75,7 @@ function useTableEffects(state: PublicState | undefined, me: string, name: (id: 
       else if (e.kind === 'mission' && e.by === me) {
         playSound('crown');
         void fireConfetti('crown');
-        toast.success('🎯 Mission erfüllt! +3 Punkte');
+        toast.success('Mission erfüllt! +3 Punkte', { icon: <Icon name="target" className="size-5 text-gold-deep" /> });
       } else if (e.kind === 'throne') void fireConfetti('win');
     }
     if (before.phase === 'tax' && state.phase === 'play' && received.length > 0 && before.tax.some((t) => t.from === me)) {
@@ -91,7 +92,7 @@ function useSwapNotice(hand: PrivateHand & { version: number }, phase: PublicSta
     const key = `${round}`;
     if (shown.current === key) return;
     shown.current = key;
-    toast(`🔄 Weitergereicht: ${describeCards(hand.swapGave)} – bekommen: ${describeCards(hand.swapGot)}`);
+    toast(`Weitergereicht: ${describeCards(hand.swapGave)} – bekommen: ${describeCards(hand.swapGot)}`, { icon: <Icon name="swap" className="size-5 text-gold-deep" /> });
   }, [hand, phase, round]);
 }
 
@@ -128,7 +129,7 @@ export function GameClient(props: Props) {
   const { dispatch, connected } = g;
   useEffect(() => {
     if (onAutopilot && connected) {
-      void dispatch({ type: 'resume' }, { silent: true }).then((ok) => { if (ok) toast('👋 Willkommen zurück – du spielst wieder selbst.'); });
+      void dispatch({ type: 'resume' }, { silent: true }).then((ok) => { if (ok) toast('Willkommen zurück – du spielst wieder selbst.', { icon: <Icon name="sparkles" className="size-5 text-gold-deep" /> }); });
     }
   }, [onAutopilot, connected, dispatch]);
 
@@ -159,7 +160,7 @@ export function GameClient(props: Props) {
       onClick={() => { setChatOpen(true); setUnread(0); }}
       aria-label={unread ? `Chat, ${unread} neue Nachrichten` : 'Chat'}
     >
-      💬
+      <Icon name="chat" className="size-5" />
       {unread > 0 && <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-wax text-xs font-bold">{unread}</span>}
     </Button>
   ) : null;

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { respondFriendRequestAction } from '@/server/social-actions';
+import { Icon } from '@/components/ui/icons';
 
 /**
  * Keeps the friend-request badge and the dashboard live: any change to a friendship addressed to me
@@ -28,7 +29,8 @@ export function FriendRequestListener({ me }: { me: string }) {
         .eq('id', friendshipId).maybeSingle();
       if (!data || data.status !== 'pending' || pathRef.current.startsWith('/spiel/')) return;
       const name = (data.requester as { username: string } | null)?.username ?? 'Jemand';
-      toast(`🤝 ${name} möchte mit dir befreundet sein`, {
+      toast(`${name} möchte mit dir befreundet sein`, {
+        icon: <Icon name="friends" className="size-5 text-gold-deep" />,
         id: `friend-${friendshipId}`,
         duration: 20_000,
         action: {

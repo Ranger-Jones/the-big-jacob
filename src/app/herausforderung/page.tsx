@@ -6,9 +6,9 @@ import { berlinDay, berlinYesterday } from '@/lib/daily';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { DailyStart } from './daily-start';
+import { Icon, Medal } from '@/components/ui/icons';
 
 export const metadata: Metadata = { title: 'Tägliche Herausforderung' };
-const MEDALS = ['🥇', '🥈', '🥉'];
 const dayFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
 
 type Row = { user_id: string; points: number; place: number; profiles: { username: string; avatar_url: string | null; avatar_frame: string | null } | null };
@@ -52,7 +52,7 @@ export default async function DailyPage() {
 
       {champion?.profiles && (
         <p className="rounded-2xl bg-velvet-deep/70 p-3 text-center ring-2 ring-gold/40">
-          👑 Gestern gewann <b>{champion.profiles.username}</b> mit {champion.points} Punkten.
+          <Icon name="crown" className="text-gold-soft" /> Gestern gewann <b>{champion.profiles.username}</b> mit {champion.points} Punkten.
         </p>
       )}
 
@@ -64,7 +64,7 @@ export default async function DailyPage() {
           <ol className="flex flex-col">
             {list.map((r, i) => (
               <li key={r.user_id} className={cx('flex items-center gap-3 border-t border-line px-5 py-2.5', r.user_id === user.id && 'bg-gold/20')}>
-                <span className="w-8 text-center font-display text-2xl font-bold">{i < 3 ? MEDALS[i] : i + 1}</span>
+                <span className="w-8 text-center font-display text-2xl font-bold"><Medal place={i + 1} /></span>
                 {r.profiles && <Avatar profile={r.profiles} size="sm" />}
                 <span className="min-w-0 flex-1 truncate font-bold">{r.profiles?.username ?? '…'}</span>
                 <span className="tabular font-display text-2xl font-bold">{r.points}</span>

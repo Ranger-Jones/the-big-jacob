@@ -9,10 +9,11 @@ import { Card } from '@/components/ui/card';
 import { cx } from '@/lib/cx';
 import { resolveDeck, type DeckEntry } from '@/lib/decks';
 import { countBy, removeCards } from '@/lib/jakob/cards';
-import { rankEmoji, rankTitle, type Player, type ReplayRound, type RoundResult } from '@/lib/jakob/engine';
+import { rankTitle, type Player, type ReplayRound, type RoundResult } from '@/lib/jakob/engine';
 import { describeCards, EVENT_TEXT } from '@/lib/jakob/texts';
 import { seatColor } from '@/lib/player-colors';
 import type { ProfileLite } from '@/server/social-service';
+import { EVENT_ICONS, Icon, rankIcon } from '@/components/ui/icons';
 
 interface Props {
   code: string;
@@ -48,7 +49,7 @@ function snapshotAt(round: ReplayRound, step: number, name: (id: string) => stri
       text = `${name(move.by)} legt ${describeCards(move.c)}.`;
       if ((hands[move.by] ?? []).length === 0 && !out.includes(move.by)) {
         out.push(move.by);
-        text += ` 🎉 ${name(move.by)} ist raus!`;
+        text += ` – ${name(move.by)} ist raus!`;
       }
     } else if (move.k === 'x') {
       passed.add(move.by);
@@ -107,7 +108,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 pb-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-5xl font-bold">🎞️ Wiederholung</h1>
+          <h1 className="text-5xl font-bold"><Icon name="film" className="text-gold-soft" /> Wiederholung</h1>
           <p className="text-parchment/75">Alle Karten offen – so lief das Spiel {code}.</p>
         </div>
         <Link href={`/spiel/${code}`} className={buttonClass('velvet', 'sm')}>Zum Ergebnis</Link>
@@ -128,7 +129,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
 
       {round.event && (
         <p className="rounded-2xl bg-velvet-deep/70 p-2 text-center text-sm ring-2 ring-gold/30">
-          {EVENT_TEXT[round.event].emoji} <b>{EVENT_TEXT[round.event].title}:</b> {EVENT_TEXT[round.event].text}
+          <Icon name={EVENT_ICONS[round.event] ?? 'sparkles'} className="text-gold-soft" /> <b>{EVENT_TEXT[round.event].title}:</b> {EVENT_TEXT[round.event].text}
         </p>
       )}
 
@@ -148,11 +149,11 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
         </div>
         <p className="text-center font-bold" aria-live="polite">{snap.text}</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="velvet" size="sm" onClick={() => setStep(0)} aria-label="Zum Anfang">⏮</Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep(0)} aria-label="Zum Anfang"><Icon name="skip-back" className="size-5" /></Button>
           <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} aria-label="Zug zurück">◀</Button>
-          <Button size="sm" onClick={() => { if (step >= total) setStep(0); setPlaying((p) => !p); }}>{playing ? '⏸ Pause' : '▶ Abspielen'}</Button>
+          <Button size="sm" onClick={() => { if (step >= total) setStep(0); setPlaying((p) => !p); }}>{playing ? <><Icon name="pause" /> Pause</> : <><Icon name="play" /> Abspielen</>}</Button>
           <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.min(total, s + 1))} aria-label="Zug vor">▶</Button>
-          <Button variant="velvet" size="sm" onClick={() => setStep(total)} aria-label="Zum Ende">⏭</Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep(total)} aria-label="Zum Ende"><Icon name="skip" className="size-5" /></Button>
           <select
             value={speed}
             onChange={(e) => setSpeed(Number(e.target.value))}
@@ -185,7 +186,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
                   <Avatar profile={avatar(id)} ring={seatColor(byId.get(id)?.i ?? 0)} size="sm" />
                   <span className="min-w-0">
                     <span className="block truncate font-bold">{name(id)}</span>
-                    <span className="block text-xs text-ink-soft">{rankEmoji(index, round.order.length)} {rankTitle(index, round.order.length)} · {hand.length} Karten</span>
+                    <span className="block text-xs text-ink-soft"><Icon name={rankIcon(index, round.order.length)} /> {rankTitle(index, round.order.length)} · {hand.length} Karten</span>
                   </span>
                   {snap.passed.has(id) && <span className="ml-auto rounded-full bg-parchment-dark px-2 text-xs font-bold">passt</span>}
                   {outPlace >= 0 && <span className="ml-auto rounded-full bg-gold px-2 text-xs font-bold">{outPlace + 1}. raus</span>}
@@ -210,7 +211,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
           <ol className="flex flex-col gap-1">
             {result.finish.map((id, i) => (
               <li key={id} className="flex items-center gap-2">
-                <span className="w-6 text-center">{rankEmoji(i, result.finish.length)}</span>
+                <Icon name={rankIcon(i, result.finish.length)} className="size-6 text-gold-soft" />
                 <span className="flex-1 font-bold">{name(id)}</span>
                 <span className="tabular font-display text-xl font-bold">+{result.points[id] ?? 0}</span>
               </li>
