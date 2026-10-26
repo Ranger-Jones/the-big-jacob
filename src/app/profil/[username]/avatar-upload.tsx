@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Avatar, type AvatarProfile } from '@/components/ui/avatar';
-import { cropToSquareWebp, validateImageFile } from '@/lib/crop-image';
+import { compressImage, IMAGE_UNREADABLE, validateImageFile } from '@/lib/crop-image';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { removeAvatarAction, setAvatarAction } from '@/server/profile-actions';
 
@@ -17,18 +17,18 @@ export function AvatarUpload({ me, profile }: { me: string; profile: AvatarProfi
     if (invalid) return toast.error(invalid);
     setBusy(true);
     try {
-      const blob = await cropToSquareWebp(file);
+      const image = await compressImage(file, 256, 256);
       const supabase = createBrowserSupabase();
-      const path = `${me}/avatar-${Date.now()}.webp`;
-      const { error } = await supabase.storage.from('avatars').upload(path, blob, { contentType: 'image/webp' });
+      const path = `${me}/avatar-${Date.now()}.${image.ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, image.blob, { contentType: image.contentType });
       if (error) throw error;
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       const res = await setAvatarAction(data.publicUrl);
       if (!res.ok) throw new Error(res.error);
       toast.success('Profilbild aktualisiert');
       router.refresh();
-    } catch {
-      toast.error('Das Bild konnte nicht hochgeladen werden. Versuch ein anderes.');
+    } catch (err) {
+      toast.error(err instanceof Error && err.message === IMAGE_UNREADABLE ? IMAGE_UNREADABLE : 'Das Bild konnte nicht hochgeladen werden. Versuch ein anderes.');
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
@@ -61,7 +61,7 @@ export function AvatarUpload({ me, profile }: { me: string; profile: AvatarProfi
         <input
           ref={input}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           className="hidden"
           data-testid="avatar-input"
           onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}

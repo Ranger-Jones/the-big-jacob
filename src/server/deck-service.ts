@@ -49,7 +49,7 @@ function isDeckArtUrl(raw: string): boolean {
   }
   const origin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin;
   return url.origin === origin && !raw.includes('%') && !url.search && !url.hash
-    && /^\/storage\/v1\/object\/public\/deck-art\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[A-Za-z0-9_-]+\.webp$/.test(url.pathname);
+    && /^\/storage\/v1\/object\/public\/deck-art\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[A-Za-z0-9_-]+\.(webp|jpg)$/.test(url.pathname);
 }
 
 function validate(name: unknown, design: unknown): ServiceResult<{ name: string; design: DeckDesign }> {

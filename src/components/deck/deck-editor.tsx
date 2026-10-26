@@ -7,7 +7,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { Segmented } from '@/components/ui/segmented';
-import { cropToWebp, validateImageFile } from '@/lib/crop-image';
+import { compressImage, IMAGE_UNREADABLE, validateImageFile } from '@/lib/crop-image';
 import { cx } from '@/lib/cx';
 import {
   BACK_PATTERNS, DECK_FONTS, FONT_LABELS, PATTERN_LABELS, PHOTO_FIT_LABELS, PHOTO_FITS, deckDesignSchema,
@@ -70,17 +70,17 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
     try {
       // Backs and full-art fronts use the card's 5:7 shape, medallion photos a square.
       const tall = rank === 'back' || design.photoFit === 'vollbild';
-      const blob = tall ? await cropToWebp(file, 500, 700) : await cropToWebp(file, 384, 384);
+      const image = tall ? await compressImage(file, 500, 700) : await compressImage(file, 384, 384);
       const supabase = createBrowserSupabase();
-      const path = `${me}/${deck.id}/${rank === 'back' ? 'back' : `r${rank}`}-${Date.now()}.webp`;
-      const { error } = await supabase.storage.from('deck-art').upload(path, blob, { contentType: 'image/webp' });
+      const path = `${me}/${deck.id}/${rank === 'back' ? 'back' : `r${rank}`}-${Date.now()}.${image.ext}`;
+      const { error } = await supabase.storage.from('deck-art').upload(path, image.blob, { contentType: image.contentType });
       if (error) throw error;
       const url = supabase.storage.from('deck-art').getPublicUrl(path).data.publicUrl;
       if (rank === 'back') update({ back: { ...design.back, image: url } });
       else updateCard(rank, { image: url });
       toast.success('Bild eingesetzt – vergiss nicht zu speichern.');
-    } catch {
-      toast.error('Das Bild konnte nicht hochgeladen werden.');
+    } catch (err) {
+      toast.error(err instanceof Error && err.message === IMAGE_UNREADABLE ? IMAGE_UNREADABLE : 'Das Bild konnte nicht hochgeladen werden.');
     } finally {
       setUploading(null);
       if (fileInput.current) fileInput.current.value = '';
@@ -204,7 +204,7 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
               );
             })}
           </ul>
-          <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+          <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         </Card>
 
         <Modal open={picking !== null} onClose={() => setPicking(null)} title={picking === 'back' ? 'Wappen-Grafik wählen' : `Grafik für Karte ${picking === JESTER ? 'Narr' : picking}`} wide>
