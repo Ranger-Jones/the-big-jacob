@@ -358,7 +358,7 @@ export const ART_GROUPS: { label: string; ids: string[] }[] = [
 ];
 
 export function hasArt(id: string | null | undefined): id is string {
-  return !!id && id in ART;
+  return typeof id === 'string' && Object.hasOwn(ART, id);
 }
 
 /** One illustration, scaled to its container. */

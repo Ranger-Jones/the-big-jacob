@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
 import { PRESETS, type DeckEntry } from '@/lib/decks';
-import { copyDeckAction, deleteDeckAction, setDefaultDeckAction } from '@/server/deck-actions';
+import { copyDeckAction, deleteDeckAction, setDeckPublicAction, setDefaultDeckAction, toggleDeckLikeAction } from '@/server/deck-actions';
+import type { GalleryDeck, GallerySort } from '@/server/deck-service';
 import { DeckFan } from './deck-fan';
 
 function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; isDefault: boolean; children: React.ReactNode; subtitle?: string }) {
@@ -28,7 +29,33 @@ function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; is
   );
 }
 
-export function DeckGallery({ mine, friends, defaultId }: { mine: DeckEntry[]; friends: (DeckEntry & { ownerName: string })[]; defaultId: string | null }) {
+function LikeButton({ deck }: { deck: GalleryDeck }) {
+  const router = useRouter();
+  const [state, setState] = useState({ liked: deck.liked, likes: deck.likes });
+  const toggle = async () => {
+    const next = { liked: !state.liked, likes: state.likes + (state.liked ? -1 : 1) };
+    setState(next);
+    const res = await toggleDeckLikeAction(deck.id);
+    if (!res.ok) {
+      setState({ liked: deck.liked, likes: deck.likes });
+      return void toast.error(res.error);
+    }
+    router.refresh();
+  };
+  return (
+    <button
+      type="button" onClick={toggle} aria-pressed={state.liked} aria-label={state.liked ? 'Gefällt mir nicht mehr' : 'Gefällt mir'}
+      className={cx('tabular inline-flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-bold transition-colors', state.liked ? 'bg-wax text-parchment' : 'bg-parchment-dark text-ink hover:bg-wax/20')}
+    >
+      <span aria-hidden className={cx(state.liked && 'animate-[pop_0.3s_ease-out]')}>{state.liked ? '❤️' : '🤍'}</span>{state.likes}
+    </button>
+  );
+}
+
+export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, shared }: {
+  me: string; mine: DeckEntry[]; friends: (DeckEntry & { ownerName: string })[]; defaultId: string | null;
+  gallery: GalleryDeck[]; sort: GallerySort; shared: string[];
+}) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<DeckEntry | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,6 +86,17 @@ export function DeckGallery({ mine, friends, defaultId }: { mine: DeckEntry[]; f
     router.refresh();
   }
 
+  async function share(deck: DeckEntry, isPublic: boolean) {
+    const res = await setDeckPublicAction(deck.id, isPublic);
+    if (!res.ok) return toast.error(res.error);
+    toast.success(isPublic ? `„${deck.name}“ hängt jetzt in der Galerie.` : `„${deck.name}“ ist wieder privat.`);
+    router.refresh();
+  }
+
+  const sharedSet = new Set(shared);
+  const friendIds = new Set(friends.map((d) => d.id));
+  const sortTab = (active: boolean) => cx('rounded-xl px-3 py-1.5 text-sm font-bold', active ? 'bg-gold text-ink' : 'bg-velvet-deep/60 text-parchment/80 hover:bg-white/10');
+
   const defaultButton = (id: string) => effectiveDefault !== id && (
     <Button size="sm" variant="ghost" onClick={() => makeDefault(id)}>⭐ Als Standard</Button>
   );
@@ -79,8 +117,9 @@ export function DeckGallery({ mine, friends, defaultId }: { mine: DeckEntry[]; f
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {mine.map((d) => (
-              <DeckTile key={d.id} deck={d} isDefault={effectiveDefault === d.id}>
+              <DeckTile key={d.id} deck={d} isDefault={effectiveDefault === d.id} subtitle={sharedSet.has(d.id) ? '🖼️ In der Galerie' : undefined}>
                 <Link href={`/decks/${d.id}`} className={buttonClass('primary', 'sm')}>Bearbeiten</Link>
+                <Button size="sm" variant="ghost" onClick={() => share(d, !sharedSet.has(d.id))}>{sharedSet.has(d.id) ? 'Aus Galerie nehmen' : '🖼️ Teilen'}</Button>
                 {defaultButton(d.id)}
                 <Button size="sm" variant="ghost" onClick={() => copy(d.id, false)} disabled={busy}>Duplizieren</Button>
                 <Button size="sm" variant="ghost" className="text-wax" onClick={() => setDeleting(d)}>Löschen</Button>
@@ -114,6 +153,31 @@ export function DeckGallery({ mine, friends, defaultId }: { mine: DeckEntry[]; f
           </ul>
         </section>
       )}
+
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-4xl font-bold">Galerie</h2>
+            <p className="text-parchment/75">Decks, die andere Spieler geteilt haben. Gefällt dir eins, kopiere es und mach es zu deinem.</p>
+          </div>
+          <nav className="flex gap-1.5" aria-label="Sortierung">
+            <Link href="/decks" scroll={false} className={sortTab(sort === 'beliebt')} aria-current={sort === 'beliebt' ? 'page' : undefined}>Beliebt</Link>
+            <Link href="/decks?galerie=neu" scroll={false} className={sortTab(sort === 'neu')} aria-current={sort === 'neu' ? 'page' : undefined}>Neu</Link>
+          </nav>
+        </div>
+        {gallery.length === 0 ? (
+          <Card tone="velvet"><p>Noch hängt nichts in der Galerie. Teile eins deiner Decks mit „🖼️ Teilen“ und sei der Erste.</p></Card>
+        ) : (
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {gallery.map((d) => (
+              <DeckTile key={d.id} deck={d} isDefault={false} subtitle={`von ${d.ownerName}${friendIds.has(d.id) ? ' · Freund' : ''}`}>
+                <LikeButton deck={d} />
+                <Button size="sm" variant="secondary" onClick={() => copy(d.id)} disabled={busy || d.ownerId === me}>Kopieren</Button>
+              </DeckTile>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Deck löschen?">
         <p className="text-ink-soft">„{deleting?.name}“ und alle hochgeladenen Kartenbilder werden gelöscht.</p>

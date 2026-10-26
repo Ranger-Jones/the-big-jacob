@@ -1,9 +1,8 @@
 'use client';
-import { ART_GROUPS, CardArt } from '@/components/deck/art';
+import { CardArt } from '@/components/deck/art';
+import { CREST_IDS } from './crest';
 import { cx } from '@/lib/cx';
 
-/** Coats of arms are drawn from the heraldry, cosmos and treasure illustrations. */
-export const CREST_IDS = ART_GROUPS.filter((g) => ['Heraldik', 'Kosmos', 'Schatzkammer'].includes(g.label)).flatMap((g) => g.ids);
 
 export function CrestPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   return (

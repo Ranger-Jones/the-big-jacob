@@ -133,3 +133,50 @@ export async function canUseDeck(admin: AdminClient, userId: string, id: string 
   if (id === null || isPresetId(id)) return true;
   return !!(await ownDeck(admin, userId, id));
 }
+
+export type GallerySort = 'beliebt' | 'neu';
+export interface GalleryDeck extends DeckEntry { ownerName: string; likes: number; liked: boolean; isPublic: boolean }
+
+/** Own decks that are shared in the gallery. */
+export async function publicDeckIds(admin: AdminClient, userId: string): Promise<string[]> {
+  const { data, error } = await admin.from('decks').select('id').eq('owner_id', userId).eq('public', true);
+  if (error) throw error;
+  return data.map((d) => d.id);
+}
+
+export async function setDeckPublic(admin: AdminClient, userId: string, id: string, isPublic: boolean): Promise<ServiceResult> {
+  if (!(await ownDeck(admin, userId, id))) return fail('Deck nicht gefunden.');
+  const { error } = await admin.from('decks').update({ public: isPublic }).eq('id', id);
+  if (error) throw error;
+  return ok(undefined);
+}
+
+/** Likes count for public decks only; liking your own deck is not possible. */
+export async function toggleDeckLike(admin: AdminClient, userId: string, id: string): Promise<ServiceResult<{ liked: boolean }>> {
+  if (!/^[0-9a-f-]{36}$/.test(id)) return fail('Deck nicht gefunden.');
+  const { data: deck } = await admin.from('decks').select('owner_id, public').eq('id', id).maybeSingle();
+  if (!deck || !deck.public) return fail('Deck nicht gefunden.');
+  if (deck.owner_id === userId) return fail('Eigene Decks kannst du nicht liken.');
+  const { data: removed, error } = await admin.from('deck_likes').delete().eq('deck_id', id).eq('user_id', userId).select('deck_id');
+  if (error) throw error;
+  if (removed.length > 0) return ok({ liked: false });
+  const { error: e2 } = await admin.from('deck_likes').insert({ deck_id: id, user_id: userId });
+  if (e2 && e2.code !== '23505') throw e2;
+  return ok({ liked: true });
+}
+
+export async function listGallery(admin: AdminClient, userId: string, sort: GallerySort, limit = 36): Promise<GalleryDeck[]> {
+  const { data, error } = await admin.from('decks')
+    .select(`${COLS}, updated_at, profiles!decks_owner_id_fkey(username), deck_likes(user_id)`)
+    .eq('public', true).order('updated_at', { ascending: false }).limit(200);
+  if (error) throw error;
+  const decks = data.map((r) => {
+    const likes = (r.deck_likes as { user_id: string }[]) ?? [];
+    return {
+      ...toEntry(r), ownerName: (r.profiles as { username: string } | null)?.username ?? '?',
+      likes: likes.length, liked: likes.some((l) => l.user_id === userId), isPublic: true,
+    };
+  });
+  if (sort === 'beliebt') decks.sort((a, b) => b.likes - a.likes);
+  return decks.slice(0, limit);
+}

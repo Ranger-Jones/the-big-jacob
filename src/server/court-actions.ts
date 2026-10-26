@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { hasArt } from '@/components/deck/art';
+import { CREST_IDS } from '@/components/courts/crest';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { createCourt, joinCourt, leaveCourt, removeCourtMember, renameCourt } from './court-service';
@@ -11,7 +11,7 @@ import { fail } from './result';
 const uuid = z.uuid();
 const courtInput = z.object({
   name: z.string().trim().min(2, 'Der Name braucht mindestens 2 Zeichen.').max(40, 'Höchstens 40 Zeichen.'),
-  crest: z.string().refine((id) => hasArt(id), 'Unbekanntes Wappen.'),
+  crest: z.string().refine((id) => CREST_IDS.includes(id), 'Unbekanntes Wappen.'),
 });
 
 export async function createCourtAction(input: { name: string; crest: string }) {

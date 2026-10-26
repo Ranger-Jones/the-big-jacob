@@ -2,7 +2,8 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { CrestPicker, CREST_IDS } from '@/components/courts/crest-picker';
+import { CREST_IDS } from '@/components/courts/crest';
+import { CrestPicker } from '@/components/courts/crest-picker';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

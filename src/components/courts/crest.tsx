@@ -1,5 +1,8 @@
-import { CardArt } from '@/components/deck/art';
+import { ART_GROUPS, CardArt } from '@/components/deck/art';
 import { cx } from '@/lib/cx';
+
+/** Coats of arms are drawn from the heraldry, cosmos and treasure illustrations. */
+export const CREST_IDS = ART_GROUPS.filter((g) => ['Heraldik', 'Kosmos', 'Schatzkammer'].includes(g.label)).flatMap((g) => g.ids);
 
 const SIZES = { sm: 'size-12', md: 'size-20', lg: 'size-32' } as const;
 

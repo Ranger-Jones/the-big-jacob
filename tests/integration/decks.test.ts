@@ -36,3 +36,27 @@ describe('decks', () => {
     expect(await getDefaultDeckId(admin, owner.id)).toBe('preset:tierreich');
   });
 });
+
+describe('deck gallery', () => {
+  it('shares decks, counts likes once and refuses self-likes and private decks', async () => {
+    const { listGallery, setDeckPublic, toggleDeckLike } = await import('@/server/deck-service');
+    const artist = await createTestUser('ga');
+    const fan = await createTestUser('gf');
+    const created = await createDeck(admin, artist.id, 'Galeriestück', structuredClone(PRESETS[2].design));
+    if (!created.ok) throw new Error(created.error);
+    const id = created.data.id;
+
+    expect((await toggleDeckLike(admin, fan.id, id)).ok).toBe(false);
+    expect((await setDeckPublic(admin, fan.id, id, true)).ok).toBe(false);
+    expect((await setDeckPublic(admin, artist.id, id, true)).ok).toBe(true);
+    expect((await toggleDeckLike(admin, artist.id, id)).ok).toBe(false);
+    expect(await toggleDeckLike(admin, fan.id, id)).toEqual({ ok: true, data: { liked: true } });
+
+    const entry = (await listGallery(admin, fan.id, 'beliebt')).find((d) => d.id === id)!;
+    expect(entry).toMatchObject({ likes: 1, liked: true, ownerName: artist.username });
+    expect(await toggleDeckLike(admin, fan.id, id)).toEqual({ ok: true, data: { liked: false } });
+
+    await setDeckPublic(admin, artist.id, id, false);
+    expect((await listGallery(admin, fan.id, 'neu')).some((d) => d.id === id)).toBe(false);
+  });
+});
