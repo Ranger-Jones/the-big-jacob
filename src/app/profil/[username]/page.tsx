@@ -10,7 +10,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { signOut } from '@/server/auth-actions';
 import { monthTitle } from '@/lib/months';
-import { badgesFor, getHistory, getMonthlyChampions, getRivalries, getStatsByUsername } from '@/server/profile-service';
+import { badgesFor, getDetailedStats, getHistory, getMonthlyChampions, getRivalries, getStatsByUsername } from '@/server/profile-service';
+import { DetailedStatsSection } from '@/components/stats/detailed-stats';
 import { AvatarUpload } from './avatar-upload';
 import { AppSettings } from '@/components/app-shell/pwa';
 import { CosmeticsPicker } from './cosmetics-picker';
@@ -31,7 +32,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const stats = await getStatsByUsername(admin, username);
   if (!stats) notFound();
   const isMe = stats.user_id === me.id;
-  const [history, champions, rivals] = await Promise.all([getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12), getRivalries(admin, stats.user_id)]);
+  const [history, champions, rivals, detailed] = await Promise.all([
+    getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12), getRivalries(admin, stats.user_id), getDetailedStats(admin, stats.user_id),
+  ]);
   const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
   const badges = badgesFor(stats);
 
@@ -62,6 +65,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </section>
 
       <StatsGrid stats={stats} />
+      <DetailedStatsSection stats={detailed} isMe={isMe} />
 
       {isMe && <CosmeticsPicker stats={stats} profile={stats} felt={me.table_felt} />}
       {isMe && <Card><AppSettings /></Card>}

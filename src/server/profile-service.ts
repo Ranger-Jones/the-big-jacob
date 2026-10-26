@@ -288,3 +288,43 @@ export async function getKingOfWeek(admin: AdminClient, userIds: string[]): Prom
   const table = aggregate(rows.filter((r) => userIds.includes(r.user_id)));
   return table[0] && table[0].wins > 0 ? table[0] : null;
 }
+
+export interface TrendPoint { finishedAt: string; place: number; players: number; points: number }
+export interface DetailedStats {
+  /** placeCounts[i] = games finished on place i + 1 */
+  placeCounts: number[];
+  /** Cards played per rank (index = rank - 1, 12 = jester). */
+  byRank: number[];
+  /** Last games, oldest first. */
+  trend: TrendPoint[];
+}
+
+/** Placement distribution, cards per rank and the recent form (normal games only). */
+export async function getDetailedStats(admin: AdminClient, userId: string, trendLength = 30): Promise<DetailedStats> {
+  const { data: mine, error } = await admin.from('game_players')
+    .select('game_id, place, points, stats, games!inner(status, mode, finished_at)')
+    .eq('user_id', userId).eq('left_game', false).eq('games.status', 'finished').eq('games.mode', 'normal');
+  if (error) throw error;
+  const rows = (mine as unknown as { game_id: string; place: number | null; points: number; stats: { byRank?: number[] } | null; games: { finished_at: string } }[])
+    .filter((r) => r.place !== null)
+    .sort((a, b) => a.games.finished_at.localeCompare(b.games.finished_at));
+
+  const placeCounts: number[] = [];
+  const byRank = Array(13).fill(0) as number[];
+  for (const r of rows) {
+    placeCounts[r.place! - 1] = (placeCounts[r.place! - 1] ?? 0) + 1;
+    (r.stats?.byRank ?? []).forEach((n, i) => { if (i < 13) byRank[i] += Number(n) || 0; });
+  }
+
+  const recent = rows.slice(-trendLength);
+  const sizes = new Map<string, number>();
+  if (recent.length > 0) {
+    const { data: games } = await admin.from('games').select('id, state').in('id', recent.map((r) => r.game_id));
+    for (const g of games ?? []) sizes.set(g.id, ((g.state as FinishedState).players ?? []).filter((p) => !p.left).length);
+  }
+  return {
+    placeCounts: Array.from(placeCounts, (n) => n ?? 0),
+    byRank,
+    trend: recent.map((r) => ({ finishedAt: r.games.finished_at, place: r.place!, players: sizes.get(r.game_id) ?? 0, points: r.points ?? 0 })),
+  };
+}
