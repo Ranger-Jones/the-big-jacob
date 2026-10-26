@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { copiesOf, JESTER, RANKS } from '@/lib/jakob/cards';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { updateDeckAction } from '@/server/deck-actions';
 import { ART_GROUPS, CardArt, hasArt } from './art';
+import { CardStudio, type DesignChange } from './card-studio';
 import { CardBack, PlayingCard } from './playing-card';
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
@@ -37,6 +38,15 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
   const router = useRouter();
   const [name, setName] = useState(deck.name);
   const [design, setDesign] = useState<DeckDesign>(deck.design);
+  // Undo history: snapshots of the whole design. Slider drags and typing are coalesced into one step.
+  const past = useRef<DeckDesign[]>([]);
+  const future = useRef<DeckDesign[]>([]);
+  const [historySize, setHistorySize] = useState({ past: 0, future: 0 });
+  const designRef = useRef(design);
+  const coalesce = useRef<{ key: string; at: number } | null>(null);
+  useEffect(() => {
+    designRef.current = design;
+  }, [design]);
   const [active, setActive] = useState(1);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<number | 'back' | null>(null);
@@ -53,14 +63,67 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
   }, [dirty]);
 
   const preview: DeckEntry = { ...deck, name, design };
-  const update = (patch: Partial<DeckDesign>) => {
-    setDesign((d) => ({ ...d, ...patch }));
+
+  const syncHistory = () => setHistorySize({ past: past.current.length, future: future.current.length });
+
+  const change: DesignChange = useCallback((fn, opts) => {
+    const mode = opts?.history ?? 'push';
+    const current = designRef.current;
+    const now = Date.now();
+    const last = coalesce.current;
+    const sameRun = mode === 'coalesce' && !!last && last.key === opts?.key && now - last.at < 900;
+    if (mode === 'push' || (mode === 'coalesce' && !sameRun)) {
+      past.current = [...past.current.slice(-79), current];
+      future.current = [];
+    }
+    coalesce.current = mode === 'coalesce' ? { key: opts?.key ?? '', at: now } : null;
+    const next = fn(current);
+    designRef.current = next;
+    setDesign(next);
     setDirty(true);
-  };
-  const updateCard = (rank: number, patch: Partial<DeckDesign['cards'][number]>) => {
-    setDesign((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, ...patch } : c)) }));
+    syncHistory();
+  }, []);
+
+  const undo = useCallback(() => {
+    const prev = past.current.at(-1);
+    if (!prev) return;
+    past.current = past.current.slice(0, -1);
+    future.current = [designRef.current, ...future.current].slice(0, 80);
+    coalesce.current = null;
+    designRef.current = prev;
+    setDesign(prev);
     setDirty(true);
-  };
+    syncHistory();
+  }, []);
+
+  const redo = useCallback(() => {
+    const [next, ...rest] = future.current;
+    if (!next) return;
+    future.current = rest;
+    past.current = [...past.current, designRef.current];
+    coalesce.current = null;
+    designRef.current = next;
+    setDesign(next);
+    setDirty(true);
+    syncHistory();
+  }, []);
+
+  // Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z anywhere in the editor, except while typing in a field.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
+      if (target?.closest('input, textarea, [role="application"]')) return;
+      e.preventDefault();
+      if (e.shiftKey) redo(); else undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
+
+  const update = (patch: Partial<DeckDesign>, key?: string) => change((d) => ({ ...d, ...patch }), key ? { history: 'coalesce', key } : undefined);
+  const updateCard = (rank: number, patch: Partial<DeckDesign['cards'][number]>, key?: string) =>
+    change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, ...patch } : c)) }), key ? { history: 'coalesce', key } : undefined);
 
   async function upload(file: File) {
     const rank = uploadRank.current;
@@ -76,7 +139,7 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
       const { error } = await supabase.storage.from('deck-art').upload(path, image.blob, { contentType: image.contentType });
       if (error) throw error;
       const url = supabase.storage.from('deck-art').getPublicUrl(path).data.publicUrl;
-      if (rank === 'back') update({ back: { ...design.back, image: url } });
+      if (rank === 'back') update({ back: { ...design.back, image: url, zoom: 1, panX: 0, panY: 0 } });
       else updateCard(rank, { image: url });
       toast.success('Bild eingesetzt – vergiss nicht zu speichern.');
     } catch (err) {
@@ -107,6 +170,35 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
         <h1 className="text-5xl font-bold">Deck gestalten</h1>
         <Link href="/decks" className={buttonClass('velvet', 'sm')}>Zur Übersicht</Link>
       </div>
+      <Card tone="velvet" className="flex min-w-0 flex-col gap-4 max-sm:-mx-2 max-sm:px-3 lg:col-span-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-3xl font-bold">Kartenseite gestalten</h2>
+          <p className="text-sm text-parchment/75">{card.name} · {active === JESTER ? 'Narr' : `Rang ${active}`}</p>
+        </div>
+        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap" role="tablist" aria-label="Karte wählen">
+          {RANKS.map((r) => (
+            <button
+              key={r} type="button" role="tab" aria-selected={active === r} onClick={() => setActive(r)} aria-label={`Karte ${r} bearbeiten`}
+              className={cx('shrink-0 rounded-md transition-transform', active === r ? 'ring-2 ring-gold -translate-y-1' : 'opacity-80 hover:opacity-100')}
+            >
+              <PlayingCard rank={r} deck={preview} size="sm" />
+            </button>
+          ))}
+        </div>
+        <CardStudio
+          design={design}
+          rank={active}
+          change={change}
+          undo={undo}
+          redo={redo}
+          canUndo={historySize.past > 0}
+          canRedo={historySize.future > 0}
+          uploading={uploading === active}
+          onUploadPhoto={() => { uploadRank.current = active; fileInput.current?.click(); }}
+          onPickArt={() => setPicking(active)}
+        />
+      </Card>
+
       <div className="flex min-w-0 flex-col gap-5">
         <Card className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5">
@@ -118,10 +210,10 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
         <Card className="flex flex-col gap-3">
           <h2 className="text-3xl font-bold">Stil der Vorderseite</h2>
           <div className="grid gap-2 sm:grid-cols-2">
-            <ColorField label="Rahmen" value={design.frame} onChange={(frame) => update({ frame })} />
-            <ColorField label="Zahlen" value={design.accent} onChange={(accent) => update({ accent })} />
-            <ColorField label="Papier" value={design.paper} onChange={(paper) => update({ paper })} />
-            <ColorField label="Schrift" value={design.ink} onChange={(ink) => update({ ink })} />
+            <ColorField label="Rahmen" value={design.frame} onChange={(frame) => update({ frame }, 'color-frame')} />
+            <ColorField label="Zahlen" value={design.accent} onChange={(accent) => update({ accent }, 'color-accent')} />
+            <ColorField label="Papier" value={design.paper} onChange={(paper) => update({ paper }, 'color-paper')} />
+            <ColorField label="Schrift" value={design.ink} onChange={(ink) => update({ ink }, 'color-ink')} />
           </div>
           <Segmented label="Schriftart" value={design.font} options={DECK_FONTS.map((f) => ({ value: f, label: FONT_LABELS[f] }))} onChange={(font) => update({ font })} />
           <Segmented label="Bilder auf der Vorderseite" value={design.photoFit} options={PHOTO_FITS.map((f) => ({ value: f, label: PHOTO_FIT_LABELS[f] }))} onChange={(photoFit) => update({ photoFit })} />
@@ -129,16 +221,16 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
         </Card>
 
         <Card className="flex flex-col gap-3">
-          <h2 className="text-3xl font-bold">Rückseite</h2>
+          <h2 className="text-3xl font-bold">Rückseite gestalten</h2>
           <Segmented label="Muster" value={design.back.pattern} options={BACK_PATTERNS.map((p) => ({ value: p, label: PATTERN_LABELS[p] }))}
             onChange={(pattern) => update({ back: { ...design.back, pattern } })} />
           <div className="grid gap-2 sm:grid-cols-2">
-            <ColorField label="Grundfarbe" value={design.back.a} onChange={(a) => update({ back: { ...design.back, a } })} />
-            <ColorField label="Musterfarbe" value={design.back.b} onChange={(b) => update({ back: { ...design.back, b } })} />
+            <ColorField label="Grundfarbe" value={design.back.a} onChange={(a) => update({ back: { ...design.back, a } }, 'back-a')} />
+            <ColorField label="Musterfarbe" value={design.back.b} onChange={(b) => update({ back: { ...design.back, b } }, 'back-b')} />
           </div>
           <label className="flex items-center justify-between gap-3 rounded-xl bg-parchment-dark/60 px-3 py-2">
             <span className="font-bold">Wappen (Emoji oder Kürzel)</span>
-            <input value={design.back.emblem} maxLength={8} onChange={(e) => update({ back: { ...design.back, emblem: e.target.value } })} className={cx(fieldClass, 'w-24 text-center text-xl')} />
+            <input value={design.back.emblem} maxLength={8} onChange={(e) => update({ back: { ...design.back, emblem: e.target.value } }, 'back-emblem')} className={cx(fieldClass, 'w-24 text-center text-xl')} />
           </label>
           <div className="flex items-center justify-between gap-3 rounded-xl bg-parchment-dark/60 px-3 py-2">
             <span className="font-bold">Wappen-Grafik</span>
@@ -183,8 +275,8 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
                     <PlayingCard rank={rank} deck={preview} size="xs" />
                   </button>
                   <span className="w-14 shrink-0 text-xs font-bold text-ink-soft">{rank === JESTER ? 'Narr' : `Rang ${rank}`}<br />×{copiesOf(rank)}</span>
-                  <input aria-label={`Name Karte ${rank}`} value={c.name} maxLength={24} onChange={(e) => updateCard(rank, { name: e.target.value })} className={cx(fieldClass, 'flex-1 basis-32 font-bold')} />
-                  <input aria-label={`Symbol Karte ${rank}`} value={c.emoji} maxLength={8} onChange={(e) => updateCard(rank, { emoji: e.target.value })} className={cx(fieldClass, 'w-16 text-center text-xl')} />
+                  <input aria-label={`Name Karte ${rank}`} value={c.name} maxLength={24} onChange={(e) => updateCard(rank, { name: e.target.value }, `${rank}-name`)} className={cx(fieldClass, 'flex-1 basis-32 font-bold')} />
+                  <input aria-label={`Symbol Karte ${rank}`} value={c.emoji} maxLength={8} onChange={(e) => updateCard(rank, { emoji: e.target.value }, `${rank}-emoji`)} className={cx(fieldClass, 'w-16 text-center text-xl')} />
                   <span className="flex gap-1">
                     <Button size="sm" variant="secondary" onClick={() => { setActive(rank); setPicking(rank); }} aria-label={`Grafik für Karte ${rank} wählen`}>
                       {hasArt(c.art) ? <CardArt id={c.art} className="size-6" /> : '🎨'}
@@ -236,21 +328,26 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
         </Modal>
       </div>
 
-      <aside className="order-first flex flex-col gap-4 lg:order-none lg:sticky lg:top-4">
-        <Card tone="velvet" className="flex flex-col items-center gap-4">
-          <h2 className="self-start text-3xl font-bold">Vorschau</h2>
-          <div className="flex items-end gap-3">
-            <PlayingCard rank={active} deck={preview} size="xl" className="max-lg:!w-[6.5rem]" />
-            <CardBack design={design} size="lg" className="max-lg:!w-[4.6rem]" />
-          </div>
-          <p className="text-center text-sm text-parchment/75">{card.name} · {active === JESTER ? 'Narr' : `Rang ${active}`}</p>
-          <div className="flex flex-wrap justify-center gap-1">
-            {RANKS.map((r) => (
-              <button key={r} type="button" onClick={() => setActive(r)} aria-label={`Karte ${r} zeigen`} className={cx('rounded-md', active === r && 'ring-2 ring-gold')}>
-                <PlayingCard rank={r} deck={preview} size="xs" />
-              </button>
-            ))}
-          </div>
+      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
+        <Card tone="velvet" className="flex flex-col items-center gap-3">
+          <h2 className="self-start text-3xl font-bold">Rückseite</h2>
+          <CardBack design={design} size="xl" />
+          {design.back.image && (
+            <div className="parchment w-full rounded-2xl p-3 ring-2 ring-line">
+              <p className="mb-1 font-bold">Foto-Ausschnitt</p>
+              {([['Zoom', 'zoom', 100, 500, 100], ['Waagerecht', 'panX', -100, 100, 1], ['Senkrecht', 'panY', -100, 100, 1]] as const).map(([label, key, min, max, factor]) => (
+                <label key={key} className="flex flex-col gap-1 py-1">
+                  <span className="text-sm font-bold">{label}</span>
+                  <input
+                    type="range" min={min} max={max}
+                    value={(design.back[key] ?? (key === 'zoom' ? 1 : 0)) * factor}
+                    onChange={(e) => update({ back: { ...design.back, [key]: Number(e.target.value) / factor } }, `back-${key}`)}
+                    className="h-2 w-full cursor-pointer accent-[var(--color-wine)]"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
         </Card>
       </aside>
 

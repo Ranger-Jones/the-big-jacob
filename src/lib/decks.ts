@@ -21,12 +21,83 @@ const symbol = z.string().trim().min(1).max(8);
 
 const artId = z.string().regex(/^[a-z0-9-]{1,32}$/);
 
+// Free card layout (card editor) -----------------------------------------------------------------
+// Positions are percentages of the card (x of the width, y of the height), sizes percentages of the width.
+
+export const PICTURE_SHAPES = ['kreis', 'abgerundet', 'frei'] as const;
+export const NUMBER_STYLES = ['ecken', 'gross', 'aus'] as const;
+export const NAME_STYLES = ['band', 'schlicht', 'aus'] as const;
+export const STICKER_KINDS = ['emoji', 'text'] as const;
+export type PictureShape = (typeof PICTURE_SHAPES)[number];
+export type NumberStyle = (typeof NUMBER_STYLES)[number];
+export type NameStyle = (typeof NAME_STYLES)[number];
+
+export const PICTURE_SHAPE_LABELS: Record<PictureShape, string> = { kreis: 'Kreis', abgerundet: 'Abgerundet', frei: 'Frei' };
+export const NUMBER_STYLE_LABELS: Record<NumberStyle, string> = { ecken: 'In den Ecken', gross: 'Groß', aus: 'Aus' };
+export const NAME_STYLE_LABELS: Record<NameStyle, string> = { band: 'Band', schlicht: 'Schlicht', aus: 'Aus' };
+
+const coord = z.number().min(-60).max(160);
+const angle = z.number().min(-180).max(180);
+
+export const stickerSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]{1,12}$/),
+  kind: z.enum(STICKER_KINDS),
+  value: z.string().trim().min(1).max(24),
+  x: coord,
+  y: coord,
+  size: z.number().min(3).max(90),
+  rotate: angle,
+  color: hex,
+});
+
+export const cardLayoutSchema = z.object({
+  /** Card background; null = the deck's paper colour. */
+  background: hex.nullable(),
+  /** Decorative inner frame with corner diamonds. */
+  frame: z.boolean(),
+  picture: z.object({
+    visible: z.boolean(),
+    /** Covers the whole card (x, y, size and shape are then ignored). */
+    fill: z.boolean(),
+    shape: z.enum(PICTURE_SHAPES),
+    x: coord,
+    y: coord,
+    size: z.number().min(5).max(250),
+    rotate: angle,
+    /** Zoom and offset of the image inside its frame (crop). */
+    zoom: z.number().min(1).max(5),
+    panX: z.number().min(-100).max(100),
+    panY: z.number().min(-100).max(100),
+  }),
+  number: z.object({
+    style: z.enum(NUMBER_STYLES),
+    x: coord,
+    y: coord,
+    size: z.number().min(4).max(90),
+    /** null = the deck's number colour. */
+    color: hex.nullable(),
+  }),
+  name: z.object({
+    style: z.enum(NAME_STYLES),
+    x: coord,
+    y: coord,
+    size: z.number().min(3).max(25),
+    width: z.number().min(20).max(100),
+  }),
+  stickers: z.array(stickerSchema).max(12),
+});
+
+export type Sticker = z.output<typeof stickerSchema>;
+export type CardLayout = z.output<typeof cardLayoutSchema>;
+
 export const cardDesignSchema = z.object({
   name: z.string().trim().min(1).max(24),
   emoji: symbol,
   /** Built-in SVG illustration (see components/deck/art); shown instead of the emoji. */
   art: artId.nullable().default(null),
   image: z.string().url().max(500).nullable(),
+  /** Free layout from the card editor; null/absent = the deck's standard layout. */
+  layout: cardLayoutSchema.nullable().optional(),
 });
 
 export const deckDesignSchema = z.object({
@@ -44,6 +115,10 @@ export const deckDesignSchema = z.object({
     art: artId.nullable().default(null),
     /** Optional photo covering the entire back (replaces pattern and emblem). */
     image: z.string().url().max(500).nullable().default(null),
+    /** Crop of the back photo. */
+    zoom: z.number().min(1).max(5).optional(),
+    panX: z.number().min(-100).max(100).optional(),
+    panY: z.number().min(-100).max(100).optional(),
   }),
   /** Index 0 = rank 1 … index 12 = jester. */
   cards: z.array(cardDesignSchema).length(13),

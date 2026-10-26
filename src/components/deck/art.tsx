@@ -371,9 +371,9 @@ export function CardArt({ id, className }: { id: string; className?: string }) {
  * The illustration as a full card face (viewBox 100×140): figures are scaled up into a scene,
  * other motifs sit large under the gold numeral on a background in the deck's frame colour.
  */
-export function FullCardArt({ id, rank, bg, className }: { id: string; rank: number; bg: string; className?: string }) {
+export function FullCardArt({ id, rank, bg, className, numeral = true }: { id: string; rank: number; bg: string; className?: string; numeral?: boolean }) {
   if (!hasArt(id)) return null;
-  const portrait = portraitCard(id, rank);
+  const portrait = portraitCard(id, rank, numeral);
   return (
     <svg viewBox="0 0 100 140" preserveAspectRatio="xMidYMid slice" className={className} aria-hidden>
       {portrait ?? (
@@ -389,7 +389,7 @@ export function FullCardArt({ id, rank, bg, className }: { id: string; rank: num
           {Array.from({ length: 16 }, (_, i) => (
             <polygon key={i} points="50,88 45,-60 55,-60" fill="#ffffff" opacity="0.06" transform={`rotate(${i * 22.5} 50 88)`} />
           ))}
-          <RankNumeral rank={rank} id={id} />
+          {numeral && <RankNumeral rank={rank} id={id} />}
           <g transform="translate(11 56) scale(0.78)">{ART[id]}</g>
         </g>
       )}

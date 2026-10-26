@@ -4,6 +4,7 @@ import { JESTER } from '@/lib/jakob/cards';
 import { cx } from '@/lib/cx';
 import { cardDesign, type BackPattern, type DeckDesign, type DeckEntry, type DeckFont } from '@/lib/decks';
 import { CardArt, FullCardArt, hasArt } from './art';
+import { LayoutFace } from './card-layout';
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -57,7 +58,9 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
   const cornerStyle = fullArt
     ? { color: d.accent, backgroundColor: d.paper, padding: '0.1em 0.18em', borderRadius: '0.25em', boxShadow: '0 1px 2px rgb(0 0 0 / 0.35)' }
     : { color: d.accent };
-  const content: ReactNode = (
+  const content: ReactNode = card.layout ? (
+    <LayoutFace design={d} card={card} rank={rank} layout={card.layout} small={size === 'xs' || size === 'sm'} />
+  ) : (
     <>
       {fullPhoto ? (
         <img src={card.image!} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />
@@ -117,7 +120,7 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
     </>
   );
   const classes = cx(
-    'relative block aspect-[5/7] shrink-0 select-none overflow-hidden rounded-[10%] text-left transition-[transform,box-shadow,filter] duration-150',
+    '@container relative block aspect-[5/7] shrink-0 select-none overflow-hidden rounded-[10%] text-left transition-[transform,box-shadow,filter] duration-150',
     WIDTH[size],
     selected && '-translate-y-3 shadow-[0_0_0_3px_var(--color-gold),0_10px_18px_rgb(0_0_0/0.45)]',
     !selected && !marked && 'shadow-[0_3px_0_rgb(0_0_0/0.35)]',
@@ -125,7 +128,7 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
     dimmed && 'brightness-[0.6] saturate-50',
     className,
   );
-  const surface: CSSProperties = { backgroundColor: d.paper, color: d.ink, border: `3px solid ${d.frame}`, ...style };
+  const surface: CSSProperties = { backgroundColor: card.layout?.background ?? d.paper, color: d.ink, border: `3px solid ${d.frame}`, ...style };
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cx(classes, 'cursor-pointer')} style={surface} aria-pressed={selected} aria-label={label ?? `${card.name} (${cornerLabel(rank)})`}>
@@ -164,7 +167,10 @@ export function CardBack({ design, size = 'md', className, style, onClick, label
   const id = `back-${design.back.pattern}-${design.back.a.slice(1)}-${design.back.b.slice(1)}`;
   const inner = design.back.image ? (
     <>
-      <img src={design.back.image} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />
+      <img
+        src={design.back.image} alt="" className="absolute inset-0 size-full object-cover" draggable={false}
+        style={{ transform: `translate(${(design.back.panX ?? 0) / 2}%, ${(design.back.panY ?? 0) / 2}%) scale(${design.back.zoom ?? 1})` }}
+      />
       <span className="absolute inset-[7%] rounded-[8%] border-2" style={{ borderColor: `${design.paper}cc` }} aria-hidden />
     </>
   ) : (

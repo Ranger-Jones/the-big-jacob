@@ -34,6 +34,8 @@ export interface PortraitSpec {
   mode?: 'disc' | 'card';
   /** Card mode: rank shown as the big numeral behind the figure. */
   rank?: number;
+  /** Card mode without the numeral (the card editor places the number itself). */
+  hideNumeral?: boolean;
 }
 
 /** Big gold numeral worked into full-card art; the figure's headwear overlaps it slightly. */
@@ -112,7 +114,7 @@ function CardPortrait(p: PortraitSpec) {
         <polygon key={i} points="50,78 45,-60 55,-60" fill="#ffffff" opacity="0.07" transform={`rotate(${i * 22.5} 50 78)`} />
       ))}
       <circle cx="50" cy="80" r="38" fill="#ffffff" opacity="0.08" />
-      <RankNumeral rank={p.rank ?? 1} id={p.id} />
+      {!p.hideNumeral && <RankNumeral rank={p.rank ?? 1} id={p.id} />}
       <g transform="translate(-7.5 32) scale(1.15)">
         <Figure {...p} />
       </g>
@@ -727,8 +729,8 @@ export const PORTRAIT_IDS = Object.keys(PORTRAITS).filter((id) => id.startsWith(
 export const RESCUE_IDS = Object.keys(PORTRAITS).filter((id) => id.startsWith('r-'));
 
 /** The portrait as a full card face, or null if the id is not a figure. */
-export function portraitCard(id: string, rank: number): ReactNode | null {
+export function portraitCard(id: string, rank: number, numeral = true): ReactNode | null {
   const el = PORTRAITS[id];
   if (!isValidElement(el) || el.type !== Portrait) return null;
-  return cloneElement(el as ReactElement<PortraitSpec>, { mode: 'card', rank });
+  return cloneElement(el as ReactElement<PortraitSpec>, { mode: 'card', rank, hideNumeral: !numeral });
 }
