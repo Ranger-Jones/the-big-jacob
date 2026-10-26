@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { Segmented } from '@/components/ui/segmented';
@@ -12,7 +12,7 @@ import {
 import { EMOJI_CATALOG } from '@/lib/emojis';
 import { JESTER } from '@/lib/jakob/cards';
 import { hasArt } from './art';
-import { defaultLayout, LayoutFace, type ElementKey, type GestureMode } from './card-layout';
+import { defaultLayout, elementHandles, LayoutFace, type ElementKey, type GestureMode } from './card-layout';
 
 export type HistoryMode = 'push' | 'coalesce' | 'none';
 export type DesignChange = (fn: (d: DeckDesign) => DeckDesign, opts?: { history?: HistoryMode; key?: string }) => void;
@@ -78,6 +78,8 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyStickers, setCopyStickers] = useState(false);
   const canvas = useRef<HTMLDivElement>(null);
+  /** Selection overlay; its size is copied from the selected element's DOM box before paint. */
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   // Gesture bookkeeping (refs: pointer moves must not wait for React).
   const gesture = useRef<{
@@ -88,6 +90,16 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
   const layoutRef = useRef(layout);
   useEffect(() => {
     layoutRef.current = layout;
+  });
+
+  // Size the overlay to the selected element after every render (it changes while scaling).
+  useLayoutEffect(() => {
+    const box = overlayRef.current;
+    if (!box || !selected || !canvas.current || (selected === 'picture' && layout.picture.fill)) return;
+    const el = canvas.current.querySelector<HTMLElement>(`[data-el="${CSS.escape(selected)}"]`);
+    box.style.width = `${(el?.offsetWidth ?? 0) + 6}px`;
+    box.style.height = `${(el?.offsetHeight ?? 0) + 6}px`;
+    box.style.visibility = el ? 'visible' : 'hidden';
   });
 
   // A different card starts with nothing selected.
@@ -250,6 +262,13 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
       if (e.shiftKey) redo(); else undo();
       return;
     }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const order = elementOrder;
+      const i = selected ? order.indexOf(selected) : -1;
+      setSelected(order[(i + (e.shiftKey ? -1 : 1) + order.length) % order.length]);
+      return;
+    }
     if (!selected) return;
     const step = e.shiftKey ? 2 : 0.5;
     const moves: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
@@ -301,6 +320,53 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
       }),
     }), { history: 'push' });
     setCopyOpen(false);
+  }
+
+  /** Bottom to top, the same order the card draws its layers. */
+  const elementOrder: ElementKey[] = ['picture', ...layout.stickers.map((s) => `sticker:${s.id}` as ElementKey), 'name', 'number'];
+  const elementLabel = (key: ElementKey): string => {
+    if (key === 'picture') return `🖼️ Bild${layout.picture.visible ? '' : ' (aus)'}`;
+    if (key === 'number') return `🔢 Zahl${layout.number.style === 'aus' ? ' (aus)' : ''}`;
+    if (key === 'name') return `🏷️ Name${layout.name.style === 'aus' ? ' (aus)' : ''}`;
+    const st = stickerOf(key);
+    return st ? (st.kind === 'emoji' ? st.value : `✏️ ${st.value.slice(0, 10)}`) : '';
+  };
+
+  // Selection overlay: drawn above every layer, outside the card clip, so handles are always reachable.
+  let overlay: ReactNode = null;
+  if (selected) {
+    const fill = selected === 'picture' && layout.picture.fill;
+    const geo = geometry(layout, selected);
+    const { scale, rotate } = elementHandles(layout, selected);
+    overlay = (
+      <div
+        ref={overlayRef}
+        key={fill ? 'fill' : 'box'}
+        aria-hidden
+        className="pointer-events-none absolute z-30"
+        style={fill
+          ? { inset: 0 }
+          : { left: `${geo.x}%`, top: `${geo.y}%`, transform: `translate(-50%, -50%) rotate(${geo.rotate}deg)` }}
+      >
+        <span className={cx('absolute inset-0 border-2 border-dashed border-azure', fill ? 'rounded-[10%]' : 'rounded-md')} />
+        {scale && (
+          <span
+            onPointerDown={(e) => hooks.onPointerDown(e, selected, 'scale')}
+            title={fill ? 'Zoomen' : 'Größe ändern'}
+            className="pointer-events-auto absolute -bottom-3 -right-3 size-7 cursor-nwse-resize touch-none rounded-full border-2 border-white bg-azure shadow-lg"
+          />
+        )}
+        {rotate && (
+          <span
+            onPointerDown={(e) => hooks.onPointerDown(e, selected, 'rotate')}
+            title="Drehen"
+            className="pointer-events-auto absolute -top-9 left-1/2 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-white bg-gold text-sm shadow-lg"
+          >
+            ↻
+          </span>
+        )}
+      </div>
+    );
   }
 
   const sticker = stickerOf(selected);
@@ -420,8 +486,8 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
       <>
         <h3 className="text-2xl font-bold">Karte {rank === JESTER ? 'Narr' : rank}</h3>
         <p className="text-sm text-ink-soft">
-          Tippe ein Element auf der Karte an, um es zu bearbeiten. Ziehen verschiebt, der blaue Punkt skaliert, der goldene dreht.
-          Mit zwei Fingern kannst du zoomen und drehen.
+          Tippe ein Element auf der Karte oder oben bei „Ebenen“ an. Ziehen verschiebt, der blaue Punkt skaliert, der goldene dreht.
+          Mit zwei Fingern kannst du zoomen und drehen, mit Tab zwischen den Elementen wechseln.
         </p>
         <ColorRow label="Hintergrund" value={layout.background ?? design.paper}
           onChange={(background) => edit('background')((l) => ({ ...l, background }))}
@@ -449,6 +515,25 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
         {custom && <Button size="sm" variant="ghost" onClick={() => { change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, layout: null } : c)) }), { history: 'push' }); setSelected(null); }}>Standard-Layout</Button>}
       </div>
 
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5" role="toolbar" aria-label="Ebenen">
+        <span className="mr-1 text-sm font-bold text-parchment/70">Ebenen:</span>
+        {[...elementOrder].reverse().map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSelected(key)}
+            aria-pressed={selected === key}
+            className={cx(
+              'min-h-9 max-w-[9rem] truncate rounded-xl px-2.5 text-sm font-bold ring-2 transition-colors',
+              selected === key ? 'bg-gold text-ink ring-gold' : 'bg-velvet-soft text-parchment ring-white/10 hover:bg-white/15',
+            )}
+          >
+            {elementLabel(key)}
+          </button>
+        ))}
+        {selected && <button type="button" onClick={() => setSelected(null)} className="min-h-9 rounded-xl px-2 text-sm font-bold text-parchment/70 hover:text-parchment">Auswahl aufheben</button>}
+      </div>
+
       <div className="grid min-w-0 gap-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
         <div
           ref={canvas}
@@ -470,6 +555,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
           {/* Elements stay grabbable when they stick out of the card a bit. */}
           {guides.v && <span aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-rose" />}
           {guides.h && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-rose" />}
+          {overlay}
         </div>
         <div className="parchment flex min-w-0 flex-col gap-2 rounded-2xl p-4 ring-2 ring-line">{inspector}</div>
       </div>

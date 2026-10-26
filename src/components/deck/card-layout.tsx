@@ -63,37 +63,20 @@ function place(x: number, y: number, rotate = 0): CSSProperties {
   return { left: `${x}%`, top: `${y}%`, transform: `translate(-50%, -50%) rotate(${rotate}deg)` };
 }
 
-/** Selection outline and gesture handles for the element being edited. */
-function Handles({ hooks, k, scale = true, rotate = true }: { hooks: EditorHooks; k: ElementKey; scale?: boolean; rotate?: boolean }) {
-  if (hooks.selected !== k) return null;
-  return (
-    <>
-      <span aria-hidden className="pointer-events-none absolute -inset-[3px] rounded-[inherit] border-2 border-dashed border-azure" />
-      {scale && (
-        <span
-          aria-label="Größe ändern"
-          onPointerDown={(e) => hooks.onPointerDown(e, k, 'scale')}
-          className="absolute -bottom-3 -right-3 z-10 size-6 cursor-nwse-resize touch-none rounded-full border-2 border-white bg-azure shadow"
-        />
-      )}
-      {rotate && (
-        <span
-          aria-label="Drehen"
-          onPointerDown={(e) => hooks.onPointerDown(e, k, 'rotate')}
-          className="absolute -top-8 left-1/2 z-10 flex size-6 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-white bg-gold text-xs shadow"
-        >
-          ↻
-        </span>
-      )}
-    </>
-  );
+/** Which gesture handles an element offers in the editor. */
+export function elementHandles(layout: CardLayout, key: ElementKey): { scale: boolean; rotate: boolean } {
+  if (key === 'picture') return { scale: true, rotate: !layout.picture.fill };
+  if (key === 'number' || key === 'name') return { scale: true, rotate: false };
+  return { scale: true, rotate: true };
 }
 
 function interactive(hooks: EditorHooks | undefined, k: ElementKey, mode: GestureMode = 'move') {
   if (!hooks) return {};
   return {
     onPointerDown: (e: PointerEvent<HTMLElement>) => hooks.onPointerDown(e, k, mode),
-    className: cx('touch-none cursor-move', hooks.selected === k && 'z-20'),
+    // The layer order never changes on selection; the editor draws outline and handles in its own overlay.
+    className: 'touch-none cursor-move',
+    'data-el': k,
   };
 }
 
@@ -119,7 +102,6 @@ function Picture({ design, card, rank, layout, hooks }: { design: DeckDesign; ca
             {card.emoji}
           </span>
         )}
-        {hooks && <Handles hooks={hooks} k="picture" rotate={false} />}
       </span>
     );
   }
@@ -144,7 +126,6 @@ function Picture({ design, card, rank, layout, hooks }: { design: DeckDesign; ca
           <span className="leading-none" style={{ fontSize: `${p.size * 0.58}cqw` }}>{card.emoji}</span>
         )}
       </span>
-      {hooks && <Handles hooks={hooks} k="picture" />}
     </span>
   );
 }
@@ -170,7 +151,6 @@ function NumberMark({ design, rank, layout, hooks }: { design: DeckDesign; rank:
         style={{ ...place(n.x, n.y), fontSize: `${rank === JESTER ? n.size * 0.55 : n.size}cqw`, ...legible }}
       >
         {label}
-        {hooks && <Handles hooks={hooks} k="number" rotate={false} />}
       </span>
     );
   }
@@ -180,7 +160,6 @@ function NumberMark({ design, rank, layout, hooks }: { design: DeckDesign; rank:
     <>
       <span {...ia} className={cx('absolute font-bold leading-none', ia.className)} style={{ ...place(n.x, n.y), ...corner }}>
         {numberLabel(rank)}
-        {hooks && <Handles hooks={hooks} k="number" rotate={false} />}
       </span>
       <span aria-hidden className="pointer-events-none absolute font-bold leading-none" style={{ ...place(100 - n.x, 100 - n.y, 180), ...corner }}>
         {numberLabel(rank)}
@@ -210,7 +189,6 @@ function NameMark({ design, card, layout, hooks }: { design: DeckDesign; card: C
       }}
     >
       {card.name}
-      {hooks && <Handles hooks={hooks} k="name" rotate={false} />}
     </span>
   );
 }
@@ -231,7 +209,6 @@ function StickerMark({ design, sticker, hooks }: { design: DeckDesign; sticker: 
       }}
     >
       {sticker.value}
-      {hooks && <Handles hooks={hooks} k={k} />}
     </span>
   );
 }
