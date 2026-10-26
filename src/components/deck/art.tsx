@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PORTRAIT_IDS, PORTRAITS, portraitCard, RankNumeral, RESCUE_IDS } from './portraits';
 
 /**
  * Hand-drawn SVG illustrations for card faces and backs (viewBox 0 0 100 100).
@@ -342,9 +343,11 @@ const gems: Record<string, ReactNode> = {
   'g-pebble': <Treasure><Gem shape="cabochon" color="#7d6e5f" light="#b7a896" dark="#3f362c" /></Treasure>,
 };
 
-export const ART: Record<string, ReactNode> = { ...heraldry, ...cosmos, ...gems };
+export const ART: Record<string, ReactNode> = { ...PORTRAITS, ...heraldry, ...cosmos, ...gems };
 
 export const ART_GROUPS: { label: string; ids: string[] }[] = [
+  { label: 'Hofstaat', ids: PORTRAIT_IDS },
+  { label: 'Rettungswache', ids: RESCUE_IDS },
   { label: 'Heraldik', ids: Object.keys(heraldry) },
   { label: 'Kosmos', ids: Object.keys(cosmos) },
   { label: 'Schatzkammer', ids: Object.keys(gems) },
@@ -360,6 +363,36 @@ export function CardArt({ id, className }: { id: string; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden>
       {ART[id]}
+    </svg>
+  );
+}
+
+/**
+ * The illustration as a full card face (viewBox 100×140): figures are scaled up into a scene,
+ * other motifs sit large under the gold numeral on a background in the deck's frame colour.
+ */
+export function FullCardArt({ id, rank, bg, className }: { id: string; rank: number; bg: string; className?: string }) {
+  if (!hasArt(id)) return null;
+  const portrait = portraitCard(id, rank);
+  return (
+    <svg viewBox="0 0 100 140" preserveAspectRatio="xMidYMid slice" className={className} aria-hidden>
+      {portrait ?? (
+        <g>
+          <defs>
+            <radialGradient id={`scene-${id}`} cx="50%" cy="62%" r="70%">
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0.28" />
+              <stop offset="1" stopColor="#000000" stopOpacity="0.45" />
+            </radialGradient>
+          </defs>
+          <rect width="100" height="140" fill={bg} />
+          <rect width="100" height="140" fill={`url(#scene-${id})`} />
+          {Array.from({ length: 16 }, (_, i) => (
+            <polygon key={i} points="50,88 45,-60 55,-60" fill="#ffffff" opacity="0.06" transform={`rotate(${i * 22.5} 50 88)`} />
+          ))}
+          <RankNumeral rank={rank} id={id} />
+          <g transform="translate(8 50) scale(0.84)">{ART[id]}</g>
+        </g>
+      )}
     </svg>
   );
 }

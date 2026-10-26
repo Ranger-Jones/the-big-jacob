@@ -65,12 +65,14 @@ export const PRESETS: DeckEntry[] = [
     name: 'Hofstaat',
     ownerId: null,
     design: {
-      v: 1, frame: '#6b1e2e', accent: '#b07a12', paper: '#fbf0d9', ink: '#2b1a12', font: 'gotisch', photoFit: 'medaillon',
-      back: { pattern: 'rauten', a: '#6b1e2e', b: '#8e2f40', emblem: '👑', art: null, image: null },
-      cards: cards([
-        ['Der Große Jakob', '👑'], ['Erzbischof', '⛪'], ['Hofmarschall', '🎖️'], ['Baronin', '💎'],
-        ['Äbtissin', '📿'], ['Ritter', '🛡️'], ['Näherin', '🧵'], ['Maurer', '🧱'], ['Köchin', '🍲'],
-        ['Schäferin', '🐑'], ['Steinmetz', '⛏️'], ['Bauer', '🌾'], ['Narr', '🃏'],
+      v: 1, frame: '#6b1e2e', accent: '#b07a12', paper: '#fbf0d9', ink: '#2b1a12', font: 'gotisch', photoFit: 'vollbild',
+      back: { pattern: 'rauten', a: '#6b1e2e', b: '#8e2f40', emblem: '👑', art: 'p-wappen', image: null },
+      cards: artCards([
+        ['Der Große Jakob', '👑', 'p-jakob'], ['Erzbischof', '⛪', 'p-erzbischof'], ['Hofmarschall', '🎖️', 'p-marschall'],
+        ['Baronin', '💎', 'p-baronin'], ['Äbtissin', '📿', 'p-aebtissin'], ['Ritter', '🛡️', 'p-ritter'],
+        ['Näherin', '🧵', 'p-naeherin'], ['Maurer', '🧱', 'p-maurer'], ['Köchin', '🍲', 'p-koechin'],
+        ['Schäferin', '🐑', 'p-schaeferin'], ['Steinmetz', '⛏️', 'p-steinmetz'], ['Bauer', '🌾', 'p-bauer'],
+        ['Narr', '🃏', 'p-narr'],
       ]),
     },
   },
@@ -79,12 +81,14 @@ export const PRESETS: DeckEntry[] = [
     name: 'Rettungswache',
     ownerId: null,
     design: {
-      v: 1, frame: '#c8323c', accent: '#1f4fb4', paper: '#fdfdf7', ink: '#1d2433', font: 'klassisch', photoFit: 'medaillon',
-      back: { pattern: 'streifen', a: '#c8323c', b: '#f2f2ea', emblem: '🚑', art: null, image: null },
-      cards: cards([
-        ['Peschel', '🦸'], ['Leitender Notarzt', '🩺'], ['Notärztin', '👩‍⚕️'], ['Wachleiter', '📋'],
-        ['Praxisanleiterin', '🎓'], ['Notfallsanitäter', '🚑'], ['Rettungssanitäterin', '💉'], ['Rettungshelfer', '🩹'],
-        ['Disponentin', '📞'], ['Desinfektor', '🧴'], ['Azubi', '📚'], ['Praktikant', '☕'], ['Blaulicht', '🚨'],
+      v: 1, frame: '#c8323c', accent: '#1f4fb4', paper: '#fdfdf7', ink: '#1d2433', font: 'klassisch', photoFit: 'vollbild',
+      back: { pattern: 'streifen', a: '#c8323c', b: '#f2f2ea', emblem: '🚑', art: 'r-star', image: null },
+      cards: artCards([
+        ['Peschel', '🦸', 'r-peschel'], ['Leitender Notarzt', '🩺', 'r-lna'], ['Notärztin', '👩‍⚕️', 'r-notaerztin'],
+        ['Wachleiter', '📋', 'r-wachleiter'], ['Praxisanleiterin', '🎓', 'r-praxisanleiterin'], ['Notfallsanitäter', '🚑', 'r-notsan'],
+        ['Rettungssanitäterin', '💉', 'r-rettsan'], ['Rettungshelfer', '🩹', 'r-retthelfer'], ['Disponentin', '📞', 'r-disponentin'],
+        ['Desinfektor', '🧴', 'r-desinfektor'], ['Azubi', '📚', 'r-azubi'], ['Praktikant', '☕', 'r-praktikant'],
+        ['Blaulicht', '🚨', 'r-blaulicht'],
       ]),
     },
   },
@@ -120,7 +124,7 @@ export const PRESETS: DeckEntry[] = [
     name: 'Heraldik',
     ownerId: null,
     design: {
-      v: 1, frame: '#2a2230', accent: '#b07a12', paper: '#f6efdc', ink: '#2a1a10', font: 'gotisch', photoFit: 'medaillon',
+      v: 1, frame: '#2a2230', accent: '#b07a12', paper: '#f6efdc', ink: '#2a1a10', font: 'gotisch', photoFit: 'vollbild',
       back: { pattern: 'schach', a: '#2a2230', b: '#3b3146', emblem: '🛡️', art: 'h-crown', image: null },
       cards: artCards([
         ['Krone', '👑', 'h-crown'], ['Mitra', '⛪', 'h-mitre'], ['Schwerter', '⚔️', 'h-swords'], ['Rose', '🌹', 'h-rose'],
@@ -135,7 +139,7 @@ export const PRESETS: DeckEntry[] = [
     name: 'Kosmos',
     ownerId: null,
     design: {
-      v: 1, frame: '#17143a', accent: '#e8b33a', paper: '#eef0fb', ink: '#17143a', font: 'klassisch', photoFit: 'medaillon',
+      v: 1, frame: '#17143a', accent: '#e8b33a', paper: '#eef0fb', ink: '#17143a', font: 'klassisch', photoFit: 'vollbild',
       back: { pattern: 'sterne', a: '#17143a', b: '#2f2a6b', emblem: '🪐', art: 'k-saturn', image: null },
       cards: artCards([
         ['Sonne', '☀️', 'k-sun'], ['Vollmond', '🌕', 'k-fullmoon'], ['Saturn', '🪐', 'k-saturn'], ['Komet', '☄️', 'k-comet'],
@@ -150,7 +154,7 @@ export const PRESETS: DeckEntry[] = [
     name: 'Schatzkammer',
     ownerId: null,
     design: {
-      v: 1, frame: '#5a3418', accent: '#b07a12', paper: '#fbf3e1', ink: '#2b1b10', font: 'klassisch', photoFit: 'medaillon',
+      v: 1, frame: '#5a3418', accent: '#b07a12', paper: '#fbf3e1', ink: '#2b1b10', font: 'klassisch', photoFit: 'vollbild',
       back: { pattern: 'rauten', a: '#5a3418', b: '#7a4a24', emblem: '💎', art: 'g-diamond', image: null },
       cards: artCards([
         ['Diamant', '💎', 'g-diamond'], ['Rubin', '❤️', 'g-ruby'], ['Saphir', '🔵', 'g-sapphire'], ['Smaragd', '💚', 'g-emerald'],

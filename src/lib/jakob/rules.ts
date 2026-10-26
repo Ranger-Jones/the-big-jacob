@@ -92,9 +92,17 @@ export function legalPlays(hand: readonly number[], trick: Trick | null, ctx: Ru
 }
 
 /**
- * True if no combination of the still unplayed cards could beat the trick. Uses public knowledge only
- * (everything played this round, including the trick), so an instant win never reveals anyone's hand.
+ * True if the trick can no longer be undercut: it is the best rank (the 1), or every card with a
+ * better rank has already been played this round. Only public knowledge is used, so an instant win
+ * never reveals anyone's hand. Under "Narrenfreiheit" an unplayed jester still threatens.
  */
 export function isUnbeatable(trick: Trick, played: readonly number[], ctx: RuleContext): boolean {
-  return legalPlays(removeCards(fullDeck(), played), trick, ctx).length === 0;
+  const unplayed = removeCards(fullDeck(), played);
+  const naturalThreat = unplayed.some((c) => c !== JESTER && better(c, trick.rank, ctx));
+  if (naturalThreat) return false;
+  const jesterLeft = unplayed.includes(JESTER);
+  // A lone jester counts as 0 under jester freedom and as 13 (the best card) in the reversed world.
+  if (jesterLeft && ctx.event === 'jesterFreedom' && trick.rank !== 0) return false;
+  if (jesterLeft && isReversed(ctx) && trick.rank < JESTER) return false;
+  return true;
 }

@@ -124,8 +124,8 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
             <ColorField label="Schrift" value={design.ink} onChange={(ink) => update({ ink })} />
           </div>
           <Segmented label="Schriftart" value={design.font} options={DECK_FONTS.map((f) => ({ value: f, label: FONT_LABELS[f] }))} onChange={(font) => update({ font })} />
-          <Segmented label="Fotos auf der Vorderseite" value={design.photoFit} options={PHOTO_FITS.map((f) => ({ value: f, label: PHOTO_FIT_LABELS[f] }))} onChange={(photoFit) => update({ photoFit })} />
-          <p className="-mt-1 text-sm text-ink-soft">„Ganze Karte“: Fotos füllen die komplette Vorderseite, Zahl und Name liegen darüber.</p>
+          <Segmented label="Bilder auf der Vorderseite" value={design.photoFit} options={PHOTO_FITS.map((f) => ({ value: f, label: PHOTO_FIT_LABELS[f] }))} onChange={(photoFit) => update({ photoFit })} />
+          <p className="-mt-1 text-sm text-ink-soft">„Ganze Karte“: Grafiken und Fotos füllen die komplette Vorderseite – bei Grafiken wird die Zahl groß ins Bild eingearbeitet.</p>
         </Card>
 
         <Card className="flex flex-col gap-3">

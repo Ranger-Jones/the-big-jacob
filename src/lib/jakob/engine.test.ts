@@ -218,6 +218,15 @@ describe('playing tricks', () => {
     expect(s.trick).toBeNull();
   });
 
+  it('a trick is not cut short while lower cards are still unplayed', () => {
+    // 3×4 with the 1 and both 2s unplayed: no lower triple is possible, but the rule only looks at ranks.
+    let s = playing({ a: [4, 4, 4, 9], b: [1, 6], c: [2, 2, 7] });
+    s = { ...s, played: [3, 3, 3] };
+    s = must(s, 'a', { type: 'play', cards: [4, 4, 4] });
+    expect(s.trick?.by).toBe('a');
+    expect(s.turn).toBe('b');
+  });
+
   it('a lone jester still threatens a 1 under jester freedom', () => {
     let s = playing({ a: [1, 5], b: [13, 6], c: [7, 4] });
     s = { ...s, event: 'jesterFreedom' };

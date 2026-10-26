@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { JESTER } from '@/lib/jakob/cards';
 import { cx } from '@/lib/cx';
 import { cardDesign, type BackPattern, type DeckDesign, type DeckEntry, type DeckFont } from '@/lib/decks';
-import { CardArt, hasArt } from './art';
+import { CardArt, FullCardArt, hasArt } from './art';
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -17,7 +17,11 @@ const MEDAL: Record<CardSize, string> = {
   xs: 'text-sm', sm: 'text-xl', md: 'text-[1.9rem]', lg: 'text-[2.6rem]', xl: 'text-[3.6rem]',
 };
 const NAME: Record<CardSize, string> = {
-  xs: 'hidden', sm: 'hidden', md: 'text-[0.6rem]', lg: 'text-[0.72rem]', xl: 'text-sm',
+  xs: 'hidden', sm: 'hidden', md: 'text-[0.55rem]', lg: 'text-[0.66rem]', xl: 'text-[0.8rem]',
+};
+/** Long names (e.g. "Der Große Jakob") get a smaller banner font so they fit. */
+const NAME_LONG: Record<CardSize, string> = {
+  xs: 'hidden', sm: 'hidden', md: 'text-[0.48rem]', lg: 'text-[0.56rem]', xl: 'text-[0.7rem]',
 };
 
 export const FONT_CLASS: Record<DeckFont, string> = {
@@ -45,28 +49,48 @@ interface FaceProps {
 export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked, className, style, onClick, label }: FaceProps) {
   const d = deck.design;
   const card = cardDesign(deck, rank);
-  const fullArt = !!card.image && d.photoFit === 'vollbild';
+  // "Ganze Karte": photos and drawn art fill the whole face; the number becomes part of the art.
+  const fullPhoto = !!card.image && d.photoFit === 'vollbild';
+  const fullDrawing = !card.image && hasArt(card.art) && d.photoFit === 'vollbild';
+  const fullArt = fullPhoto || fullDrawing;
   // On full-art cards the numbers sit on small paper tabs so they stay readable on any photo.
   const cornerStyle = fullArt
     ? { color: d.accent, backgroundColor: d.paper, padding: '0.1em 0.18em', borderRadius: '0.25em', boxShadow: '0 1px 2px rgb(0 0 0 / 0.35)' }
     : { color: d.accent };
   const content: ReactNode = (
     <>
-      {fullArt && <img src={card.image!} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />}
+      {fullPhoto ? (
+        <img src={card.image!} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />
+      ) : fullDrawing ? (
+        <FullCardArt id={card.art!} rank={rank} bg={d.frame} className="absolute inset-0 size-full" />
+      ) : (
+        <span aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_15%,rgb(255_255_255/0.55),transparent_60%)]" />
+      )}
+      {/* Double inner frame with small diamonds in the corners */}
       <span
-        className="absolute inset-[5%] rounded-[8%] border"
-        style={{ borderColor: fullArt ? `${d.paper}aa` : `${d.accent}88` }}
+        className="absolute inset-[4.5%] rounded-[8%] border-[1.5px]"
+        style={{ borderColor: fullArt ? `${d.paper}cc` : d.accent }}
         aria-hidden
       />
-      <span className={cx('absolute left-[9%] top-[5%] font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
-        {cornerLabel(rank)}
-      </span>
-      {size !== 'xs' && (
+      {size !== 'xs' && size !== 'sm' && (
+        <>
+          <span className="absolute inset-[7.5%] rounded-[7%] border" style={{ borderColor: fullArt ? `${d.paper}66` : `${d.accent}55` }} aria-hidden />
+          {['left-[3.2%] top-[2.6%]', 'right-[3.2%] top-[2.6%]', 'left-[3.2%] bottom-[2.6%]', 'right-[3.2%] bottom-[2.6%]'].map((pos) => (
+            <span key={pos} aria-hidden className={cx('absolute size-[5%] rotate-45', pos)} style={{ backgroundColor: fullArt ? d.paper : d.accent }} />
+          ))}
+        </>
+      )}
+      {!fullDrawing && (
+        <span className={cx('absolute left-[9%] top-[5%] font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
+          {cornerLabel(rank)}
+        </span>
+      )}
+      {size !== 'xs' && !fullDrawing && (
         <span className={cx('absolute bottom-[5%] right-[9%] rotate-180 font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
           {cornerLabel(rank)}
         </span>
       )}
-      {!fullArt && !card.image && hasArt(card.art) && (
+      {!fullArt && hasArt(card.art) && !card.image && (
         <CardArt id={card.art} className="absolute left-1/2 top-[43%] w-[78%] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_1px_rgb(0_0_0/0.25)]" />
       )}
       {!fullArt && (card.image || !hasArt(card.art)) && (
@@ -79,8 +103,14 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
         </span>
       )}
       <span
-        className={cx('absolute inset-x-[8%] bottom-[13%] truncate rounded-sm px-0.5 text-center font-bold leading-tight', NAME[size], FONT_CLASS[d.font])}
-        style={{ backgroundColor: d.frame, color: d.paper }}
+        className={cx('absolute inset-x-[4%] truncate px-[7%] py-[1.5%] text-center font-bold leading-tight', fullArt ? 'bottom-[7%]' : 'bottom-[12.5%]', card.name.length > (d.font === 'klassisch' ? 8 : 12) ? NAME_LONG[size] : NAME[size], FONT_CLASS[d.font])}
+        style={{
+          backgroundColor: d.frame,
+          color: d.paper,
+          // Banner with notched ends
+          clipPath: 'polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%)',
+          boxShadow: `inset 0 -2px 0 rgb(0 0 0 / 0.25)`,
+        }}
       >
         {card.name}
       </span>
