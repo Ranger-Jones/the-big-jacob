@@ -14,6 +14,9 @@ import { getSettings, maxPlayers } from '@/lib/jakob/engine';
 import { TEAM_INFO } from '@/lib/jakob/texts';
 import { inviteAction } from '@/server/game-actions';
 import type { ProfileLite } from '@/server/social-service';
+import { RatingBadge } from '@/components/rating/rating-badge';
+import { useRatings } from '@/hooks/use-ratings';
+import { PublicLobbyBanner, PublicRules } from './public-lobby';
 import { SettingsPanel } from './settings-panel';
 import { useTable } from './table-context';
 import { Icon, TEAM_ICONS } from '@/components/ui/icons';
@@ -31,6 +34,10 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
   const full = state.players.length >= seats;
   const teamMode = getSettings(state).teams;
   const myDeckId = state.players.find((p) => p.id === me)?.deckId ?? null;
+  const isPublic = state.mode === 'public';
+  // Host powers (kick, bots, rules, start) do not exist in the open online lobby.
+  const canManage = isHost && !isPublic;
+  const ratings = useRatings(state.players.filter((p) => !p.bot).map((p) => p.id));
   const myDeck = resolveDeck(myDeckId, { ...g.decks, ...Object.fromEntries(myDecks.map((d) => [d.id, d])) });
 
   async function copyLink() {
@@ -59,11 +66,15 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
       <Card className="flex flex-col gap-6 p-5 sm:p-7">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-5xl font-bold">Der Tisch wird gedeckt</h1>
-            <p className="mt-1 text-ink-soft">Mit diesem Code kommen deine Freunde an den Hof.</p>
+            <h1 className="text-5xl font-bold">{isPublic ? 'Offene Online-Lobby' : 'Der Tisch wird gedeckt'}</h1>
+            <p className="mt-1 text-ink-soft">
+              {isPublic ? 'Hier treffen sich Spieler aus dem ganzen Hof – gewertet mit Elo.' : 'Mit diesem Code kommen deine Freunde an den Hof.'}
+            </p>
           </div>
           <Button variant="secondary" size="sm" onClick={copyLink}>Link kopieren</Button>
         </div>
+
+        {isPublic && <PublicLobbyBanner />}
 
         <div className="flex gap-1.5 sm:gap-2" aria-label={`Raum-Code ${game.code.split('').join(' ')}`}>
           {game.code.split('').map((ch, i) => (
@@ -100,19 +111,23 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                     />
                   )}
                 </span>
-                <span className={cx('min-w-0 flex-1', isHost && p.id !== me && 'pr-4')}>
+                <span className={cx('min-w-0 flex-1', canManage && p.id !== me && 'pr-4')}>
                   <span className="block truncate font-bold leading-tight">{nameOf(p.id)}</span>
                   <span className="block truncate text-xs text-ink-soft">
                     {p.id === state.hostId ? <><Icon name="crown" /> Host</> : p.bot ? (p.bot.level === 'sly' ? <><Icon name="fox" /> Gerissener Bot</> : <><Icon name="smile" /> Einfacher Bot</>) : p.id === me ? 'Du' : 'Höfling'}
                   </span>
-                  <span className="block truncate text-xs text-ink-soft"><Icon name="cards" /> {deck.name}</span>
+                  {!p.bot && ratings[p.id] ? (
+                    <RatingBadge {...ratings[p.id]} className="block truncate text-ink-soft" />
+                  ) : (
+                    <span className="block truncate text-xs text-ink-soft"><Icon name="cards" /> {deck.name}</span>
+                  )}
                   {teamMode && (
                     <span className="mt-0.5 inline-block rounded-full px-1.5 text-[0.7rem] font-bold text-parchment" style={{ backgroundColor: TEAM_INFO[(seat % 2) as 0 | 1].color }}>
                       <Icon name={TEAM_ICONS[(seat % 2) as 0 | 1]} /> {TEAM_INFO[(seat % 2) as 0 | 1].name}
                     </span>
                   )}
                 </span>
-                {isHost && p.id !== me && (
+                {canManage && p.id !== me && (
                   <button
                     type="button"
                     aria-label={`${nameOf(p.id)} entfernen`}
@@ -127,7 +142,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
           })}
         </ul>
 
-        {isHost && (
+        {canManage && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-ink-soft">Bot an den Tisch holen:</span>
             <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'easy' })}><Icon name="smile" /> Einfach</Button>
@@ -136,7 +151,9 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
         )}
 
         <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-line pt-5">
-          {isHost ? (
+          {isPublic ? (
+            <p className="font-bold text-ink-soft">Das Spiel startet automatisch.</p>
+          ) : isHost ? (
             <Button size="lg" onClick={() => g.dispatch({ type: 'start' }, { versioned: true })} disabled={g.busy || state.players.length < 2}>
               Spiel starten
             </Button>
@@ -145,7 +162,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
           )}
           <Button variant="secondary" className="lg:hidden" onClick={() => setSettingsOpen(true)}>Regeln & Kniffe</Button>
           <Button variant="ghost" onClick={leave}>Tisch verlassen</Button>
-          {state.players.length < 4 && <p className="w-full text-sm text-ink-soft">Ab 4 Spielern wird es richtig höfisch – fehlende Plätze kannst du mit Bots füllen.</p>}
+          {!isPublic && state.players.length < 4 && <p className="w-full text-sm text-ink-soft">Ab 4 Spielern wird es richtig höfisch – fehlende Plätze kannst du mit Bots füllen.</p>}
         </div>
       </Card>
 
@@ -179,7 +196,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
 
         <Card className="hidden flex-col gap-2 lg:flex">
           <h2 className="text-3xl font-bold">Regeln & Kniffe</h2>
-          <SettingsPanel />
+          {isPublic ? <PublicRules /> : <SettingsPanel />}
         </Card>
 
         <Card className="flex flex-col gap-3">
@@ -207,7 +224,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
       </div>
 
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Regeln & Kniffe" wide>
-        <div className="max-h-[60dvh] overflow-y-auto pr-1"><SettingsPanel /></div>
+        <div className="max-h-[60dvh] overflow-y-auto pr-1">{isPublic ? <PublicRules /> : <SettingsPanel />}</div>
         <Button onClick={() => setSettingsOpen(false)}>Fertig</Button>
       </Modal>
 

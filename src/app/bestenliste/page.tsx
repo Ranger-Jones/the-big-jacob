@@ -8,19 +8,24 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getLeaderboard, getMonthlyChampions, getMonthlyLeaderboard } from '@/server/profile-service';
 import { Icon, Medal } from '@/components/ui/icons';
+import { EloTable } from '@/components/rating/elo-table';
+import { getRatingLeaderboard } from '@/server/rating-service';
 
 export const metadata: Metadata = { title: 'Bestenliste' };
 
 export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ zeitraum?: string }> }) {
   const me = await requireUser();
   const admin = createAdminClient();
-  const monthly = (await searchParams).zeitraum === 'monat';
+  const view = (await searchParams).zeitraum;
+  const elo = view === 'elo';
+  const monthly = view === 'monat';
   const month = monthOf(new Date());
   const [rows, monthRows, champions] = await Promise.all([
-    monthly ? Promise.resolve([]) : getLeaderboard(admin),
+    monthly || elo ? Promise.resolve([]) : getLeaderboard(admin),
     monthly ? getMonthlyLeaderboard(admin, month) : Promise.resolve([]),
     getMonthlyChampions(admin, 1),
   ]);
+  const eloRows = elo ? await getRatingLeaderboard(admin) : [];
   const lastChampion = champions[0];
   const tab = (active: boolean) => cx('rounded-xl px-4 py-2 font-bold', active ? 'bg-gold text-ink' : 'bg-velvet-deep/60 text-parchment/80 hover:bg-white/10');
 
@@ -35,15 +40,16 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         </div>
       )}
       <nav className="flex gap-2" aria-label="Zeitraum">
-        <Link href="/bestenliste" className={tab(!monthly)} aria-current={!monthly ? 'page' : undefined}>Gesamt</Link>
+        <Link href="/bestenliste?zeitraum=elo" className={tab(elo)} aria-current={elo ? 'page' : undefined}>⚖️ Elo</Link>
+        <Link href="/bestenliste" className={tab(!monthly && !elo)} aria-current={!monthly && !elo ? 'page' : undefined}>Siege</Link>
         <Link href="/bestenliste?zeitraum=monat" className={tab(monthly)} aria-current={monthly ? 'page' : undefined}>{monthLabel(month)}</Link>
       </nav>
       <p className="-mt-2 text-parchment/75">
-        {monthly ? 'Die Saison läuft bis Monatsende. Wer dann vorne liegt, trägt den Titel einen Monat lang.' : 'Sortiert nach Siegen, dann nach Kronen (Runden als Großer Jakob). Kampagne und Tagesaufgabe zählen nicht mit.'}
+        {elo ? 'Die Elo-Wertung steigt, wenn du vor stärkeren Spielern landest – und fällt, wenn schwächere dich überholen. Es zählen die Online-Lobby (Bots mit fester Stärke) und private Spiele mit mindestens zwei Menschen bis zum Schluss.' : monthly ? 'Die Saison läuft bis Monatsende. Wer dann vorne liegt, trägt den Titel einen Monat lang.' : 'Sortiert nach Siegen, dann nach Kronen (Runden als Großer Jakob). Kampagne und Tagesaufgabe zählen nicht mit.'}
       </p>
 
       <Card className="overflow-x-auto p-0">
-        {monthly ? (
+        {elo ? <EloTable rows={eloRows} me={me.id} /> : monthly ? (
           monthRows.length === 0 ? (
             <p className="p-6 text-ink-soft">Diesen Monat wurde noch kein Spiel beendet. Die Krone ist noch zu haben!</p>
           ) : (

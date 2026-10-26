@@ -6,6 +6,7 @@ import {
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { isStale, LOBBY_IDLE_HOURS } from '@/lib/jakob/stale';
+import { bookGameResults } from './rating-service';
 import { fail, ok, STALE, type ServiceResult } from './result';
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -117,9 +118,15 @@ export async function insertGame(admin: AdminClient, state: GameState): Promise<
   return fail('Konnte keinen Raum-Code erzeugen. Bitte nochmal versuchen.');
 }
 
-/** Campaign progress and daily results are booked when a solo game ends. */
+/** Elo, experience, campaign progress and daily results are booked when a game ends. */
 async function afterFinish(admin: AdminClient, gameId: string, state: GameState) {
-  if (state.mode === 'normal') return;
+  try {
+    await bookGameResults(admin, gameId, state);
+  } catch (err) {
+    // The game itself is saved; a failed booking must not turn the last move into an error.
+    console.error('booking game results failed', gameId, err);
+  }
+  if (state.mode === 'normal' || state.mode === 'public') return;
   const human = state.players.find((p) => !p.bot);
   if (!human || human.left) return;
   const place = placements(state)[human.id] ?? 99;

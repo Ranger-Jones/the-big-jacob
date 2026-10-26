@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { GameRatingResult } from '@/components/rating/game-rating-result';
 import { Avatar } from '@/components/ui/avatar';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import { MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import { playSound } from '@/lib/sound';
 import { CAMPAIGN } from '@/lib/campaign';
-import { rematchAction } from '@/server/game-actions';
+import { playOnlineAction, rematchAction } from '@/server/game-actions';
 import { startCampaignAction } from '@/server/solo-actions';
 import { useTable } from './table-context';
 import { Icon, type IconName, Medal, MISSION_ICONS, STAGE_ICONS, TEAM_ICONS } from '@/components/ui/icons';
@@ -146,6 +147,8 @@ export function Results() {
         })}
       </div>
 
+      <GameRatingResult gameId={game.id} me={me} />
+
       <Card className="overflow-x-auto p-0">
         <table className="w-full min-w-[30rem] text-left">
           <thead>
@@ -228,9 +231,16 @@ export function Results() {
         </ul>
       )}
 
-      {state.mode === 'normal' ? (
+      {state.mode === 'normal' || state.mode === 'public' ? (
         <div className="flex flex-wrap justify-center gap-3">
-          <Button size="lg" onClick={rematch} disabled={busy}>{game.rematchGameId ? 'Zur Revanche' : 'Revanche'}</Button>
+          {state.mode === 'public' && (
+            <form action={playOnlineAction}>
+              <Button type="submit" size="lg"><Icon name="castle" /> Neue Online-Runde</Button>
+            </form>
+          )}
+          <Button size="lg" variant={state.mode === 'public' ? 'velvet' : 'primary'} onClick={rematch} disabled={busy}>
+            {game.rematchGameId ? 'Zur Revanche' : state.mode === 'public' ? 'Revanche (privat)' : 'Revanche'}
+          </Button>
           <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> Wiederholung</Link>
           <Link href="/" className={buttonClass('velvet', 'lg')}>Zur Startseite</Link>
         </div>

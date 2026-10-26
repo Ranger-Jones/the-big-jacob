@@ -30,7 +30,7 @@ export const getCurrentUser = cache(async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await createAdminClient()
-    .from('profiles').select('id, username, avatar_url, avatar_frame, table_felt').eq('id', user.id).maybeSingle();
+    .from('profiles').select('id, username, avatar_url, avatar_frame, table_felt, xp, rating').eq('id', user.id).maybeSingle();
   return data;
 });
 

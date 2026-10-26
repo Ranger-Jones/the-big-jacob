@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { RatingCard } from '@/components/rating/rating-card';
 import { StatsGrid } from '@/components/stats-grid';
+import { getRatingSummary } from '@/server/rating-service';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { cx } from '@/lib/cx';
@@ -32,8 +34,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const stats = await getStatsByUsername(admin, username);
   if (!stats) notFound();
   const isMe = stats.user_id === me.id;
-  const [history, champions, rivals, detailed] = await Promise.all([
+  const [history, champions, rivals, detailed, rating] = await Promise.all([
     getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12), getRivalries(admin, stats.user_id), getDetailedStats(admin, stats.user_id),
+    getRatingSummary(admin, stats.user_id),
   ]);
   const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
   const badges = badgesFor(stats);
@@ -63,6 +66,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           )}
         </div>
       </section>
+
+      {rating && <RatingCard summary={rating} />}
 
       <StatsGrid stats={stats} />
       <DetailedStatsSection stats={detailed} isMe={isMe} />

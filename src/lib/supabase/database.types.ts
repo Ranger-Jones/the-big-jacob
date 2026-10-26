@@ -551,14 +551,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"created_at": string,"default_deck": string | null,"id": string,"quick_emojis": (string)[] | null,"table_felt": string | null,"username": string
+                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"created_at": string,"default_deck": string | null,"id": string,"peak_rating": number,"quick_emojis": (string)[] | null,"rated_games": number,"rating": number,"table_felt": string | null,"username": string,"xp": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id": string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username": string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id": string,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username": string,"xp"?: number
                   }
                   Update: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username"?: string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username"?: string,"xp"?: number
                   }
                   Relationships: [
                     
@@ -595,12 +595,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"rating_history": {
+                  Row: {
+                    "created_at": string,"delta": number,"game_id": string,"place": number | null,"players": number,"rated": boolean,"rating_after": number,"rating_before": number,"user_id": string,"xp": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"delta": number,"game_id": string,"place"?: number | null,"players": number,"rated": boolean,"rating_after": number,"rating_before": number,"user_id": string,"xp": number
+                  }
+                  Update: {
+                    "created_at"?: string,"delta"?: number,"game_id"?: string,"place"?: number | null,"players"?: number,"rated"?: boolean,"rating_after"?: number,"rating_before"?: number,"user_id"?: string,"xp"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rating_history_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rating_history_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "rating_history_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "rating_history_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             "leaderboard": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"peak_rating": number,"rated_games": number,"rating": number,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null,"xp": number
                   }
                   ComputedFields: never
                   Relationships: [
@@ -608,7 +646,7 @@ isOneToOne: false
                   ]
                 },"player_stats": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"peak_rating": number,"rated_games": number,"rating": number,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null,"xp": number
                   }
                   ComputedFields: never
                   Relationships: [
@@ -617,7 +655,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "can_read_online_channel":
+            "apply_game_results":
+{ Args: { "p_entries": Json,"p_game_id": string }; Returns: undefined
+                           },
+"can_read_online_channel":
 { Args: { "topic": string }; Returns: boolean
                            },
 "can_use_game_channel":

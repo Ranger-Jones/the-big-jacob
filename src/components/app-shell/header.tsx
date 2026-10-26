@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { LevelPip } from '@/components/rating/rating-badge';
 import { Avatar } from '@/components/ui/avatar';
+import { levelFromXp } from '@/lib/jakob/rating';
 import { Logo } from '@/components/ui/logo';
 import { GATE_COOKIE, verifyGateToken } from '@/lib/gate';
 import { getFriendLists } from '@/lib/supabase/cached';
@@ -26,8 +28,9 @@ export async function Header() {
           <NavLink href="/bestenliste" icon="trophy">Bestenliste</NavLink>
           <NavLink href="/regeln" icon="scroll">Regeln</NavLink>
           <MusicToggle className="hidden text-parchment/80 sm:flex" />
-          <Link href={`/profil/${user.username}`} className="ml-1 shrink-0 rounded-full" aria-label="Dein Profil">
+          <Link href={`/profil/${user.username}`} className="relative ml-1 shrink-0 rounded-full" aria-label={`Dein Profil, Level ${levelFromXp(user.xp ?? 0)}`}>
             <Avatar profile={user} size="sm" />
+            <LevelPip xp={user.xp ?? 0} className="absolute -bottom-1.5 -right-1.5" />
           </Link>
         </nav>
       ) : unlocked && (

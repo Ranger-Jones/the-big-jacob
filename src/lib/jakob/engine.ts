@@ -4,7 +4,7 @@ import {
 import { chooseBotPlay, chooseBotTaxReturn, wantsRevolution } from './bots';
 import { bestCards, isUnbeatable, judgePlay, worstCards, type RuleContext } from './rules';
 import {
-  BOT_LEVELS, COURT_EVENTS, DEFAULT_SETTINGS, EMPTY_STATS, GOAL_OPTIONS, MAX_PLAYERS, MAX_PLAYERS_DOUBLE, MIN_PLAYERS,
+  BOT_LEVELS, COURT_EVENTS, DEFAULT_SETTINGS, EMPTY_STATS, GOAL_OPTIONS, MAX_PLAYERS, PUBLIC_FILL_THRESHOLD, PUBLIC_FILL_TO, PUBLIC_MAX_HUMANS, PUBLIC_WAIT_SECONDS, MAX_PLAYERS_DOUBLE, MIN_PLAYERS,
   MISSION_POINTS, MISSIONS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS,
   type BotLevel, type GameAction, type GameState, type LogEntry, type LogKind, type MissionId, type Player,
   type PlayerStats, type PrivateHand, type PublicState, type RoundResult, type Settings,
@@ -78,6 +78,8 @@ export function createGameState(hostId: string, settings: Settings = DEFAULT_SET
     missionsRevealed: null,
     mode: 'normal',
     modeRef: null,
+    autoStartAt: null,
+    kicked: [],
     replay: null,
     hands: {},
     notes: {},
@@ -99,6 +101,17 @@ export function createRematchState(hostId: string, previous: GameState): GameSta
   return state;
 }
 
+/** Fixed rules of the open online lobby: quick turns so strangers keep the table moving. */
+export const PUBLIC_SETTINGS: Settings = { ...DEFAULT_SETTINGS, rounds: 5, turnSeconds: 30, chat: true, tracker: true };
+
+/** A new open online lobby that starts by itself after PUBLIC_WAIT_SECONDS. */
+export function createPublicLobbyState(hostId: string, now: number = Date.now()): GameState {
+  const state = createGameState(hostId, PUBLIC_SETTINGS);
+  state.mode = 'public';
+  state.autoStartAt = new Date(now + PUBLIC_WAIT_SECONDS * 1000).toISOString();
+  return state;
+}
+
 /** Older or partial settings objects are filled with defaults. */
 export function getSettings(state: Pick<GameState, 'settings'>): Settings {
   return { ...DEFAULT_SETTINGS, ...(state.settings ?? {}) };
@@ -112,7 +125,8 @@ export function normalizeState(state: GameState): GameState {
   return filled;
 }
 
-export function maxPlayers(state: Pick<GameState, 'settings'>): number {
+export function maxPlayers(state: Pick<GameState, 'settings'> & { mode?: GameState['mode'] }): number {
+  if (state.mode === 'public') return PUBLIC_MAX_HUMANS;
   return getSettings(state).doubleDeck ? MAX_PLAYERS_DOUBLE : MAX_PLAYERS;
 }
 
@@ -939,6 +953,22 @@ function validSettingsPatch(patch: Partial<Settings>): boolean {
   return true;
 }
 
+/** Deals the first round: shared by the host's start and the open lobby's auto start. */
+function beginGame(state: GameState, rand: RandInt, now: number) {
+  const settings = getSettings(state);
+  state.status = 'playing';
+  state.points = Object.fromEntries(state.players.map((p) => [p.id, 0]));
+  state.stats = Object.fromEntries(state.players.map((p) => [p.id, { ...EMPTY_STATS, byRank: Array(13).fill(0) }]));
+  state.teams = settings.teams ? Object.fromEntries(state.players.map((p, i) => [p.id, (i % 2) as 0 | 1])) : null;
+  if (settings.missions) assignMissions(state, rand);
+  state.moveSeq += 1;
+  // The daily challenge skips the draw so that everybody gets the same seat and deal.
+  if (state.seed !== null) {
+    state.phase = 'draw';
+    beginRound(state, state.players.map((p) => p.id), rand, now);
+  } else startDraw(state, rand, now);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Entry point
 
@@ -981,6 +1011,7 @@ export function applyAction(
     }
 
     case 'start': {
+      if (state.mode === 'public') return fail('Die offene Lobby startet von selbst.');
       if (!isHost) return fail('Nur der Host kann starten.');
       if (state.status !== 'lobby') return fail('Das Spiel läuft schon.');
       if (state.players.length < MIN_PLAYERS) return fail('Ihr braucht mindestens 2 Spieler – lade Freunde ein oder hol dir einen Bot.');
@@ -988,21 +1019,31 @@ export function applyAction(
       if (settings.teams && (state.players.length < 4 || state.players.length % 2 !== 0)) {
         return fail('Für Adel gegen Volk braucht ihr eine gerade Spielerzahl ab 4.');
       }
-      state.status = 'playing';
-      state.points = Object.fromEntries(state.players.map((p) => [p.id, 0]));
-      state.stats = Object.fromEntries(state.players.map((p) => [p.id, { ...EMPTY_STATS, byRank: Array(13).fill(0) }]));
-      state.teams = settings.teams ? Object.fromEntries(state.players.map((p, i) => [p.id, (i % 2) as 0 | 1])) : null;
-      if (settings.missions) assignMissions(state, rand);
-      state.moveSeq += 1;
-      // The daily challenge skips the draw so that everybody gets the same seat and deal.
-      if (state.seed !== null) {
-        state.phase = 'draw';
-        beginRound(state, state.players.map((p) => p.id), rand, now);
-      } else startDraw(state, rand, now);
+      beginGame(state, rand, now);
+      return done();
+    }
+
+    case 'autoStart': {
+      if (state.mode !== 'public') return fail('Nur die offene Lobby startet automatisch.');
+      if (!me || me.left) return fail('Du bist nicht in diesem Spiel.');
+      if (state.status !== 'lobby') return { ok: true, state: input };
+      const humans = state.players.filter((p) => !p.bot).length;
+      const due = !!state.autoStartAt && now >= Date.parse(state.autoStartAt);
+      if (!due && humans < PUBLIC_MAX_HUMANS) return fail('Die Lobby wartet noch auf Mitspieler.');
+      // Few people came: bots take the empty seats. Otherwise the table starts as it is.
+      if (humans <= PUBLIC_FILL_THRESHOLD) {
+        while (state.players.length < PUBLIC_FILL_TO) {
+          const identity = nextBotIdentity(state);
+          const level: BotLevel = state.players.length % 2 === 0 ? 'easy' : 'sly';
+          state.players.push({ id: `bot-${rand(2 ** 30).toString(36)}${rand(2 ** 30).toString(36)}`, left: false, deckId: null, bot: { ...identity, level } });
+        }
+      }
+      beginGame(state, rand, now);
       return done();
     }
 
     case 'updateSettings': {
+      if (state.mode === 'public') return fail('In der offenen Lobby gelten feste Regeln.');
       if (!isHost) return fail('Nur der Host kann Einstellungen ändern.');
       if (state.status !== 'lobby') return fail('Einstellungen gehen nur in der Lobby.');
       if (!action.settings || !validSettingsPatch(action.settings)) return fail('Ungültige Einstellung.');
@@ -1014,6 +1055,7 @@ export function applyAction(
     }
 
     case 'addBot': {
+      if (state.mode === 'public') return fail('Bots kommen in der offenen Lobby automatisch dazu.');
       if (!isHost) return fail('Nur der Host kann Bots holen.');
       if (state.status !== 'lobby') return fail('Bots gehen nur in der Lobby.');
       if (!(BOT_LEVELS as readonly string[]).includes(action.level)) return fail('Unbekannte Bot-Stufe.');
@@ -1025,6 +1067,8 @@ export function applyAction(
     }
 
     case 'removePlayer': {
+      // Nobody owns the open lobby: the random host must not be able to throw strangers out (and cost them Elo).
+      if (state.mode === 'public') return fail('In der offenen Lobby kann niemand entfernt werden.');
       if (!isHost) return fail('Nur der Host kann Spieler entfernen.');
       if (action.playerId === actor) return fail('Du kannst dich nicht selbst entfernen.');
       const target = player(state, action.playerId);
@@ -1035,6 +1079,8 @@ export function applyAction(
         return done();
       }
       if (state.status !== 'playing') return fail('Das Spiel ist schon vorbei.');
+      // Kicked players are not booked as losers in the rating (only leaving on your own costs Elo).
+      if (!target.bot) state.kicked = [...state.kicked, target.id];
       dropPlayer(state, target.id, rand, now);
       return done();
     }

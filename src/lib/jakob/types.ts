@@ -188,7 +188,15 @@ export interface ReplayRound {
   moves: ReplayMove[];
 }
 
-export type GameMode = 'normal' | 'campaign' | 'daily';
+export type GameMode = 'normal' | 'campaign' | 'daily' | 'public';
+
+/** Open online lobby: waiting time, size and bot fill-up. */
+export const PUBLIC_WAIT_SECONDS = 300;
+export const PUBLIC_MAX_HUMANS = 6;
+/** If at most this many people are waiting when the time is up, bots fill the table … */
+export const PUBLIC_FILL_THRESHOLD = 3;
+/** … up to this many seats. */
+export const PUBLIC_FILL_TO = 5;
 
 /** Everything every member of the game may see. */
 export interface PublicState {
@@ -243,6 +251,10 @@ export interface PublicState {
   /** Solo modes: campaign level ("1".."8") or daily challenge date. */
   mode: GameMode;
   modeRef: string | null;
+  /** Open online lobby: when the game starts at the latest (bots fill up if few people came). */
+  autoStartAt: string | null;
+  /** Humans the host removed from a running game: not booked in the rating. */
+  kicked: string[];
   /** Full replay, revealed when the game is over. */
   replay: ReplayRound[] | null;
 }
@@ -275,6 +287,7 @@ export type GameAction =
   | { type: 'join' }
   | { type: 'leave' }
   | { type: 'start' }
+  | { type: 'autoStart' }
   | { type: 'updateSettings'; settings: Partial<Settings> }
   | { type: 'addBot'; level: BotLevel }
   | { type: 'removePlayer'; playerId: string }

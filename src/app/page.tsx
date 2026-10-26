@@ -4,6 +4,7 @@ import { FriendsOnline } from '@/components/dashboard/friends-online';
 import { HomeHero } from '@/components/dashboard/home-hero';
 import { InviteList } from '@/components/dashboard/invite-list';
 import { PlayActions } from '@/components/dashboard/play-actions';
+import { PlayOnlineCard } from '@/components/rating/play-online-card';
 import { HeroCards } from '@/components/landing/hero-cards';
 import { StatsGrid } from '@/components/stats-grid';
 import { buttonClass } from '@/components/ui/button';
@@ -98,6 +99,8 @@ export default async function Home() {
           </span>
         </Card>
       )}
+
+      <PlayOnlineCard userId={user.id} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link href="/kampagne" className="group">

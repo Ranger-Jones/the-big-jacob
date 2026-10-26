@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { canUseDeck, getDefaultDeckId } from './deck-service';
 import { createGame, joinGame, performAction, requestRematch, type Expectation } from './game-service';
+import { findOrCreatePublicLobby } from './matchmaking-service';
 import { fail } from './result';
 import { sendPush } from './push-service';
 import { inviteToGame } from './social-service';
@@ -19,6 +20,7 @@ const literalUnion = <T extends readonly (string | number | null)[]>(values: T) 
 const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('leave') }),
   z.object({ type: z.literal('start') }),
+  z.object({ type: z.literal('autoStart') }),
   z.object({
     type: z.literal('updateSettings'),
     settings: z.object({
@@ -73,6 +75,15 @@ export async function createGameAction() {
   const user = await requireUser();
   const admin = createAdminClient();
   const res = await createGame(admin, user.id, await getDefaultDeckId(admin, user.id));
+  if (!res.ok) throw new Error(res.error);
+  redirect(`/spiel/${res.data.code}`);
+}
+
+/** "Online spielen": into the open lobby (or a new one). */
+export async function playOnlineAction() {
+  const user = await requireUser();
+  const admin = createAdminClient();
+  const res = await findOrCreatePublicLobby(admin, user.id, await getDefaultDeckId(admin, user.id));
   if (!res.ok) throw new Error(res.error);
   redirect(`/spiel/${res.data.code}`);
 }

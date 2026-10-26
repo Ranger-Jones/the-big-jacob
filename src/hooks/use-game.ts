@@ -7,6 +7,7 @@ import { isAllowedEmoji } from '@/lib/emojis';
 import { removeCards } from '@/lib/jakob/cards';
 import { botToMove, type GameAction, type PrivateHand, type PublicState } from '@/lib/jakob/engine';
 import { judgePlay } from '@/lib/jakob/rules';
+import { PUBLIC_MAX_HUMANS } from '@/lib/jakob/types';
 import { isStaleBuildError, reloadOnce } from '@/lib/stale-build';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { gameAction } from '@/server/game-actions';
@@ -282,6 +283,26 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       if (retry) clearTimeout(retry);
     };
   }, [deadline, moveSeq, status, driverRank, clockOffset, dispatch]);
+
+  // Open online lobby: when the waiting time is up (or the table is full) someone at the table starts it.
+  const autoStartAt = state?.mode === 'public' && status === 'lobby' && state.autoStartAt ? Date.parse(state.autoStartAt) : null;
+  const lobbyFull = state?.mode === 'public' && (state.players.filter((p) => !p.bot).length >= PUBLIC_MAX_HUMANS);
+  const version = game?.version ?? -1;
+  useEffect(() => {
+    if (!autoStartAt || driverRank < 0) return;
+    const wait = lobbyFull ? 800 : autoStartAt - (Date.now() + clockOffset) + 800 + driverRank * 2000;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const fire = () => {
+      void dispatch({ type: 'autoStart' }, { silent: true }).then((okay) => {
+        if (!okay && gameRef.current?.state.status === 'lobby') retry = setTimeout(fire, 2000);
+      });
+    };
+    const t = setTimeout(fire, Math.max(0, wait));
+    return () => {
+      clearTimeout(t);
+      if (retry) clearTimeout(retry);
+    };
+  }, [autoStartAt, lobbyFull, version, driverRank, clockOffset, dispatch]);
 
   const players = new Set(game?.state.players.map((p) => p.id) ?? []);
   const spectators = watchers.filter((id) => !players.has(id) && online.has(id));
