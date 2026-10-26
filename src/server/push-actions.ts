@@ -23,7 +23,13 @@ export async function removePushSubscriptionAction(endpoint: string) {
   await removePushSubscription(createAdminClient(), user.id, endpoint);
 }
 
+const lastTest = new Map<string, number>();
+
 export async function testPushAction() {
   const user = await requireUser();
+  // Best effort per server instance; a test push only ever reaches the caller's own devices.
+  const now = Date.now();
+  if (now - (lastTest.get(user.id) ?? 0) < 30_000) return;
+  lastTest.set(user.id, now);
   await sendPush(createAdminClient(), [user.id], { title: '👑 Der Große Jakob', body: 'So sehen deine Benachrichtigungen aus.', url: '/', tag: 'test' });
 }

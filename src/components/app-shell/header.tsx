@@ -22,6 +22,7 @@ export async function Header() {
         <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">
           <NavLink href="/decks" icon="🎴">Decks</NavLink>
           <NavLink href="/freunde" icon="🤝" badge={requests}>Freunde</NavLink>
+          <NavLink href="/hoefe" icon="🏰">Höfe</NavLink>
           <NavLink href="/bestenliste" icon="🏆">Bestenliste</NavLink>
           <NavLink href="/regeln" icon="📜">Regeln</NavLink>
           <MusicToggle className="hidden text-parchment/80 sm:flex" />
