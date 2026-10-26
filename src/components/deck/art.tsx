@@ -224,7 +224,7 @@ const cosmos: Record<string, ReactNode> = {
   ),
   'k-crescent': (
     <Sky id="crescent">
-      <path d="M58 22 A28 28 0 1 0 58 78 A22 22 0 1 1 58 22 Z" fill="#ffe7a3" />
+      <path d="M58 22 A30 30 0 1 0 58 78 A40 40 0 0 1 58 22 Z" fill="#ffe7a3" />
       <Star cx={70} cy={34} r={6} fill={STARLIGHT} />
     </Sky>
   ),
@@ -393,8 +393,8 @@ export function FullCardArt({ id, rank, bg, className, numeral = true }: { id: s
           {Array.from({ length: 16 }, (_, i) => (
             <polygon key={i} points="50,88 45,-60 55,-60" fill="#ffffff" opacity="0.06" transform={`rotate(${i * 22.5} 50 88)`} />
           ))}
+          <g transform="translate(15 53) scale(0.7)">{ART[id]}</g>
           {numeral && <RankNumeral rank={rank} id={id} />}
-          <g transform="translate(11 56) scale(0.78)">{ART[id]}</g>
         </g>
       )}
     </svg>

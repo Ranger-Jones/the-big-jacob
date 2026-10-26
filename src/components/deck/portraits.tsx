@@ -38,7 +38,7 @@ export interface PortraitSpec {
   hideNumeral?: boolean;
 }
 
-/** Big gold numeral worked into full-card art; the figure's headwear overlaps it slightly. */
+/** Big gold numeral at the top of full-card art, drawn above the motif with a dark outline. */
 export function RankNumeral({ rank, id }: { rank: number; id: string }) {
   const grad = `numeral-${id}`;
   const label = rank === 13 ? null : String(rank);
@@ -96,7 +96,7 @@ export function Portrait(p: PortraitSpec) {
   );
 }
 
-/** Full card face: scene, rays, big numeral and the figure scaled up so the shoulders meet the bottom edge. */
+/** Full card face: scene, rays, the figure (shoulders meet the bottom edge) and the big numeral above it. */
 function CardPortrait(p: PortraitSpec) {
   const id = `card-${p.id}`;
   return (
@@ -113,11 +113,13 @@ function CardPortrait(p: PortraitSpec) {
       {Array.from({ length: 16 }, (_, i) => (
         <polygon key={i} points="50,78 45,-60 55,-60" fill="#ffffff" opacity="0.07" transform={`rotate(${i * 22.5} 50 78)`} />
       ))}
-      <circle cx="50" cy="80" r="38" fill="#ffffff" opacity="0.08" />
-      {!p.hideNumeral && <RankNumeral rank={p.rank ?? 1} id={p.id} />}
-      <g transform="translate(-7.5 32) scale(1.15)">
+      <circle cx="50" cy="84" r="36" fill="#ffffff" opacity="0.08" />
+      {/* The figure stands under the numeral; tall headwear may tuck behind it … */}
+      <g transform="translate(0 37) scale(1)">
         <Figure {...p} />
       </g>
+      {/* … and the numeral is drawn last, so nothing can ever cover it. */}
+      {!p.hideNumeral && <RankNumeral rank={p.rank ?? 1} id={p.id} />}
     </g>
   );
 }
