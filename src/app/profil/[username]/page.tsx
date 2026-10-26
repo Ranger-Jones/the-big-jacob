@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { StatsGrid } from '@/components/stats-grid';
 import { Avatar } from '@/components/ui/avatar';
@@ -9,8 +10,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { signOut } from '@/server/auth-actions';
 import { monthTitle } from '@/lib/months';
-import { badgesFor, getHistory, getMonthlyChampions, getStatsByUsername } from '@/server/profile-service';
+import { badgesFor, getHistory, getMonthlyChampions, getRivalries, getStatsByUsername } from '@/server/profile-service';
 import { AvatarUpload } from './avatar-upload';
+import { AppSettings } from '@/components/app-shell/pwa';
 import { CosmeticsPicker } from './cosmetics-picker';
 import { RenameForm } from './rename-form';
 
@@ -29,7 +31,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const stats = await getStatsByUsername(admin, username);
   if (!stats) notFound();
   const isMe = stats.user_id === me.id;
-  const [history, champions] = await Promise.all([getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12)]);
+  const [history, champions, rivals] = await Promise.all([getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12), getRivalries(admin, stats.user_id)]);
   const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
   const badges = badgesFor(stats);
 
@@ -62,6 +64,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       <StatsGrid stats={stats} />
 
       {isMe && <CosmeticsPicker stats={stats} profile={stats} felt={me.table_felt} />}
+      {isMe && <Card><AppSettings /></Card>}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-4xl font-bold">Abzeichen</h2>
@@ -82,6 +85,32 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           ))}
         </ul>
       </section>
+
+      {rivals.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-4xl font-bold">Rivalitäten</h2>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {rivals.map((r) => {
+              const lead = r.wins - r.losses;
+              return (
+                <li key={r.profile.id}>
+                  <Card className="flex items-center gap-3 p-3">
+                    <Avatar profile={r.profile} size="sm" />
+                    <span className="min-w-0 flex-1">
+                      <Link href={`/profil/${r.profile.username}`} className="block truncate font-bold hover:underline">{r.profile.username}</Link>
+                      <span className="block text-xs text-ink-soft">{r.games} {r.games === 1 ? 'Spiel' : 'Spiele'} zusammen</span>
+                    </span>
+                    <span className={cx('tabular rounded-xl px-3 py-1 font-display text-2xl font-bold', lead > 0 ? 'bg-vert/20 text-vert' : lead < 0 ? 'bg-wax/15 text-wax' : 'bg-parchment-dark')}>
+                      {r.wins} : {r.losses}
+                    </span>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="-mt-1 text-xs text-parchment/60">Gezählt wird, wer im gemeinsamen Spiel vor dem anderen landete.</p>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-4xl font-bold">Letzte Spiele</h2>

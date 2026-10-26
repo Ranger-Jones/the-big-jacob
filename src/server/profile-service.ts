@@ -251,3 +251,40 @@ export async function getMonthlyChampions(admin: AdminClient, count = 12, now = 
   }
   return result;
 }
+
+export interface Rivalry { profile: ProfileLite; games: number; wins: number; losses: number }
+
+/** Head-to-head record against everyone this player met in finished normal games. */
+export async function getRivalries(admin: AdminClient, userId: string, limit = 8): Promise<Rivalry[]> {
+  const { data: mine, error } = await admin.from('game_players')
+    .select('game_id, place, games!inner(status, mode)')
+    .eq('user_id', userId).eq('left_game', false).eq('games.status', 'finished').eq('games.mode', 'normal');
+  if (error) throw error;
+  if (mine.length === 0) return [];
+  const myPlace = new Map(mine.map((m) => [m.game_id, m.place ?? 99]));
+  const { data: others, error: e2 } = await admin.from('game_players')
+    .select('game_id, user_id, place, left_game, profiles(id, username, avatar_url, avatar_frame)')
+    .in('game_id', [...myPlace.keys()]).neq('user_id', userId);
+  if (e2) throw e2;
+  const table = new Map<string, Rivalry>();
+  for (const o of others) {
+    if (o.left_game) continue;
+    const r = table.get(o.user_id) ?? { profile: o.profiles as ProfileLite, games: 0, wins: 0, losses: 0 };
+    r.games += 1;
+    const mineP = myPlace.get(o.game_id) ?? 99;
+    const theirs = o.place ?? 99;
+    if (mineP < theirs) r.wins += 1;
+    else if (mineP > theirs) r.losses += 1;
+    table.set(o.user_id, r);
+  }
+  return [...table.values()].sort((a, b) => b.games - a.games || b.wins - a.wins).slice(0, limit);
+}
+
+/** Most wins among the given players in the last seven days (normal games). */
+export async function getKingOfWeek(admin: AdminClient, userIds: string[]): Promise<PeriodRow | null> {
+  if (userIds.length === 0) return null;
+  const from = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const rows = await finishedGamePlayers(admin, from, new Date(Date.now() + 60_000).toISOString());
+  const table = aggregate(rows.filter((r) => userIds.includes(r.user_id)));
+  return table[0] && table[0].wins > 0 ? table[0] : null;
+}

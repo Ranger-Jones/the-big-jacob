@@ -5,7 +5,7 @@ import { berlinDay, DAILY_BOTS, DAILY_SETTINGS, daySeed } from '@/lib/daily';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getDefaultDeckId } from './deck-service';
-import { createSoloGame, findOpenSoloGame, hasSoloGame } from './game-service';
+import { createSoloGame, findOpenSoloGame } from './game-service';
 
 export async function startCampaignAction(level: number): Promise<{ error?: string }> {
   const user = await requireUser();
@@ -33,7 +33,9 @@ export async function startDailyAction(): Promise<{ error?: string }> {
   const open = await findOpenSoloGame(admin, user.id, 'daily', day);
   if (open) redirect(`/spiel/${open}`);
   // Leaving the table also uses up the attempt – otherwise the known deal could be replayed.
-  if (await hasSoloGame(admin, user.id, 'daily', day)) return { error: 'Du hast die heutige Herausforderung schon begonnen. Morgen gibt es eine neue!' };
+  // The primary key of daily_attempts makes this race-free: only one request can claim the day.
+  const { error: claimed } = await admin.from('daily_attempts').insert({ day, user_id: user.id });
+  if (claimed) return { error: 'Du hast die heutige Herausforderung schon begonnen. Morgen gibt es eine neue!' };
   const res = await createSoloGame(admin, user.id, {
     mode: 'daily', ref: day, settings: DAILY_SETTINGS, bots: Array(DAILY_BOTS).fill('sly'), seed: daySeed(day),
     deckId: await getDefaultDeckId(admin, user.id),

@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
 import { z } from 'zod';
 import type { GameAction } from '@/lib/jakob/engine';
 import { BOT_LEVELS, GOAL_OPTIONS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS } from '@/lib/jakob/types';
@@ -8,6 +9,7 @@ import { requireUser } from '@/lib/supabase/server';
 import { canUseDeck, getDefaultDeckId } from './deck-service';
 import { createGame, joinGame, performAction, requestRematch, type Expectation } from './game-service';
 import { fail } from './result';
+import { sendPush } from './push-service';
 import { inviteToGame } from './social-service';
 
 const cards = z.array(z.number().int().min(1).max(13)).min(1).max(160);
@@ -91,7 +93,23 @@ export async function gameAction(gameId: string, action: GameAction, expected?: 
   if (parsed.data.type === 'setDeck' && !(await canUseDeck(admin, user.id, parsed.data.deckId))) {
     return fail('Dieses Deck gehört dir nicht. Kopier es dir zuerst unter „Decks“.');
   }
-  return performAction(admin, user.id, gameId, parsed.data as GameAction, exp.data);
+  const res = await performAction(admin, user.id, gameId, parsed.data as GameAction, exp.data);
+  // "Du bist dran": notify the next human when the turn moved to them.
+  if (res.ok) {
+    const { state, previousTurn } = res.data;
+    const next = state.phase === 'play' ? state.turn : null;
+    const nextPlayer = state.players.find((p) => p.id === next);
+    if (next && next !== previousTurn && next !== user.id && nextPlayer && !nextPlayer.bot && !nextPlayer.autopilot) {
+      const code = (await admin.from('games').select('code').eq('id', gameId).single()).data?.code;
+      after(() => sendPush(admin, [next], {
+        title: '👑 Du bist dran!',
+        body: state.trick ? 'Am Tisch wartet ein Stich auf dich.' : 'Du spielst aus.',
+        url: `/spiel/${code}`,
+        tag: `turn-${gameId}`,
+      }));
+    }
+  }
+  return res;
 }
 
 export async function rematchAction(gameId: string) {
@@ -103,5 +121,13 @@ export async function rematchAction(gameId: string) {
 export async function inviteAction(gameId: string, friendId: string) {
   const user = await requireUser();
   if (!uuid.safeParse(gameId).success || !uuid.safeParse(friendId).success) return fail('Ungültige Aktion.');
-  return inviteToGame(createAdminClient(), user.id, gameId, friendId);
+  const admin = createAdminClient();
+  const res = await inviteToGame(admin, user.id, gameId, friendId);
+  if (res.ok) {
+    const code = (await admin.from('games').select('code').eq('id', gameId).single()).data?.code;
+    after(() => sendPush(admin, [friendId], {
+      title: '🎴 Einladung an den Tisch', body: `${user.username} lädt dich zum Großen Jakob ein.`, url: `/spiel/${code}`, tag: `invite-${gameId}`,
+    }));
+  }
+  return res;
 }

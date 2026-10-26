@@ -159,13 +159,6 @@ export async function createSoloGame(
   return created.ok ? ok({ code: created.data.code }) : created;
 }
 
-/** Any game (also left or finished) of a solo kind for this user – each daily challenge allows one attempt. */
-export async function hasSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<boolean> {
-  const { data } = await admin.from('games').select('id, game_players!inner(user_id)')
-    .eq('mode', mode).eq('mode_ref', ref).eq('game_players.user_id', userId).limit(1);
-  return (data?.length ?? 0) > 0;
-}
-
 /** Unfinished solo game of this kind, so a reload continues instead of starting over. */
 export async function findOpenSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<string | null> {
   const { data } = await admin.from('games').select('code, game_players!inner(user_id, left_game)')
@@ -241,7 +234,7 @@ function matches(game: GameRow, expected: Expectation): boolean {
   return game.state.moveSeq === expected.moveSeq;
 }
 
-export interface ActionOutcome { version: number; state: PublicState; hand: PrivateHand }
+export interface ActionOutcome { version: number; state: PublicState; hand: PrivateHand; previousTurn?: string | null }
 
 /**
  * Applies an action. With an expectation a mismatch yields STALE. Version conflicts while saving are
@@ -265,7 +258,7 @@ export async function performAction(
     if (version !== 'conflict') {
       if (action.type === 'removePlayer' && game.state.status === 'lobby') await notifyKicked(admin, gameId, action.playerId);
       if (res.state.status === 'finished' && game.state.status !== 'finished') await afterFinish(admin, gameId, res.state);
-      return ok({ version, state: publicState(res.state), hand: privateHand(res.state, userId) });
+      return ok({ version, state: publicState(res.state), hand: privateHand(res.state, userId), previousTurn: game.state.phase === 'play' ? game.state.turn : null });
     }
     if (typeof expected === 'number') return fail(STALE);
   }

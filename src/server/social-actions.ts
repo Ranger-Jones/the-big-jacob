@@ -1,8 +1,10 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
+import { sendPush } from './push-service';
 import { fail } from './result';
 import {
   removeFriend, respondFriendRequest, respondInvite, searchProfiles, sendFriendRequest,
@@ -22,8 +24,17 @@ export async function sendFriendRequestAction(username: string) {
   const user = await requireUser();
   const q = name.safeParse(username);
   if (!q.success) return fail('Benutzer nicht gefunden.');
-  const res = await sendFriendRequest(createAdminClient(), user.id, q.data);
+  const admin = createAdminClient();
+  const res = await sendFriendRequest(admin, user.id, q.data);
   revalidatePath('/freunde');
+  if (res.ok && res.data.status === 'pending') {
+    const { data: target } = await admin.from('profiles').select('id').eq('username', q.data).maybeSingle();
+    if (target) {
+      after(() => sendPush(admin, [target.id], {
+        title: '🤝 Freundschaftsanfrage', body: `${user.username} möchte mit dir befreundet sein.`, url: '/freunde', tag: `friend-${user.id}`,
+      }));
+    }
+  }
   return res;
 }
 

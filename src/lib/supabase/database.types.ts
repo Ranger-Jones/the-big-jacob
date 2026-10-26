@@ -93,6 +93,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"daily_attempts": {
+                  Row: {
+                    "created_at": string,"day": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"day": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"day"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "daily_attempts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "daily_attempts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "daily_attempts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"daily_results": {
                   Row: {
                     "created_at": string,"day": string,"game_id": string | null,"place": number,"points": number,"user_id": string

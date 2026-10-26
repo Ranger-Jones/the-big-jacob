@@ -12,7 +12,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { CAMPAIGN, campaignTitle } from '@/lib/campaign';
 import { berlinDay } from '@/lib/daily';
-import { getStatsByUsername, listActiveGames } from '@/server/profile-service';
+import { getKingOfWeek, getStatsByUsername, listActiveGames } from '@/server/profile-service';
+import { Avatar } from '@/components/ui/avatar';
 import { listFriendTables } from '@/server/spectate-service';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { listPendingInvites } from '@/server/social-service';
@@ -32,6 +33,7 @@ export default async function Home() {
     admin.from('daily_results').select('points').eq('day', berlinDay()).eq('user_id', user.id).maybeSingle(),
   ]);
   const level = progress?.campaign_level ?? 0;
+  const king = await getKingOfWeek(admin, [user.id, ...friends.friends.map((f) => f.profile.id)]);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 pb-12">
@@ -79,6 +81,20 @@ export default async function Home() {
               </li>
             ))}
           </ul>
+        </Card>
+      )}
+
+      {king && (
+        <Card tone="velvet" className="flex items-center gap-4 ring-gold/60">
+          <span className="relative">
+            <Avatar profile={king} size="lg" className="ring-4 ring-gold" />
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl drop-shadow" aria-hidden>👑</span>
+          </span>
+          <span>
+            <span className="block text-sm font-bold text-gold-soft">König der Woche</span>
+            <span className="block font-display text-3xl font-bold">{king.user_id === user.id ? 'Du!' : king.username}</span>
+            <span className="block text-parchment/75">{king.wins} {king.wins === 1 ? 'Sieg' : 'Siege'} in den letzten 7 Tagen unter dir und deinen Freunden</span>
+          </span>
         </Card>
       )}
 

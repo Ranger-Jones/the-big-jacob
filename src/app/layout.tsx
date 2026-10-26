@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { Backdrop } from '@/components/app-shell/backdrop';
 import { Header } from '@/components/app-shell/header';
 import { HeaderSlot } from '@/components/app-shell/header-slot';
+import { PwaRegister } from '@/components/app-shell/pwa';
 import { InviteListener } from '@/components/app-shell/invite-listener';
 import { OnlinePresenceProvider } from '@/components/app-shell/online-presence';
 import { fontVariables } from '@/lib/fonts';
@@ -13,6 +14,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'Der Große Jakob', template: '%s – Der Große Jakob' },
+  appleWebApp: { capable: true, title: 'Jakob', statusBarStyle: 'black-translucent' },
   description: 'Das Kartenspiel um Krone und Knechtschaft – online mit deinen Freunden.',
 };
 
@@ -31,6 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="de" className={`${fontVariables} h-full antialiased`}>
       <body className="relative isolate flex min-h-full flex-col">
         <Backdrop />
+        <PwaRegister />
         {user ? (
           <OnlinePresenceProvider me={user.id} friendIds={friendIds}>
             {content}

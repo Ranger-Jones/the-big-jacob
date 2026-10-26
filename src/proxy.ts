@@ -6,5 +6,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)'],
+  // App shell files must load before the access question (installing the app, push notifications).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|pwa-icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)'],
 };
