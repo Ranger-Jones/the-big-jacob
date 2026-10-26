@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PORTRAIT_IDS, PORTRAITS, portraitCard, RankNumeral, RESCUE_IDS } from './portraits';
+import { MORE_PORTRAITS, OFFICE_IDS, PIRATE_IDS, UNI_IDS } from './portraits-more';
 
 /**
  * Hand-drawn SVG illustrations for card faces and backs (viewBox 0 0 100 100).
@@ -343,11 +344,14 @@ const gems: Record<string, ReactNode> = {
   'g-pebble': <Treasure><Gem shape="cabochon" color="#7d6e5f" light="#b7a896" dark="#3f362c" /></Treasure>,
 };
 
-export const ART: Record<string, ReactNode> = { ...PORTRAITS, ...heraldry, ...cosmos, ...gems };
+export const ART: Record<string, ReactNode> = { ...PORTRAITS, ...MORE_PORTRAITS, ...heraldry, ...cosmos, ...gems };
 
 export const ART_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Hofstaat', ids: PORTRAIT_IDS },
   { label: 'Rettungswache', ids: RESCUE_IDS },
+  { label: 'Piraten', ids: PIRATE_IDS },
+  { label: 'Uni-Leben', ids: UNI_IDS },
+  { label: 'Amtsstube', ids: OFFICE_IDS },
   { label: 'Heraldik', ids: Object.keys(heraldry) },
   { label: 'Kosmos', ids: Object.keys(cosmos) },
   { label: 'Schatzkammer', ids: Object.keys(gems) },
@@ -373,7 +377,7 @@ export function CardArt({ id, className }: { id: string; className?: string }) {
  */
 export function FullCardArt({ id, rank, bg, className, numeral = true }: { id: string; rank: number; bg: string; className?: string; numeral?: boolean }) {
   if (!hasArt(id)) return null;
-  const portrait = portraitCard(id, rank, numeral);
+  const portrait = portraitCard(ART[id], rank, numeral);
   return (
     <svg viewBox="0 0 100 140" preserveAspectRatio="xMidYMid slice" className={className} aria-hidden>
       {portrait ?? (

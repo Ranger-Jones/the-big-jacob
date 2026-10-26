@@ -1,3 +1,6 @@
+import { seasonFor } from '@/lib/season';
+import { SeasonalDecor } from './seasonal';
+
 /** Throne-room atmosphere behind every page: torch light, vignette and (on wide screens) hanging banners. */
 function Banner({ side, color, trim }: { side: 'left' | 'right'; color: string; trim: string }) {
   return (
@@ -31,6 +34,7 @@ export function Backdrop() {
       {/* Stone floor fading into darkness */}
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgb(10_4_20/0.75),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,transparent_55%,rgb(8_2_16/0.65)_100%)]" />
+      <SeasonalDecor season={seasonFor(new Date())} />
       <Banner side="left" color="#6b1e2e" trim="#f4b73a" />
       <Banner side="right" color="#1f3a7a" trim="#f4b73a" />
     </div>

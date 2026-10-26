@@ -335,14 +335,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"default_deck": string | null,"id": string,"quick_emojis": (string)[] | null,"username": string
+                    "avatar_frame": string | null,"avatar_url": string | null,"created_at": string,"default_deck": string | null,"id": string,"quick_emojis": (string)[] | null,"table_felt": string | null,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id": string,"quick_emojis"?: (string)[] | null,"username": string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id": string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"quick_emojis"?: (string)[] | null,"username"?: string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username"?: string
                   }
                   Relationships: [
                     
@@ -352,7 +352,7 @@ isOneToOne: false
           Views: {
             "leaderboard": {
                   Row: {
-                    "avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -360,7 +360,7 @@ isOneToOne: false
                   ]
                 },"player_stats": {
                   Row: {
-                    "avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
                   }
                   ComputedFields: never
                   Relationships: [

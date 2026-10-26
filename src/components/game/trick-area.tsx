@@ -21,7 +21,7 @@ const FELT_GRAIN =
  * All rows have fixed heights so the table never grows or shrinks during play.
  */
 export function TrickArea() {
-  const { state, me, nameOf, deckOf } = useTable();
+  const { state, me, nameOf, deckOf, felt } = useTable();
   const reduce = useReducedMotion();
   const trick = state.trick;
   const fromMe = trick?.by === me;
@@ -73,8 +73,8 @@ export function TrickArea() {
           <div
             className="relative flex h-[12.75rem] flex-col items-center overflow-hidden rounded-[50%/42%] px-4 pt-4 sm:h-[19.5rem] sm:pt-8"
             style={{
-              backgroundColor: '#5e1626',
-              backgroundImage: `${FELT_GRAIN}, radial-gradient(ellipse at 50% 35%, #8e2a3d 0%, #6b1e2e 45%, #3d0e19 100%)`,
+              backgroundColor: felt.colors[1],
+              backgroundImage: `${FELT_GRAIN}, radial-gradient(ellipse at 50% 35%, ${felt.colors[0]} 0%, ${felt.colors[1]} 45%, ${felt.colors[2]} 100%)`,
               boxShadow: 'inset 0 0 50px rgb(0 0 0 / 0.6), inset 0 6px 0 rgb(0 0 0 / 0.25)',
             }}
           >

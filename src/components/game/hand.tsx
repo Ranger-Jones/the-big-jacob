@@ -56,12 +56,19 @@ export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount =
 
   return (
     <ul className="no-scrollbar -mx-4 flex gap-x-1.5 overflow-x-auto px-4 pb-1 pt-3 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-3 sm:overflow-visible sm:px-0 sm:pt-0" aria-label="Deine Karten">
-      {groups.map(([rank, count]) => {
+      {groups.map(([rank, count], i) => {
         const sel = selection[rank] ?? 0;
         const dim = mode === 'play' && playable ? !playable.has(rank) : false;
         const name = rank === JESTER ? 'Narr' : rankWord(rank);
         return (
-          <motion.li key={rank} layout className="relative shrink-0 pb-1 pr-1" transition={{ type: 'spring', stiffness: 500, damping: 35 }}>
+          <motion.li
+            key={rank}
+            layout
+            className="relative shrink-0 pb-1 pr-1"
+            initial={{ y: -60, opacity: 0, rotate: -8 }}
+            animate={{ y: 0, opacity: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30, delay: 0.25 + i * 0.05, layout: { type: 'spring', stiffness: 500, damping: 35 } }}
+          >
             {/* Paper edges behind the top card hint at the stack height. */}
             {count > 1 && <span aria-hidden className="absolute left-1 top-1 h-[calc(100%-0.25rem)] w-[calc(100%-0.25rem)] rounded-[10%] border-2 border-black/20" style={{ backgroundColor: deck.design.paper }} />}
             {count > 2 && <span aria-hidden className="absolute left-0.5 top-0.5 h-[calc(100%-0.25rem)] w-[calc(100%-0.25rem)] rounded-[10%] border-2 border-black/20" style={{ backgroundColor: deck.design.paper }} />}

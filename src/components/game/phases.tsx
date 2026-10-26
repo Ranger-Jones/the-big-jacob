@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { CardBack, PlayingCard } from '@/components/deck/playing-card';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { CrownMark } from '@/components/ui/logo';
 import { cx } from '@/lib/cx';
 import { JESTER } from '@/lib/jakob/cards';
 import { getSettings, rankEmoji, rankTitle, teamPoints } from '@/lib/jakob/engine';
@@ -269,7 +270,20 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
             className={cx('flex items-center gap-3 rounded-2xl px-3 py-1.5', i === 0 ? 'bg-gold/30 ring-2 ring-gold-deep/50' : 'bg-parchment-dark/60')}
           >
             <span className="w-7 text-center text-xl" aria-hidden>{rankEmoji(i, last.finish.length)}</span>
-            <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="sm" />
+            <span className="relative">
+              <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="sm" />
+              {i === 0 && (
+                <motion.span
+                  className="absolute -top-5 left-1/2 -translate-x-1/2"
+                  initial={{ y: -140, rotate: -40, opacity: 0 }}
+                  animate={{ y: 0, rotate: -8, opacity: 1 }}
+                  transition={{ delay: 0.5, type: 'spring', stiffness: 260, damping: 11 }}
+                  aria-hidden
+                >
+                  <CrownMark className="size-7 drop-shadow-[0_2px_4px_rgb(244_183_58/0.8)]" />
+                </motion.span>
+              )}
+            </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-bold leading-tight">{nameOf(id, true)}</span>
               <span className="block text-sm leading-tight text-ink-soft">wird {rankTitle(i, last.finish.length)}</span>

@@ -11,7 +11,9 @@ import { canSkip as skipAllowed, getSettings, taxSecondsFor, turnSecondsFor, wai
 import { judgePlay, legalPlays } from '@/lib/jakob/rules';
 import { describeCards, MISSION_TEXT } from '@/lib/jakob/texts';
 import { isMuted, onMutedChange, setMuted } from '@/lib/sound';
+import { MusicToggle } from '@/components/app-shell/music-toggle';
 import { CardTracker } from './card-tracker';
+import { DealOverlay } from './deal-overlay';
 import { Hand, selectedCards, type Selection } from './hand';
 import { CourtPhase, DrawPhase, RoundEndPhase, TaxPhase } from './phases';
 import { deadlineFraction, Seats } from './seats';
@@ -25,6 +27,7 @@ const ROUND_END_SECONDS = 20;
 function useMuted() {
   return useSyncExternalStore(onMutedChange, isMuted, () => false);
 }
+
 
 export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode; chat: ReactNode; chatButton: ReactNode }) {
   const router = useRouter();
@@ -126,6 +129,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis">🧠</Button>
             )}
             <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? 'Ton an' : 'Ton aus'}>{muted ? '🔇' : '🔊'}</Button>
+<MusicToggle className="bg-velvet-soft ring-2 ring-inset ring-white/10" />
             <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label="Regeln">📜</Link>
             {canSkip && (
               <Button variant="velvet" size="sm" onClick={() => setSkipping(true)} aria-label="Überspringen">
@@ -137,6 +141,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         </div>
 
         <Seats timer={state.phase === 'play' ? fraction : null} />
+        <DealOverlay round={state.round} seats={state.order.length} mySeat={state.order.indexOf(me)} design={deck.design} />
 
         {state.phase === 'draw' && <DrawPhase secondsLeft={secondsLeft} />}
         {state.phase === 'court' && <CourtPhase secondsLeft={secondsLeft} handHasBothJesters={bothJesters} />}
@@ -180,6 +185,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
             {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft">💣 Bombe! Damit gewinnst du den Stich sofort.</p>}
             {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft">⚡ Schnapp! Der Nächste muss aussetzen.</p>}
             <Hand
+              key={state.round}
               cards={hand}
               deck={deck}
               selection={selection}

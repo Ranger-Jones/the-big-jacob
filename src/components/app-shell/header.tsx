@@ -5,6 +5,7 @@ import { Logo } from '@/components/ui/logo';
 import { GATE_COOKIE, verifyGateToken } from '@/lib/gate';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { getCurrentUser } from '@/lib/supabase/server';
+import { MusicToggle } from './music-toggle';
 import { NavLink } from './nav-link';
 
 export async function Header() {
@@ -23,6 +24,7 @@ export async function Header() {
           <NavLink href="/freunde" icon="🤝" badge={requests}>Freunde</NavLink>
           <NavLink href="/bestenliste" icon="🏆">Bestenliste</NavLink>
           <NavLink href="/regeln" icon="📜">Regeln</NavLink>
+          <MusicToggle className="hidden text-parchment/80 sm:flex" />
           <Link href={`/profil/${user.username}`} className="ml-1 shrink-0 rounded-full" aria-label="Dein Profil">
             <Avatar profile={user} size="sm" />
           </Link>

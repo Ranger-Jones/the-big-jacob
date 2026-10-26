@@ -58,8 +58,13 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
   const cornerStyle = fullArt
     ? { color: d.accent, backgroundColor: d.paper, padding: '0.1em 0.18em', borderRadius: '0.25em', boxShadow: '0 1px 2px rgb(0 0 0 / 0.35)' }
     : { color: d.accent };
+  const rare = rank === 1 || rank === JESTER;
+  const holo = rare && size !== 'xs' ? <span aria-hidden className="holo pointer-events-none absolute inset-0" /> : null;
   const content: ReactNode = card.layout ? (
-    <LayoutFace design={d} card={card} rank={rank} layout={card.layout} small={size === 'xs' || size === 'sm'} />
+    <>
+      <LayoutFace design={d} card={card} rank={rank} layout={card.layout} small={size === 'xs' || size === 'sm'} />
+      {holo}
+    </>
   ) : (
     <>
       {fullPhoto ? (
@@ -117,6 +122,7 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
       >
         {card.name}
       </span>
+      {holo}
     </>
   );
   const classes = cx(

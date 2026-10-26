@@ -79,7 +79,7 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
   useEffect(() => {
     const missing = playerIds.split(',').filter((id) => id && !profiles[id]);
     if (missing.length === 0) return;
-    supabase.from('profiles').select('id, username, avatar_url').in('id', missing).then(({ data }) => {
+    supabase.from('profiles').select('id, username, avatar_url, avatar_frame').in('id', missing).then(({ data }) => {
       if (data) setProfiles((p) => ({ ...p, ...Object.fromEntries(data.map((x) => [x.id, x])) }));
     });
   }, [playerIds, profiles, supabase]);

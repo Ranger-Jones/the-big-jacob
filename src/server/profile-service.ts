@@ -1,4 +1,5 @@
 import { placements } from '@/lib/jakob/engine';
+import { FELTS, FRAMES } from '@/lib/cosmetics';
 import { isValidQuickEmojis, normalizeQuickEmojis } from '@/lib/emojis';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { USERNAME_RE } from '@/lib/username';
@@ -8,10 +9,10 @@ import type { ProfileLite } from './social-service';
 export { USERNAME_RE };
 
 export interface PlayerStats {
-  user_id: string; username: string; avatar_url: string | null;
+  user_id: string; username: string; avatar_url: string | null; avatar_frame: string | null;
   games_played: number; wins: number; total_points: number; best_points: number; avg_place: number;
   crowns: number; servant: number; revolutions: number; grand_revolutions: number; bombs: number;
-  rises: number; cards_played: number;
+  rises: number; cards_played: number; tricks: number; missions: number;
 }
 
 export interface HistoryEntry {
@@ -56,7 +57,7 @@ export async function getHistory(admin: AdminClient, userId: string, limit = 20)
   if (recent.length === 0) return [];
   const ids = recent.map((r) => r.gameId);
   const [{ data: rows, error: e2 }, { data: games, error: e3 }] = await Promise.all([
-    admin.from('game_players').select('game_id, points, place, left_game, seat, profiles(id, username, avatar_url)').in('game_id', ids),
+    admin.from('game_players').select('game_id, points, place, left_game, seat, profiles(id, username, avatar_url, avatar_frame)').in('game_id', ids),
     admin.from('games').select('id, state').in('id', ids),
   ]);
   if (e2) throw e2;
@@ -166,4 +167,24 @@ export function badgesFor(s: PlayerStats): Badge[] {
     ['cards', '🃏', 'Kartenhai', '1000 Karten gespielt', s.cards_played >= 1000],
   ];
   return list.map(([id, emoji, title, hint, earned]) => ({ id, emoji, title, hint, earned }));
+}
+
+/** Choose an unlocked table felt and/or avatar frame. */
+export async function setCosmetics(admin: AdminClient, userId: string, username: string, choice: { felt?: string; frame?: string }): Promise<ServiceResult> {
+  const stats = await getStatsByUsername(admin, username);
+  if (!stats) return fail('Profil nicht gefunden.');
+  const patch: { table_felt?: string; avatar_frame?: string | null } = {};
+  if (choice.felt !== undefined) {
+    const felt = FELTS.find((f) => f.id === choice.felt);
+    if (!felt || !felt.unlocked(stats)) return fail('Dieser Tischfilz ist noch nicht freigeschaltet.');
+    patch.table_felt = felt.id;
+  }
+  if (choice.frame !== undefined) {
+    const frame = FRAMES.find((f) => f.id === choice.frame);
+    if (!frame || !frame.unlocked(stats)) return fail('Dieser Rahmen ist noch nicht freigeschaltet.');
+    patch.avatar_frame = frame.id === 'none' ? null : frame.id;
+  }
+  const { error } = await admin.from('profiles').update(patch).eq('id', userId);
+  if (error) throw error;
+  return ok(undefined);
 }

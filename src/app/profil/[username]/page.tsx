@@ -10,6 +10,7 @@ import { requireUser } from '@/lib/supabase/server';
 import { signOut } from '@/server/auth-actions';
 import { badgesFor, getHistory, getStatsByUsername } from '@/server/profile-service';
 import { AvatarUpload } from './avatar-upload';
+import { CosmeticsPicker } from './cosmetics-picker';
 import { RenameForm } from './rename-form';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -52,6 +53,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </section>
 
       <StatsGrid stats={stats} />
+
+      {isMe && <CosmeticsPicker stats={stats} profile={stats} felt={me.table_felt} />}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-4xl font-bold">Abzeichen</h2>

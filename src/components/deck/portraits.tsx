@@ -6,12 +6,12 @@ import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 
  * hair and the item each figure holds tell them apart.
  */
 
-const INK = '#2a1a10';
-const GOLD = '#e8b33a';
+export const INK = '#2a1a10';
+export const GOLD = '#e8b33a';
 const GOLD_DARK = '#a8741a';
-const SKIN = { light: '#f2c9a0', mid: '#e0a87c', tan: '#c68642', deep: '#8d5524' } as const;
+export const SKIN = { light: '#f2c9a0', mid: '#e0a87c', tan: '#c68642', deep: '#8d5524' } as const;
 
-const outline = { stroke: INK, strokeWidth: 1.8, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+export const outline = { stroke: INK, strokeWidth: 1.8, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
 
 export interface PortraitSpec {
   id: string;
@@ -70,7 +70,7 @@ export function RankNumeral({ rank, id }: { rank: number; id: string }) {
   );
 }
 
-function Portrait(p: PortraitSpec) {
+export function Portrait(p: PortraitSpec) {
   if (p.mode === 'card') return <CardPortrait {...p} />;
   const clip = `portrait-${p.id}`;
   return (
@@ -160,7 +160,7 @@ function Figure(p: PortraitSpec) {
   );
 }
 
-const jewel = (cx: number, cy: number, fill: string, r = 1.8) => <circle cx={cx} cy={cy} r={r} fill={fill} stroke={INK} strokeWidth="0.8" />;
+export const jewel = (cx: number, cy: number, fill: string, r = 1.8) => <circle cx={cx} cy={cy} r={r} fill={fill} stroke={INK} strokeWidth="0.8" />;
 
 /** Reflective safety stripes of a German rescue uniform. */
 const RESCUE_STRIPES = (
@@ -177,7 +177,7 @@ const STETHOSCOPE = (
   </>
 );
 
-const GLASSES = (
+export const GLASSES = (
   <>
     <circle cx="45" cy="46" r="4" fill="#ffffff" fillOpacity="0.15" stroke={INK} strokeWidth="1.3" />
     <circle cx="55" cy="46" r="4" fill="#ffffff" fillOpacity="0.15" stroke={INK} strokeWidth="1.3" />
@@ -728,9 +728,8 @@ export const PORTRAITS: Record<string, ReactNode> = {
 export const PORTRAIT_IDS = Object.keys(PORTRAITS).filter((id) => id.startsWith('p-'));
 export const RESCUE_IDS = Object.keys(PORTRAITS).filter((id) => id.startsWith('r-'));
 
-/** The portrait as a full card face, or null if the id is not a figure. */
-export function portraitCard(id: string, rank: number, numeral = true): ReactNode | null {
-  const el = PORTRAITS[id];
+/** The portrait as a full card face, or null if the node is not a figure. */
+export function portraitCard(el: ReactNode, rank: number, numeral = true): ReactNode | null {
   if (!isValidElement(el) || el.type !== Portrait) return null;
   return cloneElement(el as ReactElement<PortraitSpec>, { mode: 'card', rank, hideNumeral: !numeral });
 }

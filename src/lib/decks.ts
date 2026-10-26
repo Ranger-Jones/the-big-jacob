@@ -185,12 +185,46 @@ export const PRESETS: DeckEntry[] = [
     name: 'Piraten',
     ownerId: null,
     design: {
-      v: 1, frame: '#1e2a3a', accent: '#d9a441', paper: '#efe2c4', ink: '#1b1712', font: 'verspielt', photoFit: 'medaillon',
-      back: { pattern: 'wellen', a: '#1e2a3a', b: '#2f4560', emblem: '🏴‍☠️', art: null, image: null },
-      cards: cards([
-        ['Kapitänin', '🏴‍☠️'], ['Steuermann', '☸️'], ['Quartiermeister', '🗺️'], ['Navigatorin', '🧭'],
-        ['Kanonier', '💣'], ['Bootsmann', '⚓'], ['Schiffsärztin', '🩹'], ['Smutje', '🍖'], ['Ausguck', '🔭'],
-        ['Matrosin', '🪢'], ['Schiffsjunge', '🧽'], ['Ratte', '🐀'], ['Papagei', '🦜'],
+      v: 1, frame: '#1e2a3a', accent: '#d9a441', paper: '#efe2c4', ink: '#1b1712', font: 'verspielt', photoFit: 'vollbild',
+      back: { pattern: 'wellen', a: '#1e2a3a', b: '#2f4560', emblem: '🏴‍☠️', art: 'pi-kapitaenin', image: null },
+      cards: artCards([
+        ['Kapitänin', '🏴‍☠️', 'pi-kapitaenin'], ['Steuermann', '☸️', 'pi-steuermann'], ['Quartiermeister', '🗺️', 'pi-quartiermeister'],
+        ['Navigatorin', '🧭', 'pi-navigatorin'], ['Kanonier', '💣', 'pi-kanonier'], ['Bootsmann', '⚓', 'pi-bootsmann'],
+        ['Schiffsärztin', '🩹', 'pi-schiffsaerztin'], ['Smutje', '🍖', 'pi-smutje'], ['Ausguck', '🔭', 'pi-ausguck'],
+        ['Matrosin', '🪢', 'pi-matrosin'], ['Schiffsjunge', '🧽', 'pi-schiffsjunge'], ['Landratte', '🐀', 'pi-landratte'],
+        ['Papagei', '🦜', 'pi-papagei'],
+      ]),
+    },
+  },
+  {
+    id: 'preset:uni',
+    name: 'Uni-Leben',
+    ownerId: null,
+    design: {
+      v: 1, frame: '#2e2a5e', accent: '#e8b33a', paper: '#f4f3ee', ink: '#1d1b33', font: 'klassisch', photoFit: 'vollbild',
+      back: { pattern: 'schach', a: '#2e2a5e', b: '#3d3878', emblem: '🎓', art: 'u-dekan', image: null },
+      cards: artCards([
+        ['Präsidentin', '🏛️', 'u-praesidentin'], ['Dekan', '🎓', 'u-dekan'], ['Professorin', '👩‍🏫', 'u-professorin'],
+        ['Doktorand', '☕', 'u-doktorand'], ['Tutorin', '📋', 'u-tutorin'], ['Bibliothekar', '📚', 'u-bibliothekar'],
+        ['Mensakoch', '🍝', 'u-mensakoch'], ['Hausmeister', '🔑', 'u-hausmeister'], ['Erstie', '🗺️', 'u-erstie'],
+        ['Langzeitstudent', '🎸', 'u-langzeitstudent'], ['Prüfungsamt', '📮', 'u-pruefungsamt'], ['Hiwi', '📄', 'u-hiwi'],
+        ['Partylöwe', '🥳', 'u-partyloewe'],
+      ]),
+    },
+  },
+  {
+    id: 'preset:amtsstube',
+    name: 'Amtsstube',
+    ownerId: null,
+    design: {
+      v: 1, frame: '#3f4a5e', accent: '#c8323c', paper: '#f2efe6', ink: '#1d2433', font: 'klassisch', photoFit: 'vollbild',
+      back: { pattern: 'streifen', a: '#3f4a5e', b: '#56627a', emblem: '📎', art: 'a-amtsschimmel', image: null },
+      cards: artCards([
+        ['Amtsleiterin', '🏢', 'a-amtsleiterin'], ['Referent', '💼', 'a-referent'], ['Sachbearbeiter', '🗂️', 'a-sachbearbeiter'],
+        ['Pförtner', '🔑', 'a-pfoertner'], ['Registratorin', '📁', 'a-registratorin'], ['Kassenwart', '💶', 'a-kassenwart'],
+        ['Bote', '✉️', 'a-bote'], ['Antragsteller', '📝', 'a-antragsteller'], ['Wartender', '🎫', 'a-wartender'],
+        ['Praktikantin', '☕', 'a-praktikantin'], ['Archivar', '📜', 'a-archivar'], ['Kopierer', '🖨️', 'a-kopierer'],
+        ['Amtsschimmel', '🐴', 'a-amtsschimmel'],
       ]),
     },
   },

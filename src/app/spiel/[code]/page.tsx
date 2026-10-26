@@ -27,7 +27,7 @@ export default async function GamePage({ params }: { params: Promise<{ code: str
   const humanIds = game.state.players.filter((p) => !p.bot).map((p) => p.id);
   const deckIds = game.state.players.map((p) => p.deckId).filter((d): d is string => !!d);
   const [{ data: profiles }, friends, decks, myDecks, quickEmojis] = await Promise.all([
-    admin.from('profiles').select('id, username, avatar_url').in('id', humanIds),
+    admin.from('profiles').select('id, username, avatar_url, avatar_frame').in('id', humanIds),
     listFriends(admin, user.id),
     getDecksByIds(admin, deckIds),
     listDecks(admin, user.id),
@@ -44,6 +44,7 @@ export default async function GamePage({ params }: { params: Promise<{ code: str
       friends={friends.friends.map((f) => f.profile)}
       myDecks={myDecks}
       quickEmojis={quickEmojis}
+      felt={user.table_felt}
       // eslint-disable-next-line react-hooks/purity -- server render time, used to sync client clocks
       serverNow={Date.now()}
     />

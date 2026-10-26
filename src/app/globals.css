@@ -45,6 +45,49 @@
 }
 .banner-sway { animation: banner-sway 7s ease-in-out infinite; }
 
+@keyframes frame-flame {
+  0%, 100% { box-shadow: 0 0 0 3px #ff7a2e, 0 0 10px 2px rgb(255 90 30 / 0.8), 0 -4px 14px 2px rgb(255 200 60 / 0.6); }
+  50% { box-shadow: 0 0 0 3px #ffb02e, 0 0 16px 4px rgb(255 60 30 / 0.9), 0 -6px 20px 4px rgb(255 220 80 / 0.7); }
+}
+.frame-flame { animation: frame-flame 1.4s ease-in-out infinite; }
+
+/* Seasonal decorations */
+@keyframes season-fall {
+  0% { transform: translate3d(0, -5vh, 0) rotate(0deg); }
+  100% { transform: translate3d(var(--drift, 40px), 110vh, 0) rotate(260deg); }
+}
+.season-fall { animation: season-fall linear infinite; }
+@keyframes season-float {
+  0%, 100% { transform: translate(0, 0); opacity: 0.2; }
+  50% { transform: translate(18px, -24px); opacity: 1; }
+}
+.season-float { animation: season-float ease-in-out infinite; }
+@keyframes season-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.season-blink { animation: season-blink 1.6s ease-in-out infinite; }
+@keyframes season-bat {
+  0% { transform: translate(-10vw, 0) scaleY(1); }
+  25% { transform: translate(25vw, -4vh) scaleY(0.6); }
+  50% { transform: translate(55vw, 2vh) scaleY(1); }
+  75% { transform: translate(85vw, -3vh) scaleY(0.6); }
+  100% { transform: translate(115vw, 0) scaleY(1); }
+}
+.season-bat { left: 0; animation: season-bat linear infinite; }
+@keyframes season-glow { 0%, 100% { filter: drop-shadow(0 0 8px rgb(255 160 40 / 0.5)); } 50% { filter: drop-shadow(0 0 22px rgb(255 160 40 / 0.9)); } }
+.season-glow { animation: season-glow 2.8s ease-in-out infinite; }
+
+/* Holographic shine for the rarest cards (the 1 and the jesters). */
+@keyframes holo-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.holo {
+  background: linear-gradient(115deg, transparent 20%, rgb(255 255 255 / 0.55) 30%, rgb(255 120 220 / 0.35) 38%,
+    rgb(120 220 255 / 0.35) 46%, rgb(255 240 120 / 0.35) 54%, transparent 64%);
+  background-size: 250% 100%;
+  mix-blend-mode: overlay;
+  animation: holo-shift 3.6s linear infinite;
+}
+
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgb(244 183 58 / 0.7); }
   70% { box-shadow: 0 0 0 12px rgb(244 183 58 / 0); }

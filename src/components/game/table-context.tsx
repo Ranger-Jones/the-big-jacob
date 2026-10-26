@@ -2,6 +2,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { AvatarProfile } from '@/components/ui/avatar';
 import type { UseGame } from '@/hooks/use-game';
+import { feltById, type Felt } from '@/lib/cosmetics';
 import { resolveDeck, type DeckEntry } from '@/lib/decks';
 import type { Player, PublicState } from '@/lib/jakob/engine';
 import { seatColor } from '@/lib/player-colors';
@@ -17,11 +18,13 @@ export interface TableApi {
   avatarOf: (id: string) => AvatarProfile;
   deckOf: (id: string) => DeckEntry;
   colorOf: (id: string) => string;
+  /** The viewer's chosen table felt. */
+  felt: Felt;
 }
 
 const TableContext = createContext<TableApi | null>(null);
 
-export function TableProvider({ g, me, children }: { g: UseGame; me: string; children: ReactNode }) {
+export function TableProvider({ g, me, felt, children }: { g: UseGame; me: string; felt?: string | null; children: ReactNode }) {
   const state = g.game!.state;
   const api = useMemo<TableApi>(() => {
     const byId = new Map(state.players.map((p, i) => [p.id, { p, i }]));
@@ -44,8 +47,9 @@ export function TableProvider({ g, me, children }: { g: UseGame; me: string; chi
       },
       deckOf: (id) => resolveDeck(player(id)?.deckId, g.decks),
       colorOf: (id) => seatColor(byId.get(id)?.i ?? 0),
+      felt: feltById(felt),
     };
-  }, [g, state, me]);
+  }, [g, state, me, felt]);
   return <TableContext.Provider value={api}>{children}</TableContext.Provider>;
 }
 

@@ -33,6 +33,7 @@ interface Props {
   myDecks: DeckEntry[];
   quickEmojis: string[];
   serverNow: number;
+  felt?: string | null;
 }
 
 /** Sounds, toasts and confetti for what just happened at the table. */
@@ -95,7 +96,7 @@ function useSwapNotice(hand: PrivateHand & { version: number }, phase: PublicSta
 }
 
 export function GameClient(props: Props) {
-  const { initial, initialHand, initialProfiles, initialDecks, me, friends, myDecks, quickEmojis, serverNow } = props;
+  const { initial, initialHand, initialProfiles, initialDecks, me, friends, myDecks, quickEmojis, serverNow, felt } = props;
   const router = useRouter();
   const g = useGame({ initial, initialHand, initialProfiles, initialDecks: { ...initialDecks, ...Object.fromEntries(myDecks.map((d) => [d.id, d])) }, me, serverNow });
   const { game } = g;
@@ -166,7 +167,7 @@ export function GameClient(props: Props) {
   const emojiBar = <EmojiBar onSend={g.sendEmoji} initialQuick={quickEmojis} />;
 
   return (
-    <TableProvider g={g} me={me}>
+    <TableProvider g={g} me={me} felt={felt}>
       <ConnectionBanner connected={g.connected} />
       {game.state.status === 'lobby' && (
         <>

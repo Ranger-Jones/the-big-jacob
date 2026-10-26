@@ -3,12 +3,12 @@ import type { AdminClient } from '@/lib/supabase/admin';
 import { joinGame, loadGame } from './game-service';
 import { fail, ok, type ServiceResult } from './result';
 
-export interface ProfileLite { id: string; username: string; avatar_url: string | null }
+export interface ProfileLite { id: string; username: string; avatar_url: string | null; avatar_frame?: string | null }
 export interface FriendEntry { friendshipId: string; profile: ProfileLite }
 export interface FriendLists { friends: FriendEntry[]; incoming: FriendEntry[]; outgoing: FriendEntry[] }
 export interface PendingInvite { id: string; gameCode: string; from: ProfileLite; createdAt: string }
 
-const PROFILE_COLS = 'id, username, avatar_url';
+const PROFILE_COLS = 'id, username, avatar_url, avatar_frame';
 
 export async function searchProfiles(admin: AdminClient, userId: string, query: string): Promise<ProfileLite[]> {
   const q = query.trim().replace(/[^A-Za-z0-9_]/g, '');
