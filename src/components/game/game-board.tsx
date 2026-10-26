@@ -7,9 +7,9 @@ import { Modal } from '@/components/ui/modal';
 import { useNow } from '@/hooks/use-now';
 import { cx } from '@/lib/cx';
 import { countBy, JESTER } from '@/lib/jakob/cards';
-import { canSkip as skipAllowed, getSettings, waitingOn } from '@/lib/jakob/engine';
+import { canSkip as skipAllowed, getSettings, taxSecondsFor, turnSecondsFor, waitingOn } from '@/lib/jakob/engine';
 import { judgePlay, legalPlays } from '@/lib/jakob/rules';
-import { describeCards } from '@/lib/jakob/texts';
+import { describeCards, MISSION_TEXT } from '@/lib/jakob/texts';
 import { isMuted, onMutedChange, setMuted } from '@/lib/sound';
 import { CardTracker } from './card-tracker';
 import { Hand, selectedCards, type Selection } from './hand';
@@ -35,6 +35,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [skipping, setSkipping] = useState(false);
+  const [missionOpen, setMissionOpen] = useState(false);
+  const mission = g.hand.mission ?? null;
 
   const hand = g.hand.cards;
   const phaseKey = `${state.round}-${state.phase}`;
@@ -66,8 +68,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   const totalSeconds = state.phase === 'draw' ? DRAW_SECONDS
     : state.phase === 'court' ? COURT_SECONDS
       : state.phase === 'roundEnd' ? ROUND_END_SECONDS
-        : state.phase === 'tax' ? (settings.turnSeconds ? Math.max(settings.turnSeconds, 30) : 60)
-          : settings.turnSeconds;
+        : state.phase === 'tax' ? taxSecondsFor(state)
+          : turnSecondsFor(state);
   const fraction = deadlineFraction(now, totalSeconds, state.deadline);
   const secondsLeft = state.deadline ? Math.max(0, Math.ceil((Date.parse(state.deadline) - now) / 1000)) : null;
 
@@ -105,14 +107,21 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
           <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
             {state.phase === 'draw' ? 'Auslosung' : (
               <>
-                <span className="sm:hidden">Runde {state.round}/{settings.rounds}</span>
-                <span className="hidden sm:inline">Runde {state.round} von {settings.rounds}</span>
+                <span className="sm:hidden">Runde {state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
+                <span className="hidden sm:inline">
+                  Runde {state.round}{settings.goal === null ? ` von ${settings.rounds}` : ` · Ziel ${settings.goal} P.`}
+                </span>
               </>
             )}
             {myIndex >= 0 && <span className="ml-2 hidden font-sans text-sm text-parchment/70 sm:inline">· {state.points[me] ?? 0} Punkte</span>}
           </p>
           <div className="flex shrink-0 items-center gap-1">
             {chatButton}
+            {settings.missions && mission && (
+              <Button variant="velvet" size="sm" onClick={() => setMissionOpen(true)} aria-label="Deine Mission" className={cx(mission.done && 'ring-gold')}>
+                {mission.done ? '✅' : '🎯'}
+              </Button>
+            )}
             {settings.tracker && state.phase === 'play' && (
               <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis">🧠</Button>
             )}
@@ -210,15 +219,39 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         </div>
       </Modal>
 
-      <Modal open={skipping} onClose={() => setSkipping(false)} title="Überspringen?">
+      <Modal open={skipping} onClose={() => setSkipping(false)} title="Hängt jemand fest?">
         <p className="text-ink-soft">
-          Für {waiting.map((id) => nameOf(id)).join(', ')} wird automatisch entschieden: passen, die schwächste Karte ausspielen,
-          die schlechtesten Karten zurückgeben oder einfach „bereit“.
+          <b>Einmal überspringen:</b> Für {waiting.map((id) => nameOf(id)).join(', ')} wird jetzt automatisch entschieden.
         </p>
-        <div className="flex justify-end gap-2">
+        <p className="text-ink-soft">
+          <b>Bot übernimmt:</b> Ein Bot spielt dauerhaft weiter, bis die Person zurück am Tisch ist.
+        </p>
+        <div className="flex flex-wrap justify-end gap-2">
           <Button variant="ghost" onClick={() => setSkipping(false)}>Abbrechen</Button>
-          <Button onClick={async () => { setSkipping(false); await g.dispatch({ type: 'skip' }, { move: true }); }}>Überspringen</Button>
+          <Button variant="secondary" onClick={async () => { setSkipping(false); await g.dispatch({ type: 'skip' }, { move: true }); }}>Einmal überspringen</Button>
+          {waiting.filter((id) => !state.players.find((p) => p.id === id)?.bot).map((id) => (
+            <Button key={id} onClick={async () => { setSkipping(false); await g.dispatch({ type: 'takeover', playerId: id }, { move: true }); }}>
+              🤖 Bot für {nameOf(id)}
+            </Button>
+          ))}
         </div>
+      </Modal>
+
+      <Modal open={missionOpen} onClose={() => setMissionOpen(false)} title="Deine geheime Mission">
+        {mission && (
+          <div className="flex items-center gap-4 rounded-2xl bg-parchment-dark/70 p-4">
+            <span className="text-5xl" aria-hidden>{MISSION_TEXT[mission.id].emoji}</span>
+            <span>
+              <span className="block font-display text-3xl font-bold">{MISSION_TEXT[mission.id].title}</span>
+              <span className="block">{MISSION_TEXT[mission.id].text}</span>
+              <span className={cx('mt-1 block font-bold', mission.done ? 'text-vert' : 'text-ink-soft')}>
+                {mission.done ? '✅ Erfüllt – +3 Punkte!' : 'Noch offen · bringt 3 Bonuspunkte'}
+              </span>
+            </span>
+          </div>
+        )}
+        <p className="text-sm text-ink-soft">Die anderen sehen deine Mission erst am Spielende.</p>
+        <Button onClick={() => setMissionOpen(false)}>Verstanden</Button>
       </Modal>
     </main>
   );

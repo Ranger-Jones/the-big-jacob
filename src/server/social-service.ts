@@ -1,4 +1,4 @@
-import { MAX_PLAYERS } from '@/lib/jakob/types';
+import { maxPlayers } from '@/lib/jakob/engine';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { joinGame, loadGame } from './game-service';
 import { fail, ok, type ServiceResult } from './result';
@@ -91,7 +91,7 @@ export async function inviteToGame(admin: AdminClient, userId: string, gameId: s
   if (game.state.status !== 'lobby') return fail('Das Spiel läuft bereits.');
   if (!game.state.players.some((p) => p.id === userId)) return fail('Du bist nicht in diesem Spiel.');
   if (game.state.players.some((p) => p.id === friendId)) return fail('Ist schon im Spiel.');
-  if (game.state.players.length >= MAX_PLAYERS) return fail('Der Tisch ist voll.');
+  if (game.state.players.length >= maxPlayers(game.state)) return fail('Der Tisch ist voll.');
   const f = await findFriendship(admin, userId, friendId);
   if (f?.status !== 'accepted') return fail('Ihr seid nicht befreundet.');
   const { error } = await admin.from('game_invites').upsert(

@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import type { GameAction } from '@/lib/jakob/engine';
-import { BOT_LEVELS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS } from '@/lib/jakob/types';
+import { BOT_LEVELS, GOAL_OPTIONS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS } from '@/lib/jakob/types';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { canUseDeck, getDefaultDeckId } from './deck-service';
@@ -10,7 +10,7 @@ import { createGame, joinGame, performAction, requestRematch, type Expectation }
 import { fail } from './result';
 import { inviteToGame } from './social-service';
 
-const cards = z.array(z.number().int().min(1).max(13)).min(1).max(80);
+const cards = z.array(z.number().int().min(1).max(13)).min(1).max(160);
 const literalUnion = <T extends readonly (string | number | null)[]>(values: T) =>
   z.union(values.map((v) => z.literal(v)) as unknown as [z.ZodLiteral<T[number]>, z.ZodLiteral<T[number]>]);
 
@@ -21,6 +21,7 @@ const actionSchema = z.discriminatedUnion('type', [
     type: z.literal('updateSettings'),
     settings: z.object({
       rounds: literalUnion(ROUND_OPTIONS).optional(),
+      goal: literalUnion(GOAL_OPTIONS).optional(),
       turnSeconds: literalUnion(TURN_OPTIONS).optional(),
       tax: z.enum(TAX_OPTIONS).optional(),
       revolution: z.boolean().optional(),
@@ -32,6 +33,15 @@ const actionSchema = z.discriminatedUnion('type', [
       jesterBan: z.boolean().optional(),
       events: z.boolean().optional(),
       tracker: z.boolean().optional(),
+      missions: z.boolean().optional(),
+      throne: z.boolean().optional(),
+      teams: z.boolean().optional(),
+      mercy: z.boolean().optional(),
+      abdicate: z.boolean().optional(),
+      jesterCurse: z.boolean().optional(),
+      courtSwap: z.boolean().optional(),
+      blitz: z.boolean().optional(),
+      doubleDeck: z.boolean().optional(),
     }).strict(),
   }),
   z.object({ type: z.literal('addBot'), level: z.enum(BOT_LEVELS) }),
@@ -40,6 +50,10 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('ready') }),
   z.object({ type: z.literal('revolution') }),
+  z.object({ type: z.literal('mercy') }),
+  z.object({ type: z.literal('abdicate') }),
+  z.object({ type: z.literal('takeover'), playerId: z.string().min(1).max(64) }),
+  z.object({ type: z.literal('resume') }),
   z.object({ type: z.literal('taxReturn'), cards }),
   z.object({ type: z.literal('play'), cards }),
   z.object({ type: z.literal('pass') }),

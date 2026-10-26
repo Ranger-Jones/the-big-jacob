@@ -3,7 +3,8 @@ import { PlayingCard } from '@/components/deck/playing-card';
 import { Card } from '@/components/ui/card';
 import { DEFAULT_DECK } from '@/lib/decks';
 import { RANKS } from '@/lib/jakob/cards';
-import { EVENT_TEXT, SETTING_TEXT, KNIFFE } from '@/lib/jakob/texts';
+import { EVENT_TEXT, GAME_MODES, KNIFFE, MISSION_TEXT, SETTING_TEXT } from '@/lib/jakob/texts';
+import { MISSIONS } from '@/lib/jakob/types';
 import { COURT_EVENTS } from '@/lib/jakob/types';
 
 export const metadata: Metadata = { title: 'Regeln' };
@@ -85,6 +86,22 @@ export default function RulesPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
+        <h2 className="text-3xl font-bold">Spielmodi</h2>
+        <ul className="flex flex-col gap-2">
+          <li><b>Punkteziel:</b> Statt fester Rundenzahl wird gespielt, bis jemand 20, 30 oder 50 Punkte hat.</li>
+          {GAME_MODES.map((k) => <li key={k}><b>{SETTING_TEXT[k].label}:</b> {SETTING_TEXT[k].hint}</li>)}
+        </ul>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-3xl font-bold">Geheime Missionen</h2>
+        <p>Mit dieser Option bekommt jeder zu Spielbeginn eine verdeckte Aufgabe. Wer sie erfüllt, bekommt sofort 3 Bonuspunkte. Am Ende werden alle Missionen aufgedeckt.</p>
+        <ul className="grid gap-1.5 sm:grid-cols-2">
+          {MISSIONS.map((m) => <li key={m}>{MISSION_TEXT[m].emoji} <b>{MISSION_TEXT[m].title}:</b> {MISSION_TEXT[m].text}</li>)}
+        </ul>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
         <h2 className="text-3xl font-bold">Kniffe (in der Lobby wählbar)</h2>
         <ul className="flex flex-col gap-2">
           {KNIFFE.map((k) => <li key={k}><b>{SETTING_TEXT[k].label}:</b> {SETTING_TEXT[k].hint}</li>)}
@@ -103,7 +120,7 @@ export default function RulesPage() {
           <li>Deine Hand liegt als Stapel pro Zahl vor dir. Ein Tipp wählt passend viele Karten aus, jeder weitere Tipp eine weniger.</li>
           <li>Narren tippst du extra dazu. Ausgegraute Karten passen gerade nicht auf den Stich.</li>
           <li>🧠 zeigt das Kartengedächtnis, 💬 öffnet den Chat, die Emoji-Leiste schickt Reaktionen an alle.</li>
-          <li>Hängt jemand fest, kann ihn nach 30 Sekunden jeder am Tisch überspringen. Mit Zugzeit entscheidet der Hof nach Ablauf automatisch.</li>
+          <li>Hängt jemand fest, kann ihn nach 30 Sekunden jeder am Tisch überspringen – oder ein Bot übernimmt, bis die Person zurück ist. Mit Zugzeit entscheidet der Hof nach Ablauf automatisch.</li>
         </ul>
       </Card>
     </main>

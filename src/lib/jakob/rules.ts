@@ -4,6 +4,8 @@ import type { CourtEvent, Settings, Trick } from './types';
 export interface RuleContext {
   settings: Pick<Settings, 'snap' | 'bomb' | 'jestersTaxable'>;
   event: CourtEvent | null;
+  /** Number of 80-card decks in play (2 with "Doppeldeck"). */
+  decks?: number;
 }
 
 export const isReversed = (ctx: RuleContext) => ctx.event === 'reversed';
@@ -97,7 +99,7 @@ export function legalPlays(hand: readonly number[], trick: Trick | null, ctx: Ru
  * never reveals anyone's hand. Under "Narrenfreiheit" an unplayed jester still threatens.
  */
 export function isUnbeatable(trick: Trick, played: readonly number[], ctx: RuleContext): boolean {
-  const unplayed = removeCards(fullDeck(), played);
+  const unplayed = removeCards(fullDeck(ctx.decks ?? 1), played);
   const naturalThreat = unplayed.some((c) => c !== JESTER && better(c, trick.rank, ctx));
   if (naturalThreat) return false;
   const jesterLeft = unplayed.includes(JESTER);

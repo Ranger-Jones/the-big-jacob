@@ -10,7 +10,8 @@ import { Card } from '@/components/ui/card';
 import { CrownMark } from '@/components/ui/logo';
 import { fireConfetti } from '@/lib/confetti';
 import { cx } from '@/lib/cx';
-import { placements } from '@/lib/jakob/engine';
+import { placements, teamPoints } from '@/lib/jakob/engine';
+import { MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import { playSound } from '@/lib/sound';
 import { rematchAction } from '@/server/game-actions';
@@ -30,6 +31,8 @@ export function Results() {
   const places = placements(state);
   const ranked = [...state.players].sort((a, b) => (places[a.id] ?? 99) - (places[b.id] ?? 99));
   const iWon = places[me] === 1;
+  const totals = teamPoints(state);
+  const winningTeam: 0 | 1 | null = !state.teams ? null : totals[0] === totals[1] ? null : totals[0] > totals[1] ? 0 : 1;
 
   useEffect(() => {
     if (iWon) {
@@ -62,8 +65,16 @@ export function Results() {
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-4 pb-12">
       <div className="text-center">
         <CrownMark className="mx-auto size-14" />
-        <h1 className="gold-text text-6xl font-bold">{iWon ? 'Lang lebe Jakob – also du!' : `${nameOf(ranked[0]?.id ?? '')} regiert!`}</h1>
-        <p className="mt-1 text-parchment/80">Nach {state.history.length} {state.history.length === 1 ? 'Runde' : 'Runden'} steht der Hof fest.</p>
+        <h1 className="gold-text text-6xl font-bold">
+          {state.teams
+            ? `${winningTeam === null ? 'Unentschieden!' : `${TEAM_INFO[winningTeam].emoji} ${TEAM_INFO[winningTeam].name} gewinnt!`}`
+            : iWon ? 'Lang lebe Jakob – also du!' : `${nameOf(ranked[0]?.id ?? '')} regiert!`}
+        </h1>
+        <p className="mt-1 text-parchment/80">
+          {state.throneWinner
+            ? `🏰 Thronfolge: ${nameOf(state.throneWinner, true)} ${state.throneWinner === me ? 'warst' : 'war'} dreimal in Folge Großer Jakob.`
+            : `Nach ${state.history.length} ${state.history.length === 1 ? 'Runde' : 'Runden'} steht der Hof fest.`}
+        </p>
       </div>
 
       <div className="flex items-end justify-center gap-2 sm:gap-4">
@@ -123,6 +134,39 @@ export function Results() {
           </tbody>
         </table>
       </Card>
+
+      {state.teams && (
+        <div className="grid grid-cols-2 gap-3">
+          {([0, 1] as const).map((t) => (
+            <div key={t} className={cx('rounded-2xl p-4 text-center text-parchment ring-4', winningTeam === t ? 'ring-gold' : 'ring-transparent')} style={{ backgroundColor: TEAM_INFO[t].color }}>
+              <span className="block font-bold">{TEAM_INFO[t].emoji} {TEAM_INFO[t].name}</span>
+              <span className="tabular block font-display text-5xl font-bold">{totals[t]}</span>
+              <span className="block text-sm">{state.players.filter((p) => state.teams?.[p.id] === t).map((p) => nameOf(p.id, true)).join(', ')}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {state.missionsRevealed && (
+        <Card className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold">Die geheimen Missionen</h2>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {state.players.filter((p) => state.missionsRevealed?.[p.id]).map((p) => {
+              const m = state.missionsRevealed![p.id];
+              return (
+                <li key={p.id} className={cx('flex items-center gap-3 rounded-xl p-2', m.done ? 'bg-vert/15' : 'bg-parchment-dark/60')}>
+                  <span className="text-2xl" aria-hidden>{MISSION_TEXT[m.id].emoji}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-bold">{nameOf(p.id, true)}: {MISSION_TEXT[m.id].title}</span>
+                    <span className="block text-sm text-ink-soft">{MISSION_TEXT[m.id].text}</span>
+                  </span>
+                  <span className="font-bold">{m.done ? '✅ +3' : '✗'}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       {highlights.length > 0 && (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">

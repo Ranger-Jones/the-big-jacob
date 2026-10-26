@@ -5,6 +5,7 @@ import { CardBack } from '@/components/deck/playing-card';
 import { Avatar } from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
 import { rankEmoji, rankTitle, waitingOn } from '@/lib/jakob/engine';
+import { TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
 
 /** Fraction of the current deadline that is left (1 → 0). */
@@ -63,6 +64,7 @@ export function Seats({ timer }: { timer: number | null }) {
             className={cx(
               'relative flex w-[5.3rem] shrink-0 snap-start flex-col items-center gap-0.5 rounded-2xl px-1 pb-1.5 pt-2 text-center transition-all sm:w-[6.6rem] sm:gap-1 sm:px-1.5 sm:pb-2 sm:pt-2.5',
               isTurn ? 'bg-gold/20 ring-2 ring-gold' : 'bg-velvet-deep/60 ring-2 ring-white/10',
+              state.teams && state.teams[id] !== undefined && (state.teams[id] === 0 ? 'border-b-4 border-[#6c2a8e]' : 'border-b-4 border-[#2f7a4f]'),
               p.left && 'opacity-40',
             )}
           >
@@ -72,13 +74,19 @@ export function Seats({ timer }: { timer: number | null }) {
               {!p.bot && !p.left && (
                 <span className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-velvet-deep', g.online.has(id) ? 'bg-vert' : 'bg-ink-soft')} />
               )}
+              {p.autopilot && (
+                <span className="absolute -bottom-1 -left-2 rounded-full bg-velvet-soft px-1 text-xs ring-2 ring-velvet-deep" title="Ein Bot spielt gerade für diese Person">🤖</span>
+              )}
               {index >= 0 && state.phase && state.phase !== 'draw' && (
                 <span className="absolute -left-2 -top-2 text-lg drop-shadow" title={rankTitle(index, present.length)} aria-hidden>
                   {rankEmoji(index, present.length)}
                 </span>
               )}
             </span>
-            <span className="w-full truncate text-xs font-bold leading-tight sm:text-sm">{nameOf(id, true)}</span>
+            <span className="w-full truncate text-xs font-bold leading-tight sm:text-sm">
+              {state.teams && state.teams[id] !== undefined && <span aria-label={TEAM_INFO[state.teams[id]].name}>{TEAM_INFO[state.teams[id]].emoji} </span>}
+              {nameOf(id, true)}
+            </span>
             <span className="hidden w-full truncate text-[0.7rem] leading-tight text-parchment/70 sm:block">
               {index >= 0 && state.phase !== 'draw' ? rankTitle(index, present.length) : p.bot ? 'Bot' : 'Höfling'}
             </span>

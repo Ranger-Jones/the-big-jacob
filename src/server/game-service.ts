@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import {
-  applyAction, createGameState, createRematchState, fromParts, placements, privateHand, publicState,
-  type GameAction, type GameState, type PrivateHand, type PublicState,
+  applyAction, createGameState, createRematchState, fromParts, placements, privateHand, publicState, secretsOf,
+  type GameAction, type GameState, type PrivateHand, type PublicState, type Secrets,
 } from '@/lib/jakob/engine';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
@@ -22,7 +22,7 @@ function generateCode(): string {
   return Array.from({ length: 6 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join('');
 }
 
-type Secret = { hands?: GameState['hands']; notes?: GameState['notes'] };
+type Secret = Partial<Secrets>;
 type Row = {
   id: string; code: string; version: number; state: unknown; rematch_game_id: string | null;
   game_secrets: { data: unknown } | { data: unknown }[] | null;
@@ -34,7 +34,7 @@ function toGame(r: Row): GameRow {
   const secret = (secretRow?.data ?? {}) as Secret;
   return {
     id: r.id, code: r.code, version: r.version, rematchGameId: r.rematch_game_id,
-    state: fromParts(r.state as PublicState, secret.hands ?? {}, secret.notes ?? {}),
+    state: fromParts(r.state as PublicState, secret),
   };
 }
 
@@ -82,7 +82,7 @@ async function commit(
     p_game_id: gameId,
     p_expected_version: expectedVersion,
     p_state: publicState(next) as never,
-    p_secret: { hands: next.hands, notes: next.notes } as never,
+    p_secret: secretsOf(next) as never,
     p_players: playersPayload(next) as never,
     p_hands: handsPayload(prev, next) as never,
   });

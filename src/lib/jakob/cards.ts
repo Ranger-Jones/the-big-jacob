@@ -3,21 +3,36 @@ export const JESTER = 13;
 export const RANKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const;
 export type Rank = (typeof RANKS)[number];
 
-/** Rank n exists n times, plus two jesters: 80 cards. */
-export function fullDeck(): number[] {
+/** Rank n exists n times, plus two jesters: 80 cards per deck ("Doppeldeck" uses two). */
+export function fullDeck(decks = 1): number[] {
   const deck: number[] = [];
-  for (let r = 1; r <= 12; r++) for (let i = 0; i < r; i++) deck.push(r);
-  deck.push(JESTER, JESTER);
+  for (let d = 0; d < decks; d++) {
+    for (let r = 1; r <= 12; r++) for (let i = 0; i < r; i++) deck.push(r);
+    deck.push(JESTER, JESTER);
+  }
   return deck;
 }
 
 export const DECK_SIZE = 80;
 
-export function copiesOf(rank: number): number {
-  return rank === JESTER ? 2 : rank;
+export function copiesOf(rank: number, decks = 1): number {
+  return (rank === JESTER ? 2 : rank) * decks;
 }
 
 export type RandInt = (maxExclusive: number) => number;
+
+/** Deterministic PRNG (mulberry32) – used for reproducible deals and in tests. */
+export function seededRand(seed: number): RandInt {
+  let a = seed >>> 0;
+  return (max: number) => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    const r = ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return Math.floor(r * max);
+  };
+}
 
 export function shuffle<T>(items: readonly T[], rand: RandInt): T[] {
   const a = [...items];
@@ -56,8 +71,8 @@ export function removeCards(whole: readonly number[], part: readonly number[]): 
 }
 
 /** Remaining cards of the 80-card deck after removing the given ones. */
-export function remainingDeck(removed: readonly number[]): number[] {
-  return removeCards(fullDeck(), removed);
+export function remainingDeck(removed: readonly number[], decks = 1): number[] {
+  return removeCards(fullDeck(decks), removed);
 }
 
 export interface PlayShape {

@@ -70,11 +70,28 @@ function useTableEffects(state: PublicState | undefined, me: string, name: (id: 
       if (e.kind === 'snap') playSound('snap');
       else if (e.kind === 'bomb') playSound('bomb');
       else if (e.kind === 'unbeatable') playSound('crown');
+      else if (e.kind === 'mission' && e.by === me) {
+        playSound('crown');
+        void fireConfetti('crown');
+        toast.success('🎯 Mission erfüllt! +3 Punkte');
+      } else if (e.kind === 'throne') void fireConfetti('win');
     }
     if (before.phase === 'tax' && state.phase === 'play' && received.length > 0 && before.tax.some((t) => t.from === me)) {
       toast(`Du hast ${describeCards(received)} zurückbekommen.`);
     }
   }, [state, me, name, received]);
+}
+
+/** Pest / court swap: tell me what I passed on and what I got (arrives with my hand). */
+function useSwapNotice(hand: PrivateHand & { version: number }, phase: PublicState['phase'], round: number) {
+  const shown = useRef<string>('');
+  useEffect(() => {
+    if (phase !== 'play' || !hand.swapGot?.length || !hand.swapGave?.length) return;
+    const key = `${round}`;
+    if (shown.current === key) return;
+    shown.current = key;
+    toast(`🔄 Weitergereicht: ${describeCards(hand.swapGave)} – bekommen: ${describeCards(hand.swapGot)}`);
+  }, [hand, phase, round]);
 }
 
 export function GameClient(props: Props) {
@@ -103,6 +120,16 @@ export function GameClient(props: Props) {
   const chat = useChat(initial.id, me, chatEnabled, onIncoming);
 
   useTableEffects(game?.state, me, nameOf, g.hand.received);
+  useSwapNotice(g.hand, game?.state.phase ?? null, game?.state.round ?? 0);
+
+  // Back at the table after a bot stood in: take over again.
+  const onAutopilot = !!game?.state.players.find((p) => p.id === me)?.autopilot;
+  const { dispatch, connected } = g;
+  useEffect(() => {
+    if (onAutopilot && connected) {
+      void dispatch({ type: 'resume' }, { silent: true }).then((ok) => { if (ok) toast('👋 Willkommen zurück – du spielst wieder selbst.'); });
+    }
+  }, [onAutopilot, connected, dispatch]);
 
   useEffect(() => {
     if (!game) {

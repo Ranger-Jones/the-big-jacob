@@ -1,5 +1,5 @@
 import { JESTER, rankWord } from './cards';
-import type { CourtEvent, LogEntry, Settings } from './types';
+import type { CourtEvent, LogEntry, MissionId, Settings } from './types';
 
 export const EVENT_TEXT: Record<CourtEvent, { emoji: string; title: string; text: string }> = {
   holiday: { emoji: '🎉', title: 'Feiertag', text: 'Der König ist gnädig: Diese Runde gibt es keine Steuern.' },
@@ -7,6 +7,21 @@ export const EVENT_TEXT: Record<CourtEvent, { emoji: string; title: string; text
   reversed: { emoji: '🙃', title: 'Verkehrte Welt', text: 'Diese Runde schlagen höhere Zahlen die niedrigeren.' },
   doublePoints: { emoji: '✨', title: 'Doppelte Punkte', text: 'Jeder Platz bringt diese Runde doppelt so viele Punkte.' },
   jesterFreedom: { emoji: '🃏', title: 'Narrenfreiheit', text: 'Ein Narr allein schlägt diese Runde jede Karte.' },
+  pest: { emoji: '🐀', title: 'Pest', text: 'Vor dem Ausspielen gibt jeder eine zufällige Karte an den Nächsten weiter.' },
+  audit: { emoji: '🔍', title: 'Steuerprüfung', text: 'Eine Karte des Großen Jakob wird allen gezeigt.' },
+  coronation: { emoji: '👑', title: 'Krönungsfest', text: 'Der Erste dieser Runde bekommt doppelte Punkte.' },
+  charity: { emoji: '🤲', title: 'Mildtätigkeit', text: 'Der Große Jakob schenkt dem Großen Knecht seine schlechteste Karte.' },
+};
+
+export const MISSION_TEXT: Record<MissionId, { emoji: string; title: string; text: string }> = {
+  twelveTrick: { emoji: '🌾', title: 'Bauernaufstand', text: 'Gewinne einen Stich mit Zwölfen.' },
+  bigPlay: { emoji: '🧱', title: 'Großer Wurf', text: 'Lege mindestens 4 Karten auf einmal.' },
+  loneJester: { emoji: '🃏', title: 'Narrenstück', text: 'Spiele einen Narren ganz allein.' },
+  crownTwice: { emoji: '👑', title: 'Doppelte Krone', text: 'Werde mindestens zweimal Großer Jakob.' },
+  neverServant: { emoji: '🧹', title: 'Niemals Knecht', text: 'Werde im ganzen Spiel nie Großer Knecht (ab 2 Runden).' },
+  fiveTricks: { emoji: '🖐️', title: 'Stichsammler', text: 'Gewinne 5 Stiche in einem Spiel.' },
+  revolutionary: { emoji: '✊', title: 'Aufrührer', text: 'Rufe eine Revolution aus.' },
+  climber: { emoji: '🪜', title: 'Emporkömmling', text: 'Steige in einer Runde um mindestens zwei Ränge auf.' },
 };
 
 /** "3× Neun", "Narr", "2× Sieben + Narr" */
@@ -36,6 +51,17 @@ export function describeLog(entry: LogEntry, name: (id: string) => string): stri
     case 'jesterOut': return `🤡 ${who} ging mit einem Narren raus und landet ganz unten`;
     case 'unbeatable': return `👑 Unschlagbar! ${who} gewinnt den Stich sofort`;
     case 'kingFall': return `👑💥 Königssturz! ${who} fällt auf den letzten Platz`;
+    case 'mission': return `📜 ${who} erfüllt die Mission „${entry.mission ? MISSION_TEXT[entry.mission].title : ''}“ (+3)`;
+    case 'mercy': return `🙏 ${who} bittet um Gnade – keine große Steuer`;
+    case 'abdicate': return `🪑 ${who} dankt ab und tauscht mit ${entry.to ? name(entry.to) : 'einem Bürger'}`;
+    case 'jesterCurse': return `🤡 Narrenfluch: ${who} verliert ${entry.count ?? 1} ${entry.count === 1 ? 'Punkt' : 'Punkte'}`;
+    case 'courtSwap': return '🔄 Hoftausch: Die Bürger reichen eine Karte weiter';
+    case 'pest': return '🐀 Pest: Jeder reicht eine Karte weiter';
+    case 'audit': return `🔍 Steuerprüfung: ${who} hat ${describeCards(entry.cards ?? [])}`;
+    case 'charity': return `🤲 ${who} schenkt ${entry.to ? name(entry.to) : ''} ${describeCards(entry.cards ?? [])}`;
+    case 'autopilot': return `🤖 Ein Bot spielt für ${who}`;
+    case 'resume': return `👋 ${who} ist zurück`;
+    case 'throne': return `🏰 Thronfolge! ${who} war dreimal in Folge Großer Jakob`;
   }
 }
 
@@ -51,13 +77,36 @@ export const SETTING_TEXT = {
   bomb: { label: 'Bombe', hint: 'Vier oder mehr gleiche Karten ohne Narren schlagen jeden Stich und gewinnen ihn sofort.' },
   kingFall: { label: 'Königssturz', hint: 'Wird der Große Jakob nicht Erster, stürzt er auf den letzten Platz.' },
   jesterBan: { label: 'Narrenverbot', hint: 'Wer mit einem Narren ausgeht, landet auf dem letzten Platz.' },
-  events: { label: 'Hofgeflüster', hint: 'Jede Runde ein zufälliges Ereignis: Feiertag, Steuererhöhung, Verkehrte Welt …' },
+  events: { label: 'Hofgeflüster', hint: 'Jede Runde ein zufälliges Ereignis: Feiertag, Pest, Krönungsfest, Verkehrte Welt …' },
+  missions: { label: 'Geheime Missionen', hint: 'Jeder bekommt eine verdeckte Aufgabe – erfüllt bringt sie 3 Bonuspunkte.' },
+  throne: { label: 'Thronfolge', hint: 'Wer dreimal hintereinander Großer Jakob wird, gewinnt sofort.' },
+  teams: { label: 'Adel gegen Volk', hint: 'Zwei Teams (abwechselnd nach Sitzplatz), die Punkte zählen fürs Team. Gerade Spielerzahl ab 4.' },
+  mercy: { label: 'Gnadenrecht', hint: 'Einmal pro Spiel darf der Große Knecht die große Steuer verweigern.' },
+  abdicate: { label: 'Abdankung', hint: 'Der Große Jakob darf abdanken und tauscht den Platz mit einem Bürger.' },
+  jesterCurse: { label: 'Narrenfluch', hint: 'Wer am Rundenende noch Narren hat, verliert pro Narr einen Punkt.' },
+  courtSwap: { label: 'Hoftausch', hint: 'Nach den Steuern reichen die Bürger blind eine Karte weiter.' },
+  blitz: { label: 'Blitzrunde', hint: 'Die Zugzeit wird jede Runde 5 Sekunden kürzer (mindestens 10 s).' },
+  doubleDeck: { label: 'Doppeldeck', hint: 'Zwei Kartensätze (160 Karten) – bis zu 12 Spieler am Tisch.' },
 } as const;
 
-export const KNIFFE = ['snap', 'bomb', 'kingFall', 'jesterBan', 'events'] as const satisfies (keyof Settings)[];
+export const KNIFFE = [
+  'snap', 'bomb', 'kingFall', 'jesterBan', 'events', 'missions', 'mercy', 'abdicate', 'jesterCurse', 'courtSwap', 'blitz',
+] as const satisfies (keyof Settings)[];
+
+/** How the game ends and how big the table can be. */
+export const GAME_MODES = ['throne', 'teams', 'doubleDeck'] as const satisfies (keyof Settings)[];
+
+export function goalLabel(goal: Settings['goal']): string {
+  return goal === null ? 'Aus' : `${goal} P.`;
+}
 
 export function turnLabel(seconds: Settings['turnSeconds']): string {
   return seconds === null ? 'Aus' : `${seconds} s`;
 }
 
 export const TAX_LABELS: Record<Settings['tax'], string> = { none: 'Keine', normal: 'Normal', high: 'Hoch' };
+
+export const TEAM_INFO: Record<0 | 1, { name: string; emoji: string; color: string }> = {
+  0: { name: 'Adel', emoji: '👑', color: '#6c2a8e' },
+  1: { name: 'Volk', emoji: '🌾', color: '#2f7a4f' },
+};

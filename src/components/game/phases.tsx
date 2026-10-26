@@ -5,8 +5,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cx } from '@/lib/cx';
 import { JESTER } from '@/lib/jakob/cards';
-import { getSettings, rankEmoji, rankTitle } from '@/lib/jakob/engine';
-import { describeCards, EVENT_TEXT } from '@/lib/jakob/texts';
+import { getSettings, rankEmoji, rankTitle, teamPoints } from '@/lib/jakob/engine';
+import { describeCards, EVENT_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -116,7 +116,7 @@ export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
 }
 
 export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: number | null; handHasBothJesters: boolean }) {
-  const { state, me, g, nameOf } = useTable();
+  const { state, me, g, nameOf, deckOf } = useTable();
   const settings = getSettings(state);
   const present = state.order.filter((id) => !state.players.find((p) => p.id === id)?.left);
   const ready = state.ready.includes(me);
@@ -155,7 +155,33 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
         </div>
       )}
 
+      {state.audit && (
+        <div className="flex items-center gap-3 rounded-2xl bg-parchment-dark/70 p-3">
+          <PlayingCard rank={state.audit.card} deck={deckOf(state.audit.by)} size="sm" />
+          <p className="text-sm"><b>🔍 Steuerprüfung:</b> {nameOf(state.audit.by, true)} {state.audit.by === me ? 'musst' : 'muss'} diese Karte allen zeigen.</p>
+        </div>
+      )}
+
+      {state.mercyRound && (
+        <p className="rounded-2xl bg-azure/15 p-3 font-bold">🙏 {nameOf(present.at(-1) ?? '', true)} hat um Gnade gebeten – die große Steuer entfällt.</p>
+      )}
+      {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold">🪑 Der Große Jakob hat abgedankt.</p>}
+
       <RankLadder order={present} showDraws={state.round === 1} />
+
+      {settings.mercy && !rev && !state.mercyRound && present.at(-1) === me && !state.mercyUsed.includes(me) && (
+        <div className="rounded-2xl border-2 border-dashed border-azure p-3">
+          <p className="mb-2 font-bold">Gnadenrecht: Einmal pro Spiel kannst du die große Steuer verweigern.</p>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'mercy' })} disabled={g.busy}>🙏 Um Gnade bitten</Button>
+        </div>
+      )}
+
+      {settings.abdicate && !rev && !state.abdicated && present[0] === me && present.length >= 3 && (
+        <div className="rounded-2xl border-2 border-dashed border-gold-deep p-3">
+          <p className="mb-2 font-bold">Abdankung: Du tauschst den Platz mit einem Bürger. Klug bei schwacher Hand – besonders, wenn der Königssturz droht.</p>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'abdicate' })} disabled={g.busy}>🪑 Abdanken</Button>
+        </div>
+      )}
 
       {settings.revolution && !rev && handHasBothJesters && (
         <div className="rounded-2xl border-2 border-dashed border-wax p-3">
@@ -255,7 +281,13 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
           </motion.li>
         ))}
       </ol>
-      <p className="text-sm text-ink-soft">Noch {getSettings(state).rounds - last.round} {getSettings(state).rounds - last.round === 1 ? 'Runde' : 'Runden'}. Gleich wird neu gemischt und gegeben.</p>
+      {state.teams && <TeamScore />}
+      <p className="text-sm text-ink-soft">
+        {getSettings(state).goal !== null
+          ? `Gespielt wird bis ${getSettings(state).goal} Punkte.`
+          : `Noch ${getSettings(state).rounds - last.round} ${getSettings(state).rounds - last.round === 1 ? 'Runde' : 'Runden'}.`}
+        {' '}Gleich wird neu gemischt und gegeben.
+      </p>
       <div className="flex flex-wrap items-center gap-3">
         <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>{ready ? 'Bereit ✓' : 'Nächste Runde'}</Button>
       </div>
@@ -264,3 +296,19 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
   );
 }
 
+
+/** Team totals (Adel gegen Volk). */
+export function TeamScore() {
+  const { state } = useTable();
+  const totals = teamPoints(state);
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {([0, 1] as const).map((t) => (
+        <div key={t} className="rounded-2xl p-3 text-center text-parchment" style={{ backgroundColor: TEAM_INFO[t].color }}>
+          <span className="block text-sm font-bold">{TEAM_INFO[t].emoji} {TEAM_INFO[t].name}</span>
+          <span className="tabular block font-display text-3xl font-bold">{totals[t]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}

@@ -1,11 +1,17 @@
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 8;
+/** With "Doppeldeck" (two 80-card decks) up to 12 players fit at the table. */
+export const MAX_PLAYERS_DOUBLE = 12;
 
 export type Phase = 'draw' | 'court' | 'tax' | 'play' | 'roundEnd';
 export type Status = 'lobby' | 'playing' | 'finished';
 
 export const ROUND_OPTIONS = [3, 5, 7, 10] as const;
 export type RoundCount = (typeof ROUND_OPTIONS)[number];
+
+/** "Punkteziel": play until someone reaches this many points (overrides the round count). */
+export const GOAL_OPTIONS = [null, 20, 30, 50] as const;
+export type PointGoal = (typeof GOAL_OPTIONS)[number];
 
 export const TURN_OPTIONS = [null, 15, 30, 45, 60] as const;
 export type TurnSeconds = (typeof TURN_OPTIONS)[number];
@@ -16,11 +22,20 @@ export type TaxLevel = (typeof TAX_OPTIONS)[number];
 export const BOT_LEVELS = ['easy', 'sly'] as const;
 export type BotLevel = (typeof BOT_LEVELS)[number];
 
-export const COURT_EVENTS = ['holiday', 'taxHike', 'reversed', 'doublePoints', 'jesterFreedom'] as const;
+export const COURT_EVENTS = [
+  'holiday', 'taxHike', 'reversed', 'doublePoints', 'jesterFreedom', 'pest', 'audit', 'coronation', 'charity',
+] as const;
 export type CourtEvent = (typeof COURT_EVENTS)[number];
+
+export const MISSIONS = [
+  'twelveTrick', 'bigPlay', 'loneJester', 'crownTwice', 'neverServant', 'fiveTricks', 'revolutionary', 'climber',
+] as const;
+export type MissionId = (typeof MISSIONS)[number];
+export const MISSION_POINTS = 3;
 
 export interface Settings {
   rounds: RoundCount;
+  goal: PointGoal;
   turnSeconds: TurnSeconds;
   tax: TaxLevel;
   revolution: boolean;
@@ -39,10 +54,29 @@ export interface Settings {
   events: boolean;
   /** "Kartengedächtnis": show which cards were played this round. */
   tracker: boolean;
+  /** Secret missions worth bonus points. */
+  missions: boolean;
+  /** "Thronfolge": three crowns in a row win the game at once. */
+  throne: boolean;
+  /** "Adel gegen Volk": two teams, points are summed per team. */
+  teams: boolean;
+  /** "Gnadenrecht": once per game the Great Servant may refuse to pay taxes. */
+  mercy: boolean;
+  /** "Abdankung": the Great Jakob may step down and swap places with a citizen. */
+  abdicate: boolean;
+  /** "Narrenfluch": jesters left in hand at the end of a round cost a point each. */
+  jesterCurse: boolean;
+  /** "Hoftausch": after taxes the citizens pass one random card to the next citizen. */
+  courtSwap: boolean;
+  /** "Blitzrunde": the turn time shrinks by 5 s every round (minimum 10 s). */
+  blitz: boolean;
+  /** "Doppeldeck": two 80-card decks for up to 12 players. */
+  doubleDeck: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   rounds: 5,
+  goal: null,
   turnSeconds: null,
   tax: 'normal',
   revolution: true,
@@ -54,6 +88,15 @@ export const DEFAULT_SETTINGS: Settings = {
   jesterBan: false,
   events: false,
   tracker: true,
+  missions: false,
+  throne: false,
+  teams: false,
+  mercy: false,
+  abdicate: false,
+  jesterCurse: false,
+  courtSwap: false,
+  blitz: false,
+  doubleDeck: false,
 };
 
 export interface BotInfo { name: string; emoji: string; level: BotLevel }
@@ -64,6 +107,8 @@ export interface Player {
   /** Deck chosen by the player (uuid of a custom deck or "preset:<id>"); null = default. */
   deckId: string | null;
   bot?: BotInfo;
+  /** "Bot übernimmt": a human who dropped out is played by a bot until they return. */
+  autopilot?: boolean;
 }
 
 export interface Trick {
@@ -77,9 +122,19 @@ export interface Trick {
 
 export type LogKind =
   | 'play' | 'pass' | 'clear' | 'out' | 'revolution' | 'grandRevolution' | 'tax'
-  | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall' | 'unbeatable';
+  | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall' | 'unbeatable'
+  | 'mission' | 'mercy' | 'abdicate' | 'jesterCurse' | 'courtSwap' | 'pest' | 'audit' | 'charity'
+  | 'autopilot' | 'resume' | 'throne';
 
-export interface LogEntry { seq: number; kind: LogKind; by?: string; to?: string; cards?: number[]; count?: number }
+export interface LogEntry {
+  seq: number;
+  kind: LogKind;
+  by?: string;
+  to?: string;
+  cards?: number[];
+  count?: number;
+  mission?: MissionId;
+}
 
 export interface TaxPair {
   /** Servant who pays their best cards. */
@@ -109,11 +164,18 @@ export interface PlayerStats {
   bombs: number;
   rises: number;
   cardsPlayed: number;
+  tricks: number;
+  missions: number;
+  /** Cards played per rank (index 0 = rank 1 … index 12 = jester). */
+  byRank: number[];
 }
 
 export const EMPTY_STATS: PlayerStats = {
   crowns: 0, servant: 0, revolutions: 0, grandRevolutions: 0, bombs: 0, rises: 0, cardsPlayed: 0,
+  tricks: 0, missions: 0, byRank: Array(13).fill(0),
 };
+
+export interface Mission { id: MissionId; done: boolean }
 
 /** Everything every member of the game may see. */
 export interface PublicState {
@@ -151,18 +213,43 @@ export interface PublicState {
   log: LogEntry[];
   history: RoundResult[];
   stats: Record<string, PlayerStats>;
+  /** Team mode: 0 = Adel, 1 = Volk. */
+  teams: Record<string, 0 | 1> | null;
+  /** Players who already used their "Gnadenrecht". */
+  mercyUsed: string[];
+  /** This round's servant asked for mercy: no great tax. */
+  mercyRound: boolean;
+  abdicated: boolean;
+  /** Consecutive crowns of the current Great Jakob ("Thronfolge"). */
+  crownStreak: { id: string; count: number } | null;
+  throneWinner: string | null;
+  /** "Steuerprüfung": one card of the Great Jakob shown to everyone. */
+  audit: { by: string; card: number } | null;
+  /** Missions become public once the game is over. */
+  missionsRevealed: Record<string, Mission> | null;
 }
 
-export interface PrivateNotes { received: number[]; gave: number[] }
+export interface PrivateNotes { received: number[]; gave: number[]; swapGave?: number[]; swapGot?: number[] }
 
 /** Full server-side state: public part plus everyone's hands. */
 export interface GameState extends Omit<PublicState, 'handCounts'> {
   hands: Record<string, number[]>;
   notes: Record<string, PrivateNotes>;
+  /** Secret missions (only the owner sees theirs until the game ends). */
+  missions: Record<string, Mission>;
+  /** Fixed seed for reproducible deals (daily challenge); null = random. */
+  seed: number | null;
 }
 
 /** What one player privately sees in addition to the public state. */
-export interface PrivateHand { cards: number[]; received: number[]; gave: number[] }
+export interface PrivateHand {
+  cards: number[];
+  received: number[];
+  gave: number[];
+  swapGave?: number[];
+  swapGot?: number[];
+  mission?: Mission | null;
+}
 
 export type GameAction =
   | { type: 'join' }
@@ -175,9 +262,13 @@ export type GameAction =
   | { type: 'draw' }
   | { type: 'ready' }
   | { type: 'revolution' }
+  | { type: 'mercy' }
+  | { type: 'abdicate' }
   | { type: 'taxReturn'; cards: number[] }
   | { type: 'play'; cards: number[] }
   | { type: 'pass' }
   | { type: 'timeout' }
   | { type: 'skip' }
+  | { type: 'takeover'; playerId: string }
+  | { type: 'resume' }
   | { type: 'botMove' };

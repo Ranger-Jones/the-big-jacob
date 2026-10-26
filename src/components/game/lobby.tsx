@@ -10,7 +10,8 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
 import { PRESETS, resolveDeck, type DeckEntry } from '@/lib/decks';
-import { MAX_PLAYERS } from '@/lib/jakob/types';
+import { getSettings, maxPlayers } from '@/lib/jakob/engine';
+import { TEAM_INFO } from '@/lib/jakob/texts';
 import { inviteAction } from '@/server/game-actions';
 import type { ProfileLite } from '@/server/social-service';
 import { SettingsPanel } from './settings-panel';
@@ -25,7 +26,9 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inGame = new Set(state.players.map((p) => p.id));
   const invitable = friends.filter((f) => !inGame.has(f.id));
-  const full = state.players.length >= MAX_PLAYERS;
+  const seats = maxPlayers(state);
+  const full = state.players.length >= seats;
+  const teamMode = getSettings(state).teams;
   const myDeckId = state.players.find((p) => p.id === me)?.deckId ?? null;
   const myDeck = resolveDeck(myDeckId, { ...g.decks, ...Object.fromEntries(myDecks.map((d) => [d.id, d])) });
 
@@ -75,7 +78,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
         </div>
 
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: MAX_PLAYERS }, (_, seat) => {
+          {Array.from({ length: seats }, (_, seat) => {
             const p = state.players[seat];
             if (!p) {
               return (
@@ -102,6 +105,11 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                     {p.id === state.hostId ? '👑 Host' : p.bot ? (p.bot.level === 'sly' ? '🦊 Gerissener Bot' : '🙂 Einfacher Bot') : p.id === me ? 'Du' : 'Höfling'}
                   </span>
                   <span className="block truncate text-xs text-ink-soft">🎴 {deck.name}</span>
+                  {teamMode && (
+                    <span className="mt-0.5 inline-block rounded-full px-1.5 text-[0.7rem] font-bold text-parchment" style={{ backgroundColor: TEAM_INFO[(seat % 2) as 0 | 1].color }}>
+                      {TEAM_INFO[(seat % 2) as 0 | 1].emoji} {TEAM_INFO[(seat % 2) as 0 | 1].name}
+                    </span>
+                  )}
                 </span>
                 {isHost && p.id !== me && (
                   <button
