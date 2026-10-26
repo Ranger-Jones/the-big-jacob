@@ -1,5 +1,6 @@
 import { placements } from '@/lib/jakob/engine';
 import { FELTS, FRAMES } from '@/lib/cosmetics';
+import { monthOf, monthRange, sameMonth, shiftMonth, type MonthKey } from '@/lib/months';
 import { isValidQuickEmojis, normalizeQuickEmojis } from '@/lib/emojis';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { USERNAME_RE } from '@/lib/username';
@@ -187,4 +188,63 @@ export async function setCosmetics(admin: AdminClient, userId: string, username:
   const { error } = await admin.from('profiles').update(patch).eq('id', userId);
   if (error) throw error;
   return ok(undefined);
+}
+
+export interface PeriodRow {
+  user_id: string; username: string; avatar_url: string | null; avatar_frame: string | null;
+  games: number; wins: number; points: number; crowns: number;
+}
+
+type PeriodGame = {
+  user_id: string; place: number | null; points: number; stats: unknown; left_game: boolean;
+  games: { finished_at: string | null };
+  profiles: { username: string; avatar_url: string | null; avatar_frame: string | null } | null;
+};
+
+async function finishedGamePlayers(admin: AdminClient, from: string, to: string): Promise<PeriodGame[]> {
+  const { data, error } = await admin.from('game_players')
+    .select('user_id, place, points, stats, left_game, games!inner(finished_at, status, mode), profiles(username, avatar_url, avatar_frame)')
+    .eq('games.status', 'finished').eq('games.mode', 'normal').eq('left_game', false)
+    .gte('games.finished_at', from).lt('games.finished_at', to);
+  if (error) throw error;
+  return data as unknown as PeriodGame[];
+}
+
+function aggregate(rows: PeriodGame[]): PeriodRow[] {
+  const byUser = new Map<string, PeriodRow>();
+  for (const r of rows) {
+    const row = byUser.get(r.user_id) ?? {
+      user_id: r.user_id, username: r.profiles?.username ?? '?', avatar_url: r.profiles?.avatar_url ?? null,
+      avatar_frame: r.profiles?.avatar_frame ?? null, games: 0, wins: 0, points: 0, crowns: 0,
+    };
+    row.games += 1;
+    if (r.place === 1) row.wins += 1;
+    row.points += r.points ?? 0;
+    row.crowns += Number((r.stats as { crowns?: number } | null)?.crowns ?? 0);
+    byUser.set(r.user_id, row);
+  }
+  return [...byUser.values()].sort((a, b) => b.wins - a.wins || b.crowns - a.crowns || b.points - a.points);
+}
+
+/** Monthly league table (normal games only). */
+export async function getMonthlyLeaderboard(admin: AdminClient, month: MonthKey): Promise<PeriodRow[]> {
+  const { from, to } = monthRange(month);
+  const rows = await finishedGamePlayers(admin, from, to);
+  return aggregate(rows.filter((r) => r.games.finished_at && sameMonth(monthOf(new Date(r.games.finished_at)), month)));
+}
+
+/** Champions of the last `count` completed months (newest first). */
+export async function getMonthlyChampions(admin: AdminClient, count = 12, now = new Date()): Promise<{ month: MonthKey; champion: PeriodRow }[]> {
+  const current = monthOf(now);
+  const oldest = shiftMonth(current, -count);
+  const { from } = monthRange(oldest);
+  const { from: to } = monthRange(current);
+  const rows = await finishedGamePlayers(admin, from, new Date(Date.parse(to) + 86_400_000).toISOString());
+  const result: { month: MonthKey; champion: PeriodRow }[] = [];
+  for (let i = 1; i <= count; i++) {
+    const month = shiftMonth(current, -i);
+    const table = aggregate(rows.filter((r) => r.games.finished_at && sameMonth(monthOf(new Date(r.games.finished_at)), month)));
+    if (table[0] && table[0].wins > 0) result.push({ month, champion: table[0] });
+  }
+  return result;
 }

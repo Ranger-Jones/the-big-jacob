@@ -14,7 +14,9 @@ import { placements, teamPoints } from '@/lib/jakob/engine';
 import { MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import { playSound } from '@/lib/sound';
+import { CAMPAIGN } from '@/lib/campaign';
 import { rematchAction } from '@/server/game-actions';
+import { startCampaignAction } from '@/server/solo-actions';
 import { useTable } from './table-context';
 
 const PODIUM = [
@@ -22,6 +24,49 @@ const PODIUM = [
   { place: 1, height: 'h-28', color: '#f4b73a', medal: '🥇' },
   { place: 3, height: 'h-14', color: '#c98a52', medal: '🥉' },
 ];
+
+/** End of a campaign stage or the daily challenge. */
+function SoloOutcome({ won }: { won: boolean }) {
+  const { state, g, me } = useTable();
+  const [pending, setPending] = useState(false);
+  const code = g.game!.code;
+  if (state.mode === 'daily') {
+    return (
+      <Card className="flex flex-col items-center gap-3 text-center">
+        <h2 className="text-3xl font-bold">Dein Tagesergebnis: {state.points[me] ?? 0} Punkte</h2>
+        <p className="text-ink-soft">Schau nach, wie du im Vergleich zu deinen Freunden abschneidest.</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link href="/herausforderung" className={buttonClass('primary', 'lg')}>Zur Tagesrangliste</Link>
+          <Link href={`/spiel/${code}/wiederholung`} className={buttonClass('secondary', 'lg')}>🎞️ Wiederholung</Link>
+        </div>
+      </Card>
+    );
+  }
+  const level = Number(state.modeRef);
+  const stage = CAMPAIGN.find((s) => s.level === level);
+  const nextStage = CAMPAIGN.find((s) => s.level === level + 1);
+  async function play(target: number) {
+    setPending(true);
+    const res = await startCampaignAction(target);
+    setPending(false);
+    if (res?.error) toast.error(res.error);
+  }
+  return (
+    <Card className="flex flex-col items-center gap-3 text-center">
+      <h2 className="text-4xl font-bold">{won ? `${stage?.emoji ?? '🏆'} ${stage?.place ?? 'Station'} gemeistert!` : 'Diesmal nicht …'}</h2>
+      <p className="text-ink-soft">
+        {won
+          ? nextStage ? `Neuer Titel: ${stage?.title}. Als Nächstes wartet: ${nextStage.place}.` : 'Du hast die ganze Kampagne gewonnen. Lang lebe der Große Jakob!'
+          : 'Nur ein Sieg bringt dich weiter. Neue Karten, neues Glück!'}
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {won && nextStage && <Button size="lg" onClick={() => play(nextStage.level)} disabled={pending}>Weiter: {nextStage.place}</Button>}
+        {!won && <Button size="lg" onClick={() => play(level)} disabled={pending}>Nochmal versuchen</Button>}
+        <Link href="/kampagne" className={buttonClass('secondary', 'lg')}>Zur Kampagne</Link>
+      </div>
+    </Card>
+  );
+}
 
 export function Results() {
   const router = useRouter();
@@ -182,10 +227,15 @@ export function Results() {
         </ul>
       )}
 
-      <div className="flex flex-wrap justify-center gap-3">
-        <Button size="lg" onClick={rematch} disabled={busy}>{game.rematchGameId ? 'Zur Revanche' : 'Revanche'}</Button>
-        <Link href="/" className={buttonClass('velvet', 'lg')}>Zur Startseite</Link>
-      </div>
+      {state.mode === 'normal' ? (
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button size="lg" onClick={rematch} disabled={busy}>{game.rematchGameId ? 'Zur Revanche' : 'Revanche'}</Button>
+          <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}>🎞️ Wiederholung</Link>
+          <Link href="/" className={buttonClass('velvet', 'lg')}>Zur Startseite</Link>
+        </div>
+      ) : (
+        <SoloOutcome won={iWon} />
+      )}
     </main>
   );
 }

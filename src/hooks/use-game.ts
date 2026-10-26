@@ -40,6 +40,8 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
   const [connected, setConnected] = useState(true);
   const [emojis, setEmojis] = useState<EmojiEvent[]>([]);
   const [kickNotice, setKickNotice] = useState(false);
+  /** People seen at the table who are not players (spectators). */
+  const [watchers, setWatchers] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   // Server clock minus local clock, so countdowns match the server's deadline checks.
   const [clockOffset] = useState(() => serverNow - Date.now());
@@ -74,8 +76,8 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
     } else setGame(null);
   }, [applyHand, initial.id, me, supabase]);
 
-  // Load profiles of newly joined players.
-  const playerIds = game?.state.players.filter((p) => !p.bot).map((p) => p.id).join(',') ?? '';
+  // Load profiles of newly joined players and of spectators.
+  const playerIds = [...(game?.state.players.filter((p) => !p.bot).map((p) => p.id) ?? []), ...watchers].join(',');
   useEffect(() => {
     const missing = playerIds.split(',').filter((id) => id && !profiles[id]);
     if (missing.length === 0) return;
@@ -130,10 +132,11 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
             if (row?.user_id === me && row.hand) applyHand(row.hand, row.version ?? 0);
           })
         .on('broadcast', { event: 'emoji' }, ({ payload }) => {
+          // The channel only admits players and spectators, so any well-formed reaction may be shown.
           const e = payload as Partial<EmojiEvent> | null;
-          const isPlayer = gameRef.current?.state.players.some((p) => p.id === e?.from && !p.left);
-          if (!e || typeof e.id !== 'string' || !isAllowedEmoji(e.emoji) || !isPlayer) return;
+          if (!e || typeof e.id !== 'string' || typeof e.from !== 'string' || !isAllowedEmoji(e.emoji)) return;
           setEmojis((list) => [...list.slice(-15), { id: e.id!, emoji: e.emoji!, from: e.from! }]);
+          setWatchers((w) => (w.includes(e.from!) ? w : [...w, e.from!]));
         })
         .on('broadcast', { event: 'kicked' }, ({ payload }) => {
           if ((payload as { userId?: string } | null)?.userId !== me) return;
@@ -145,6 +148,8 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
           const ids = new Set(Object.keys(ch.presenceState()));
           ids.add(me);
           setOnline(ids);
+          const players = new Set(gameRef.current?.state.players.map((p) => p.id) ?? []);
+          setWatchers([...ids].filter((id) => !players.has(id)));
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
@@ -275,7 +280,9 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
     };
   }, [deadline, moveSeq, status, driverRank, clockOffset, dispatch]);
 
-  return { game, hand, profiles, decks, online, connected, emojis, kickNotice, busy, clockOffset, sendEmoji, dispatch, refetch };
+  const players = new Set(game?.state.players.map((p) => p.id) ?? []);
+  const spectators = watchers.filter((id) => !players.has(id) && online.has(id));
+  return { game, hand, profiles, decks, online, connected, emojis, kickNotice, busy, clockOffset, spectators, sendEmoji, dispatch, refetch };
 }
 
 export type UseGame = ReturnType<typeof useGame>;

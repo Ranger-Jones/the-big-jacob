@@ -218,6 +218,30 @@ describe('daily seed', () => {
   });
 });
 
+describe('replay', () => {
+  it('records every round secretly and reveals it at the end', () => {
+    let s = playing({ a: [9, 1], b: [8, 2], c: [7, 3] }, { rounds: 3 });
+    s = { ...s, phase: 'tax', tax: [] };
+    // Start play through the engine so the round snapshot is taken.
+    s = { ...s, round: 3, replayLog: [{ round: 3, order: ['a', 'b', 'c'], hands: structuredClone(s.hands), event: null, moves: [] }] };
+    s = { ...s, phase: 'play' };
+    s = must(s, 'a', { type: 'play', cards: [9] });
+    s = must(s, 'b', { type: 'pass' });
+    expect(publicState(s)).not.toHaveProperty('replayLog');
+    expect(publicState(s).replay).toBeNull();
+    s = must(s, 'c', { type: 'play', cards: [7] });
+    s = must(s, 'a', { type: 'play', cards: [1] });
+    // The 1 wins at once; a is out, so b leads – the 2 is unbeatable now that the 1 is gone.
+    s = must(s, 'b', { type: 'play', cards: [2] });
+    s = must(s, 'b', { type: 'play', cards: [8] });
+    expect(s.status).toBe('finished');
+    const moves = s.replay![0].moves;
+    expect(moves[0]).toEqual({ k: 'p', by: 'a', c: [9] });
+    expect(moves[1]).toEqual({ k: 'x', by: 'b' });
+    expect(moves.some((m) => m.k === 'c')).toBe(true);
+  });
+});
+
 describe('everything on', () => {
   it('plays complete games with all options', () => {
     for (const seed of [11, 12, 13]) {

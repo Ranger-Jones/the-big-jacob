@@ -9,7 +9,10 @@ import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/supabase/server';
+import { CAMPAIGN, campaignTitle } from '@/lib/campaign';
+import { berlinDay } from '@/lib/daily';
 import { getStatsByUsername, listActiveGames } from '@/server/profile-service';
+import { listFriendTables } from '@/server/spectate-service';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { listPendingInvites } from '@/server/social-service';
 
@@ -18,12 +21,16 @@ export default async function Home() {
   if (!user) return <Landing />;
 
   const admin = createAdminClient();
-  const [invites, active, friends, stats] = await Promise.all([
+  const [invites, active, friends, stats, friendTables, { data: progress }, { data: daily }] = await Promise.all([
     listPendingInvites(admin, user.id),
     listActiveGames(admin, user.id),
     getFriendLists(user.id),
     getStatsByUsername(admin, user.username),
+    listFriendTables(admin, user.id),
+    admin.from('profiles').select('campaign_level').eq('id', user.id).single(),
+    admin.from('daily_results').select('points').eq('day', berlinDay()).eq('user_id', user.id).maybeSingle(),
   ]);
+  const level = progress?.campaign_level ?? 0;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 pb-12">
@@ -62,6 +69,43 @@ export default async function Home() {
       )}
 
       <PlayActions />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link href="/kampagne" className="group">
+          <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
+            <span className="text-5xl" aria-hidden>{CAMPAIGN[Math.min(level, CAMPAIGN.length - 1)].emoji}</span>
+            <span>
+              <span className="block font-display text-3xl font-bold">Kampagne</span>
+              <span className="block text-parchment/75">Vom Bauern zum König · Station {Math.min(level + 1, CAMPAIGN.length)} von {CAMPAIGN.length}</span>
+              <span className="block text-sm text-gold-soft">Dein Titel: {campaignTitle(level)}</span>
+            </span>
+          </Card>
+        </Link>
+        <Link href="/herausforderung" className="group">
+          <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
+            <span className="text-5xl" aria-hidden>📅</span>
+            <span>
+              <span className="block font-display text-3xl font-bold">Tägliche Herausforderung</span>
+              <span className="block text-parchment/75">Dieselbe Hand für alle – wer holt heute die meisten Punkte?</span>
+              <span className="block text-sm text-gold-soft">{daily ? `Heute erledigt: ${daily.points} Punkte` : 'Heute noch offen'}</span>
+            </span>
+          </Card>
+        </Link>
+      </div>
+
+      {friendTables.length > 0 && (
+        <Card tone="velvet" className="flex flex-col gap-3">
+          <h2 className="text-3xl font-bold">Freunde am Tisch</h2>
+          <ul className="flex flex-col gap-2">
+            {friendTables.map((t) => (
+              <li key={t.code} className="flex flex-wrap items-center gap-3">
+                <span className="min-w-0 flex-1 truncate"><b>{t.friend.username}</b> spielt gerade · Runde {t.round} · {t.players} am Tisch</span>
+                <Link href={`/spiel/${t.code}/zuschauen`} className={buttonClass('secondary', 'sm')}>👀 Zuschauen</Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
         <Card tone="velvet" className="flex flex-col gap-3">

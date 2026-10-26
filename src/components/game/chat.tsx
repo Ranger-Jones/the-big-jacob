@@ -9,7 +9,7 @@ import { useTable } from './table-context';
 
 const time = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
 
-export function ChatPanel({ messages, onSend, className }: { messages: ChatMessage[]; onSend: (body: string) => Promise<boolean>; className?: string }) {
+export function ChatPanel({ messages, onSend, className, readOnly }: { messages: ChatMessage[]; onSend: (body: string) => Promise<boolean>; className?: string; readOnly?: boolean }) {
   const { me, nameOf, avatarOf, colorOf } = useTable();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -45,6 +45,7 @@ export function ChatPanel({ messages, onSend, className }: { messages: ChatMessa
           );
         })}
       </ol>
+      {readOnly ? <p className="text-center text-xs text-ink-soft">Zuschauer lesen nur mit.</p> : (<>
       <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
         {QUICK_PHRASES.map((p) => (
           <button key={p} type="button" onClick={() => send(p)} className="shrink-0 rounded-full bg-parchment-dark px-3 py-1 text-xs font-bold text-ink-soft ring-1 ring-line hover:bg-white/70">
@@ -71,6 +72,7 @@ export function ChatPanel({ messages, onSend, className }: { messages: ChatMessa
           Senden
         </button>
       </form>
+      </>)}
     </div>
   );
 }

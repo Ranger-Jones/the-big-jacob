@@ -20,7 +20,9 @@ export default async function GamePage({ params }: { params: Promise<{ code: str
   if (!game) notFound();
   if (!game.state.players.some((p) => p.id === user.id)) {
     const joined = await joinGame(admin, user.id, code);
-    if (!joined.ok) return <JoinError message={joined.error} />;
+    if (!joined.ok) {
+      return <JoinError message={joined.error} spectateHref={game.state.status === 'playing' ? `/spiel/${game.code}/zuschauen` : undefined} />;
+    }
     game = await loadGameByCode(admin, code);
     if (!game) notFound();
   }

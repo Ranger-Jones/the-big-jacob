@@ -76,10 +76,14 @@ export function createGameState(hostId: string, settings: Settings = DEFAULT_SET
     throneWinner: null,
     audit: null,
     missionsRevealed: null,
+    mode: 'normal',
+    modeRef: null,
+    replay: null,
     hands: {},
     notes: {},
     missions: {},
     seed: null,
+    replayLog: [],
   };
 }
 
@@ -259,10 +263,11 @@ function assignMissions(state: GameState, rand: RandInt) {
 // Projections
 
 export function publicState(state: GameState): PublicState {
-  const { hands, notes: _notes, missions: _missions, seed: _seed, ...pub } = state;
+  const { hands, notes: _notes, missions: _missions, seed: _seed, replayLog: _replay, ...pub } = state;
   void _notes;
   void _missions;
   void _seed;
+  void _replay;
   const handCounts = Object.fromEntries(Object.entries(hands).map(([id, cards]) => [id, cards.length]));
   return structuredClone({ ...pub, handCounts });
 }
@@ -284,10 +289,11 @@ export interface Secrets {
   notes: GameState['notes'];
   missions: GameState['missions'];
   seed: number | null;
+  replayLog: GameState['replayLog'];
 }
 
 export function secretsOf(state: GameState): Secrets {
-  return { hands: state.hands, notes: state.notes, missions: state.missions, seed: state.seed };
+  return { hands: state.hands, notes: state.notes, missions: state.missions, seed: state.seed, replayLog: state.replayLog };
 }
 
 export function fromParts(pub: PublicState, secret: Partial<Secrets>): GameState {
@@ -299,6 +305,7 @@ export function fromParts(pub: PublicState, secret: Partial<Secrets>): GameState
     notes: structuredClone(secret.notes ?? {}),
     missions: structuredClone(secret.missions ?? {}),
     seed: secret.seed ?? null,
+    replayLog: structuredClone(secret.replayLog ?? []),
   } as GameState);
 }
 
@@ -558,7 +565,14 @@ function startPlay(state: GameState, rand: RandInt, now: number) {
   state.trick = null;
   state.passed = [];
   state.turn = state.order.find((id) => isActive(state, id)) ?? null;
+  state.replayLog = [...state.replayLog, {
+    round: state.round, order: [...state.order], hands: structuredClone(state.hands), event: state.event, moves: [],
+  }];
   setTurnDeadline(state, now);
+}
+
+function record(state: GameState, move: GameState['replayLog'][number]['moves'][number]) {
+  state.replayLog.at(-1)?.moves.push(move);
 }
 
 function setTurnDeadline(state: GameState, now: number) {
@@ -578,6 +592,7 @@ function clearTrick(state: GameState, now: number) {
   state.passed = [];
   const leader = by && isActive(state, by) ? by : by ? nextActiveAfter(state, by) : activeIds(state)[0];
   state.turn = leader ?? null;
+  record(state, { k: 'c', by: leader ?? null });
   log(state, 'clear', { by: leader ?? undefined });
   setTurnDeadline(state, now);
 }
@@ -696,6 +711,7 @@ function finishGame(state: GameState) {
   for (const id of Object.keys(state.hands)) state.hands[id] = [];
   state.notes = {};
   if (getSettings(state).missions) state.missionsRevealed = structuredClone(state.missions);
+  state.replay = structuredClone(state.replayLog);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -717,6 +733,7 @@ function doPlay(state: GameState, actor: string, cards: number[], rand: RandInt,
   const byRank = stats(state, actor).byRank;
   for (const c of cards) byRank[c - 1] = (byRank[c - 1] ?? 0) + 1;
   state.trick = { cards: sortHand(cards), rank: verdict.rank, count: cards.length, by: actor, seq: state.moveSeq };
+  record(state, { k: 'p', by: actor, c: sortHand(cards) });
   log(state, verdict.bomb ? 'bomb' : 'play', { by: actor, cards: sortHand(cards) });
   if (verdict.bomb) bumpStat(state, actor, 'bombs');
   if (cards.length >= 4) completeMission(state, actor, 'bigPlay');
@@ -761,6 +778,7 @@ function doPass(state: GameState, actor: string, now: number, kind: LogKind = 'p
   if (!state.trick) return 'Du spielst aus – passen geht nicht.';
   state.moveSeq += 1;
   state.passed = [...new Set([...state.passed, actor])];
+  record(state, { k: 'x', by: actor });
   log(state, kind, { by: actor });
   advanceAfter(state, actor, now);
   return null;

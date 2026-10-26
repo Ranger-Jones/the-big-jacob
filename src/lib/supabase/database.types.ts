@@ -23,7 +23,45 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "decks": {
+            "daily_results": {
+                  Row: {
+                    "created_at": string,"day": string,"game_id": string | null,"place": number,"points": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"day": string,"game_id"?: string | null,"place": number,"points": number,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"day"?: string,"game_id"?: string | null,"place"?: number,"points"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "daily_results_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "daily_results_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "daily_results_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "daily_results_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"decks": {
                   Row: {
                     "created_at": string,"design": NonNullable<Json>,"id": string,"name": string,"owner_id": string,"updated_at": string
                   }
@@ -295,16 +333,54 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
-                },"games": {
+                },"game_spectators": {
                   Row: {
-                    "code": string,"created_at": string,"finished_at": string | null,"host_id": string,"id": string,"rematch_game_id": string | null,"started_at": string | null,"state": NonNullable<Json>,"status": string,"version": number
+                    "created_at": string,"game_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "code": string,"created_at"?: string,"finished_at"?: string | null,"host_id": string,"id"?: string,"rematch_game_id"?: string | null,"started_at"?: string | null,"state": NonNullable<Json>,"status"?: string,"version"?: number
+                    "created_at"?: string,"game_id": string,"user_id": string
                   }
                   Update: {
-                    "code"?: string,"created_at"?: string,"finished_at"?: string | null,"host_id"?: string,"id"?: string,"rematch_game_id"?: string | null,"started_at"?: string | null,"state"?: NonNullable<Json>,"status"?: string,"version"?: number
+                    "created_at"?: string,"game_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "game_spectators_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "game_spectators_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "game_spectators_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "game_spectators_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"games": {
+                  Row: {
+                    "code": string,"created_at": string,"finished_at": string | null,"host_id": string,"id": string,"mode": string,"mode_ref": string | null,"rematch_game_id": string | null,"started_at": string | null,"state": NonNullable<Json>,"status": string,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"created_at"?: string,"finished_at"?: string | null,"host_id": string,"id"?: string,"mode"?: string,"mode_ref"?: string | null,"rematch_game_id"?: string | null,"started_at"?: string | null,"state": NonNullable<Json>,"status"?: string,"version"?: number
+                  }
+                  Update: {
+                    "code"?: string,"created_at"?: string,"finished_at"?: string | null,"host_id"?: string,"id"?: string,"mode"?: string,"mode_ref"?: string | null,"rematch_game_id"?: string | null,"started_at"?: string | null,"state"?: NonNullable<Json>,"status"?: string,"version"?: number
                   }
                   Relationships: [
                     {
@@ -335,14 +411,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"created_at": string,"default_deck": string | null,"id": string,"quick_emojis": (string)[] | null,"table_felt": string | null,"username": string
+                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"created_at": string,"default_deck": string | null,"id": string,"quick_emojis": (string)[] | null,"table_felt": string | null,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id": string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username": string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id": string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username": string
                   }
                   Update: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username"?: string
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"quick_emojis"?: (string)[] | null,"table_felt"?: string | null,"username"?: string
                   }
                   Relationships: [
                     
@@ -352,7 +428,7 @@ isOneToOne: false
           Views: {
             "leaderboard": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -360,7 +436,7 @@ isOneToOne: false
                   ]
                 },"player_stats": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
+                    "avatar_frame": string | null,"avatar_url": string | null,"avg_place": number | null,"best_points": number | null,"bombs": number | null,"campaign_level": number,"cards_played": number | null,"crowns": number | null,"games_played": number | null,"grand_revolutions": number | null,"missions": number | null,"revolutions": number | null,"rises": number | null,"servant": number | null,"total_points": number | null,"tricks": number | null,"user_id": string,"username": string | null,"wins": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -379,6 +455,9 @@ isOneToOne: false
 { Args: { "p_expected_version": number,"p_game_id": string,"p_hands": Json,"p_players": Json,"p_secret": Json,"p_state": Json }; Returns: number
                            },
 "is_game_member":
+{ Args: { "gid": string }; Returns: boolean
+                           },
+"is_game_spectator":
 { Args: { "gid": string }; Returns: boolean
                            }
           }

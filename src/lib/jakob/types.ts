@@ -177,6 +177,19 @@ export const EMPTY_STATS: PlayerStats = {
 
 export interface Mission { id: MissionId; done: boolean }
 
+/** Replay data: p = play, x = pass, c = trick cleared (by = who leads next). */
+export type ReplayMove = { k: 'p'; by: string; c: number[] } | { k: 'x'; by: string } | { k: 'c'; by: string | null };
+export interface ReplayRound {
+  round: number;
+  order: string[];
+  /** Hands at the moment play starts (after taxes and swaps). */
+  hands: Record<string, number[]>;
+  event: CourtEvent | null;
+  moves: ReplayMove[];
+}
+
+export type GameMode = 'normal' | 'campaign' | 'daily';
+
 /** Everything every member of the game may see. */
 export interface PublicState {
   status: Status;
@@ -227,6 +240,11 @@ export interface PublicState {
   audit: { by: string; card: number } | null;
   /** Missions become public once the game is over. */
   missionsRevealed: Record<string, Mission> | null;
+  /** Solo modes: campaign level ("1".."8") or daily challenge date. */
+  mode: GameMode;
+  modeRef: string | null;
+  /** Full replay, revealed when the game is over. */
+  replay: ReplayRound[] | null;
 }
 
 export interface PrivateNotes { received: number[]; gave: number[]; swapGave?: number[]; swapGot?: number[] }
@@ -239,6 +257,8 @@ export interface GameState extends Omit<PublicState, 'handCounts'> {
   missions: Record<string, Mission>;
   /** Fixed seed for reproducible deals (daily challenge); null = random. */
   seed: number | null;
+  /** Replay being recorded (secret until the end). */
+  replayLog: ReplayRound[];
 }
 
 /** What one player privately sees in addition to the public state. */

@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import {
   applyAction, createGameState, createRematchState, fromParts, placements, privateHand, publicState, secretsOf,
-  type GameAction, type GameState, type PrivateHand, type PublicState, type Secrets,
+  type BotLevel, type GameAction, type GameState, type PrivateHand, type PublicState, type Secrets, type Settings,
 } from '@/lib/jakob/engine';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
@@ -97,7 +97,7 @@ export async function insertGame(admin: AdminClient, state: GameState): Promise<
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateCode();
     const { data, error } = await admin.from('games')
-      .insert({ code, host_id: state.hostId, status: 'lobby', state: publicState(state) as never })
+      .insert({ code, host_id: state.hostId, status: 'lobby', state: publicState(state) as never, mode: state.mode, mode_ref: state.modeRef })
       .select('id').single();
     if (error) {
       if (error.code === '23505') continue;
@@ -114,6 +114,56 @@ export async function insertGame(admin: AdminClient, state: GameState): Promise<
     return ok({ id: data.id, code });
   }
   return fail('Konnte keinen Raum-Code erzeugen. Bitte nochmal versuchen.');
+}
+
+/** Campaign progress and daily results are booked when a solo game ends. */
+async function afterFinish(admin: AdminClient, gameId: string, state: GameState) {
+  if (state.mode === 'normal') return;
+  const human = state.players.find((p) => !p.bot);
+  if (!human || human.left) return;
+  const place = placements(state)[human.id] ?? 99;
+  if (state.mode === 'campaign' && place === 1) {
+    const level = Number(state.modeRef);
+    const { data } = await admin.from('profiles').select('campaign_level').eq('id', human.id).maybeSingle();
+    if (data && Number.isInteger(level) && data.campaign_level < level) {
+      await admin.from('profiles').update({ campaign_level: level }).eq('id', human.id);
+    }
+  }
+  if (state.mode === 'daily' && state.modeRef) {
+    await admin.from('daily_results').upsert(
+      { day: state.modeRef, user_id: human.id, game_id: gameId, points: state.points[human.id] ?? 0, place },
+      { onConflict: 'day,user_id', ignoreDuplicates: true },
+    );
+  }
+}
+
+/** A solo game against bots that starts right away (campaign stage or daily challenge). */
+export async function createSoloGame(
+  admin: AdminClient, userId: string,
+  options: { mode: 'campaign' | 'daily'; ref: string; settings: Settings; bots: BotLevel[]; seed?: number; deckId?: string | null },
+): Promise<ServiceResult<{ code: string }>> {
+  let state = createGameState(userId, options.settings);
+  state.players[0].deckId = options.deckId ?? null;
+  state.mode = options.mode;
+  state.modeRef = options.ref;
+  state.seed = options.seed ?? null;
+  for (const level of options.bots) {
+    const res = applyAction(state, userId, { type: 'addBot', level }, rand);
+    if (!res.ok) return fail(res.error);
+    state = res.state;
+  }
+  const started = applyAction(state, userId, { type: 'start' }, rand);
+  if (!started.ok) return fail(started.error);
+  const created = await insertGame(admin, started.state);
+  return created.ok ? ok({ code: created.data.code }) : created;
+}
+
+/** Unfinished solo game of this kind, so a reload continues instead of starting over. */
+export async function findOpenSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<string | null> {
+  const { data } = await admin.from('games').select('code, game_players!inner(user_id, left_game)')
+    .eq('mode', mode).eq('mode_ref', ref).eq('status', 'playing')
+    .eq('game_players.user_id', userId).eq('game_players.left_game', false).limit(1);
+  return data?.[0]?.code ?? null;
 }
 
 export async function createGame(admin: AdminClient, userId: string, deckId: string | null = null) {
@@ -171,6 +221,7 @@ export async function performAction(
     const version = await commit(admin, gameId, game.version, game.state, res.state);
     if (version !== 'conflict') {
       if (action.type === 'removePlayer' && game.state.status === 'lobby') await notifyKicked(admin, gameId, action.playerId);
+      if (res.state.status === 'finished' && game.state.status !== 'finished') await afterFinish(admin, gameId, res.state);
       return ok({ version, state: publicState(res.state), hand: privateHand(res.state, userId) });
     }
     if (typeof expected === 'number') return fail(STALE);

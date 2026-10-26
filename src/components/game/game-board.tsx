@@ -108,6 +108,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
+            {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment">⚔️ Station {state.modeRef}</span>}
+            {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment">📅 Tagesaufgabe</span>}
             {state.phase === 'draw' ? 'Auslosung' : (
               <>
                 <span className="sm:hidden">Runde {state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
@@ -119,6 +121,11 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
             {myIndex >= 0 && <span className="ml-2 hidden font-sans text-sm text-parchment/70 sm:inline">· {state.points[me] ?? 0} Punkte</span>}
           </p>
           <div className="flex shrink-0 items-center gap-1">
+            {g.spectators.length > 0 && (
+              <span className="rounded-xl bg-velvet-soft px-2 py-1 text-sm font-bold" title={`Es schauen zu: ${g.spectators.map((id) => g.profiles[id]?.username ?? '…').join(', ')}`}>
+                👀 {g.spectators.length}
+              </span>
+            )}
             {chatButton}
             {settings.missions && mission && (
               <Button variant="velvet" size="sm" onClick={() => setMissionOpen(true)} aria-label="Deine Mission" className={cx(mission.done && 'ring-gold')}>

@@ -8,7 +8,8 @@ import { parseUsernameParam } from '@/lib/username';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { signOut } from '@/server/auth-actions';
-import { badgesFor, getHistory, getStatsByUsername } from '@/server/profile-service';
+import { monthTitle } from '@/lib/months';
+import { badgesFor, getHistory, getMonthlyChampions, getStatsByUsername } from '@/server/profile-service';
 import { AvatarUpload } from './avatar-upload';
 import { CosmeticsPicker } from './cosmetics-picker';
 import { RenameForm } from './rename-form';
@@ -28,7 +29,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const stats = await getStatsByUsername(admin, username);
   if (!stats) notFound();
   const isMe = stats.user_id === me.id;
-  const history = await getHistory(admin, stats.user_id);
+  const [history, champions] = await Promise.all([getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12)]);
+  const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
   const badges = badgesFor(stats);
 
   return (
@@ -41,6 +43,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
             {stats.crowns > 0 ? `${stats.crowns}× Großer Jakob gewesen` : 'Noch nie auf dem Thron gesessen'}
             {stats.servant > 0 && ` · ${stats.servant}× Großer Knecht`}
           </p>
+          {titles.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5">
+              {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60">👑 {t}</li>)}
+            </ul>
+          )}
           {isMe && (
             <div className="flex flex-wrap items-center gap-2">
               <RenameForm current={stats.username} />
