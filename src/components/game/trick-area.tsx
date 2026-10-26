@@ -49,6 +49,22 @@ export function TrickArea() {
 
   return (
     <div className="relative mx-auto w-full max-w-3xl pt-2.5 sm:pt-3">
+      {/* Spotlight: a soft cone of torch light falling onto the table */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-48 left-1/2 h-[34rem] w-[150%] max-w-[56rem] -translate-x-1/2"
+        style={{
+          background: 'radial-gradient(ellipse 46% 52% at 50% 64%, rgb(255 214 140 / 0.2), transparent 72%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-48 left-1/2 h-[30rem] w-[110%] max-w-[44rem] -translate-x-1/2 opacity-60"
+        style={{
+          clipPath: 'polygon(40% 0, 60% 0, 100% 100%, 0 100%)',
+          background: 'linear-gradient(180deg, rgb(255 226 170 / 0.16), rgb(255 214 140 / 0.04) 70%, transparent)',
+        }}
+      />
       {state.event && (
         <span
           className="absolute left-1/2 top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-velvet-deep px-3 py-1 text-xs font-bold text-gold-soft ring-2 ring-gold/50 shadow-[0_3px_0_rgb(0_0_0/0.4)]"

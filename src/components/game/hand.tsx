@@ -85,7 +85,7 @@ export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount =
             />
             <span className={cx(
               'pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-2 text-xs font-bold tabular shadow',
-              sel > 0 ? 'bg-gold text-ink' : 'bg-velvet-deep text-parchment ring-1 ring-white/20',
+              sel > 0 ? 'bg-gold text-[#2b1a12]' : 'bg-velvet-deep text-parchment ring-1 ring-white/20',
             )}>
               {sel > 0 ? `${sel}/${count}` : `×${count}`}
             </span>

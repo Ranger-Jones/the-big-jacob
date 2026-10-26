@@ -48,7 +48,7 @@ export function ChatPanel({ messages, onSend, className, readOnly }: { messages:
       {readOnly ? <p className="text-center text-xs text-ink-soft">Zuschauer lesen nur mit.</p> : (<>
       <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
         {QUICK_PHRASES.map((p) => (
-          <button key={p} type="button" onClick={() => send(p)} className="shrink-0 rounded-full bg-parchment-dark px-3 py-1 text-xs font-bold text-ink-soft ring-1 ring-line hover:bg-white/70">
+          <button key={p} type="button" onClick={() => send(p)} className="shrink-0 rounded-full bg-parchment-dark px-3 py-1 text-xs font-bold text-ink-soft ring-1 ring-line hover:bg-white/10">
             {p}
           </button>
         ))}
@@ -66,7 +66,7 @@ export function ChatPanel({ messages, onSend, className, readOnly }: { messages:
           maxLength={CHAT_MAX}
           placeholder="Nachricht an den Tisch"
           aria-label="Nachricht"
-          className="h-11 min-w-0 flex-1 rounded-xl bg-white/60 px-3 text-ink ring-2 ring-inset ring-line outline-none focus:ring-gold-deep"
+          className="h-11 min-w-0 flex-1 rounded-xl bg-white/5 px-3 text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
         />
         <button type="submit" disabled={!text.trim() || sending} className="h-11 rounded-xl bg-wine px-4 font-bold text-parchment disabled:opacity-50">
           Senden

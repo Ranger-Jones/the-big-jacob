@@ -18,7 +18,7 @@ export function Modal({
       onClose={onClose}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
       className={cx(
-        'parchment m-auto max-h-[90dvh] rounded-[1.5rem] p-0 ring-2 ring-line shadow-[0_8px_0_rgb(0_0_0/0.4)] backdrop:bg-velvet-deep/70 backdrop:backdrop-blur-[2px]',
+        'parchment m-auto max-h-[90dvh] rounded-[1.5rem] p-0 ring-1 ring-line shadow-[0_8px_0_rgb(0_0_0/0.4)] backdrop:bg-velvet-deep/70 backdrop:backdrop-blur-[2px]',
         wide ? 'w-[min(94vw,40rem)]' : 'w-[min(92vw,26rem)]',
       )}
     >

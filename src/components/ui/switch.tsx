@@ -20,7 +20,7 @@ export function Switch({
           disabled={disabled}
           onChange={(e) => onChange?.(e.target.checked)}
         />
-        <span className="block h-7 w-12 rounded-full bg-ink-soft/30 ring-2 ring-inset ring-line transition-colors peer-checked:bg-vert peer-checked:ring-vert peer-focus-visible:outline-3 peer-focus-visible:outline-gold peer-disabled:opacity-60" />
+        <span className="block h-7 w-12 rounded-full bg-ink-soft/30 ring-1 ring-inset ring-line transition-colors peer-checked:bg-vert peer-checked:ring-vert peer-focus-visible:outline-3 peer-focus-visible:outline-gold peer-disabled:opacity-60" />
         <span className="absolute left-1 top-1 size-5 rounded-full bg-parchment shadow transition-transform peer-checked:translate-x-5" />
       </span>
     </label>

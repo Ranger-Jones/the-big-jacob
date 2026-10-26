@@ -32,7 +32,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-const fieldClass = 'h-10 min-w-0 rounded-xl bg-white/60 px-3 text-ink ring-2 ring-inset ring-line outline-none focus:ring-gold-deep';
+const fieldClass = 'h-10 min-w-0 rounded-xl bg-white/5 px-3 text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep';
 
 export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
   const router = useRouter();
@@ -333,7 +333,7 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
           <h2 className="self-start text-3xl font-bold">Rückseite</h2>
           <CardBack design={design} size="xl" />
           {design.back.image && (
-            <div className="parchment w-full rounded-2xl p-3 ring-2 ring-line">
+            <div className="parchment w-full rounded-2xl p-3 ring-1 ring-line">
               <p className="mb-1 font-bold">Foto-Ausschnitt</p>
               {([['Zoom', 'zoom', 100, 500, 100], ['Waagerecht', 'panX', -100, 100, 1], ['Senkrecht', 'panY', -100, 100, 1]] as const).map(([label, key, min, max, factor]) => (
                 <label key={key} className="flex flex-col gap-1 py-1">

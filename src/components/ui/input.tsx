@@ -13,8 +13,8 @@ export function Input({
         id={inputId}
         aria-invalid={!!error || undefined}
         className={cx(
-          'h-12 rounded-2xl bg-parchment-dark/60 px-4 text-base text-ink ring-2 ring-inset ring-line outline-none',
-          'placeholder:text-ink-soft/60 focus:bg-white/70 focus:ring-gold-deep',
+          'h-12 rounded-2xl bg-parchment-dark/60 px-4 text-base text-ink ring-1 ring-inset ring-line outline-none',
+          'placeholder:text-ink-soft/60 focus:bg-white/10 focus:ring-gold-deep',
           error && 'ring-wax',
           className,
         )}

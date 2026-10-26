@@ -434,7 +434,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
           <input
             value={card.name} maxLength={24}
             onChange={(e) => change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, name: e.target.value } : c)) }), { history: 'coalesce', key: `${rank}-nametext` })}
-            className="h-10 rounded-xl bg-white/60 px-3 font-bold text-ink ring-2 ring-inset ring-line outline-none focus:ring-gold-deep"
+            className="h-10 rounded-xl bg-white/5 px-3 font-bold text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
           />
         </label>
         <Segmented label="Stil" value={n.style} options={NAME_STYLES.map((s) => ({ value: s, label: NAME_STYLE_LABELS[s] }))} onChange={(style) => setLayout((l) => ({ ...l, name: { ...l.name, style } }), { history: 'push' })} />
@@ -456,7 +456,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
           <input
             value={sticker.value} maxLength={24}
             onChange={(e) => e.target.value.trim() && updateSticker(sticker.id, { value: e.target.value })}
-            className="h-10 rounded-xl bg-white/60 px-3 text-lg font-bold text-ink ring-2 ring-inset ring-line outline-none focus:ring-gold-deep"
+            className="h-10 rounded-xl bg-white/5 px-3 text-lg font-bold text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
           />
         </label>
         {sticker.kind === 'emoji' && (
@@ -557,7 +557,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
           {guides.h && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-rose" />}
           {overlay}
         </div>
-        <div className="parchment flex min-w-0 flex-col gap-2 rounded-2xl p-4 ring-2 ring-line">{inspector}</div>
+        <div className="parchment flex min-w-0 flex-col gap-2 rounded-2xl p-4 ring-1 ring-line">{inspector}</div>
       </div>
 
       <Modal open={copyOpen} onClose={() => setCopyOpen(false)} title="Layout auf alle Karten übertragen?">

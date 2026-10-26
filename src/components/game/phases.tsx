@@ -15,7 +15,7 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
     <motion.section
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={cx('parchment mx-auto flex w-full max-w-2xl flex-col gap-4 rounded-[1.6rem] p-5 ring-2 ring-line shadow-[0_8px_0_rgb(0_0_0/0.4)] sm:p-7', className)}
+      className={cx('parchment mx-auto flex w-full max-w-2xl flex-col gap-4 rounded-[1.6rem] p-5 ring-1 ring-line shadow-[0_8px_0_rgb(0_0_0/0.4)] sm:p-7', className)}
     >
       {children}
     </motion.section>
@@ -34,7 +34,7 @@ function ReadyList({ ids }: { ids: string[] }) {
       {ids.map((id) => {
         const ready = state.ready.includes(id);
         return (
-          <li key={id} className={cx('flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm font-bold ring-2', ready ? 'bg-vert/15 ring-vert' : 'bg-white/40 ring-line text-ink-soft')}>
+          <li key={id} className={cx('flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm font-bold ring-2', ready ? 'bg-vert/15 ring-vert' : 'bg-white/5 ring-line text-ink-soft')}>
             <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="xs" />
             {nameOf(id, true)} {ready ? '✓' : '…'}
           </li>

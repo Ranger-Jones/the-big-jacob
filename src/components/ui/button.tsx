@@ -5,11 +5,11 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'velvet';
 type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-gradient-to-b from-gold-soft to-gold text-ink shadow-[0_4px_0_var(--color-gold-deep)] active:shadow-[0_1px_0_var(--color-gold-deep)]',
-  secondary: 'bg-parchment text-ink ring-2 ring-inset ring-line shadow-[0_4px_0_var(--color-line)] active:shadow-[0_1px_0_var(--color-line)]',
+  primary: 'bg-gradient-to-b from-gold-soft to-gold text-[#2b1a12] shadow-[0_4px_0_var(--color-gold-deep)] active:shadow-[0_1px_0_var(--color-gold-deep)]',
+  secondary: 'bg-white/[0.06] text-parchment ring-1 ring-inset ring-parchment/30 hover:bg-white/10',
   ghost: 'bg-transparent text-current opacity-80 hover:opacity-100 hover:bg-white/10',
   danger: 'bg-wax text-parchment shadow-[0_4px_0_#7f1a22] active:shadow-[0_1px_0_#7f1a22]',
-  velvet: 'bg-velvet-soft text-parchment ring-2 ring-inset ring-white/10 shadow-[0_4px_0_var(--color-velvet-deep)] active:shadow-[0_1px_0_var(--color-velvet-deep)]',
+  velvet: 'bg-velvet-soft/80 text-parchment ring-1 ring-inset ring-white/10 hover:bg-velvet-soft',
 };
 const SIZES: Record<Size, string> = {
   sm: 'min-h-9 px-3 text-sm rounded-xl',

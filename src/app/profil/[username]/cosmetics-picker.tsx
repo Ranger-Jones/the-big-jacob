@@ -40,7 +40,7 @@ export function CosmeticsPicker({ stats, profile, felt }: { stats: CosmeticStats
                 type="button"
                 disabled={!open || busy || active}
                 onClick={() => choose({ felt: f.id })}
-                className={cx('flex w-full flex-col items-center gap-1.5 rounded-2xl p-2 ring-2 transition', active ? 'bg-gold/25 ring-gold-deep' : 'ring-line hover:bg-white/50', !open && 'opacity-50 grayscale')}
+                className={cx('flex w-full flex-col items-center gap-1.5 rounded-2xl p-2 ring-2 transition', active ? 'bg-gold/25 ring-gold-deep' : 'ring-line hover:bg-white/10', !open && 'opacity-50 grayscale')}
               >
                 <span
                   className="block h-12 w-full rounded-[50%/45%] border-4 border-[#5c3519]"
@@ -69,7 +69,7 @@ export function CosmeticsPicker({ stats, profile, felt }: { stats: CosmeticStats
                 type="button"
                 disabled={!open || busy || active}
                 onClick={() => choose({ frame: f.id })}
-                className={cx('flex w-full flex-col items-center gap-2 rounded-2xl px-1 pb-2 pt-4 ring-2 transition', active ? 'bg-gold/25 ring-gold-deep' : 'ring-line hover:bg-white/50', !open && 'opacity-50 grayscale')}
+                className={cx('flex w-full flex-col items-center gap-2 rounded-2xl px-1 pb-2 pt-4 ring-2 transition', active ? 'bg-gold/25 ring-gold-deep' : 'ring-line hover:bg-white/10', !open && 'opacity-50 grayscale')}
               >
                 <Avatar profile={{ ...profile, avatar_frame: f.id === 'none' ? null : f.id }} size="md" />
                 <span className="text-xs font-bold leading-tight">{open ? f.name : `🔒 ${f.name}`}</span>

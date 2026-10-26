@@ -19,6 +19,7 @@ import { CourtPhase, DrawPhase, RoundEndPhase, TaxPhase } from './phases';
 import { deadlineFraction, Seats } from './seats';
 import { useTable } from './table-context';
 import { TrickArea } from './trick-area';
+import { TurnBanner } from './turn-banner';
 
 const DRAW_SECONDS = 30;
 const COURT_SECONDS = 20;
@@ -97,9 +98,9 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
 
   let status: string;
   if (state.phase === 'play') {
-    if (state.finished.includes(me) || state.shamed.includes(me)) status = 'Du bist raus – schau zu, wer Knecht wird.';
-    else if (myTurn) status = state.trick ? `Du bist dran: schlage ${describeCards(state.trick.cards)} oder passe.` : 'Du spielst aus – leg beliebig viele gleiche Karten.';
-    else status = `${nameOf(state.turn ?? '', true)} ist dran …`;
+    if (state.finished.includes(me) || state.shamed.includes(me)) status = 'Du bist raus – schau zu, wer Knecht wird';
+    else if (myTurn) status = state.trick ? `Du bist dran · schlage ${describeCards(state.trick.cards)}` : 'Du bist dran · spiel aus';
+    else status = `${nameOf(state.turn ?? '', true)} ist dran`;
   } else if (pendingTax) status = `Wähle ${pendingTax.count} ${pendingTax.count === 1 ? 'Karte' : 'Karten'} zum Zurückgeben.`;
   else status = '';
 
@@ -112,7 +113,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
             {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment">📅 Tagesaufgabe</span>}
             {state.phase === 'draw' ? 'Auslosung' : (
               <>
-                <span className="sm:hidden">Runde {state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
+                <span className="sm:hidden">R{state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
                 <span className="hidden sm:inline">
                   Runde {state.round}{settings.goal === null ? ` von ${settings.rounds}` : ` · Ziel ${settings.goal} P.`}
                 </span>
@@ -155,39 +156,19 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         {state.phase === 'tax' && <TaxPhase secondsLeft={secondsLeft} />}
         {state.phase === 'roundEnd' && <RoundEndPhase secondsLeft={secondsLeft} />}
         {state.phase === 'play' && <TrickArea />}
+        {state.phase === 'play' && <TurnBanner text={status} mine={myTurn} seconds={secondsLeft} fraction={fraction} />}
 
         {state.phase !== 'draw' && state.phase !== 'roundEnd' && (
           <section
             className={cx(
-              'z-10 -mx-4 flex flex-col gap-2 rounded-t-[1.6rem] bg-velvet-deep/95 px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5 ring-2 sm:gap-3 sm:pb-4 sm:pt-3 ring-white/10 backdrop-blur sm:mx-0 sm:rounded-[1.6rem]',
-              myTurn && 'ring-gold/60',
+              'z-10 -mx-4 flex flex-col gap-2 rounded-t-[1.6rem] border-t border-gold/30 bg-velvet-deep/95 px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur sm:mx-0 sm:gap-3 sm:rounded-[1.6rem] sm:border sm:border-gold/20 sm:pb-4',
+              myTurn && 'shadow-[0_-10px_34px_rgb(244_183_58/0.14)]',
             )}
             aria-label="Deine Hand"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className={cx('min-w-0 basis-full text-sm font-bold sm:basis-auto sm:flex-1 sm:text-base', myTurn ? 'text-gold-soft' : 'text-parchment/80')} aria-live="polite">
-                {status}
-                {myTurn && secondsLeft !== null && <span className={cx('tabular ml-2 rounded-full px-2 text-sm', secondsLeft <= 5 ? 'bg-wax' : 'bg-white/10')}>{secondsLeft} s</span>}
-              </p>
-              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>Abwählen</Button>}
-                {state.phase === 'play' && myTurn && state.trick && (
-                  <Button variant="velvet" onClick={() => { setSelection({}); void g.dispatch({ type: 'pass' }, { move: true }); }} disabled={g.busy}>
-                    Passen
-                  </Button>
-                )}
-                {state.phase === 'play' && (
-                  <Button onClick={play} disabled={!myTurn || !verdict?.ok || g.busy}>
-                    {picked.length > 0 ? `${describeCards(picked)} legen` : 'Karten wählen'}
-                  </Button>
-                )}
-                {pendingTax && (
-                  <Button onClick={giveBack} disabled={picked.length !== pendingTax.count || g.busy}>
-                    Zurückgeben ({picked.length}/{pendingTax.count})
-                  </Button>
-                )}
-              </div>
-            </div>
+            {state.phase !== 'play' && status && (
+              <p className="pt-2 text-sm font-bold text-gold-soft sm:text-base" aria-live="polite">{status}</p>
+            )}
             {myTurn && verdict && !verdict.ok && <p className="-mt-1 text-sm font-bold text-wax brightness-150">{verdict.error}</p>}
             {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft">💣 Bombe! Damit gewinnst du den Stich sofort.</p>}
             {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft">⚡ Schnapp! Der Nächste muss aussetzen.</p>}
@@ -203,6 +184,24 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               playable={myTurn ? playable : null}
               received={state.phase === 'tax' || state.phase === 'play' ? g.hand.received : []}
             />
+            <div className="flex items-center gap-2">
+              {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>Abwählen</Button>}
+              {state.phase === 'play' && myTurn && state.trick && (
+                <Button variant="secondary" className="flex-1" onClick={() => { setSelection({}); void g.dispatch({ type: 'pass' }, { move: true }); }} disabled={g.busy}>
+                  Passen
+                </Button>
+              )}
+              {state.phase === 'play' && (
+                <Button className="flex-[1.5]" onClick={play} disabled={!myTurn || !verdict?.ok || g.busy}>
+                  {picked.length > 0 ? `${describeCards(picked)} legen` : myTurn ? 'Karten wählen' : 'Warte auf deinen Zug'}
+                </Button>
+              )}
+              {pendingTax && (
+                <Button className="flex-1" onClick={giveBack} disabled={picked.length !== pendingTax.count || g.busy}>
+                  Zurückgeben ({picked.length}/{pendingTax.count})
+                </Button>
+              )}
+            </div>
             <div className="flex justify-center">{emojiBar}</div>
           </section>
         )}

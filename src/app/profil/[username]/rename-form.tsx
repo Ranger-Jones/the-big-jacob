@@ -11,7 +11,7 @@ export function RenameForm({ current }: { current: string }) {
     return <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>Benutzername ändern</Button>;
   }
   return (
-    <form action={action} className="parchment flex w-full max-w-sm flex-col gap-2 rounded-2xl p-4 ring-2 ring-line">
+    <form action={action} className="parchment flex w-full max-w-sm flex-col gap-2 rounded-2xl p-4 ring-1 ring-line">
       <Input label="Neuer Benutzername" name="username" defaultValue={current} required minLength={3} maxLength={20} error={state.error} />
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={pending}>Speichern</Button>

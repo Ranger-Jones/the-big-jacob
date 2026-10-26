@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FriendRequests } from '@/components/dashboard/friend-requests';
 import { FriendsOnline } from '@/components/dashboard/friends-online';
+import { HomeHero } from '@/components/dashboard/home-hero';
 import { InviteList } from '@/components/dashboard/invite-list';
 import { PlayActions } from '@/components/dashboard/play-actions';
 import { HeroCards } from '@/components/landing/hero-cards';
@@ -34,7 +35,20 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 pb-12">
-      <h1 className="break-words text-5xl font-bold sm:text-6xl">Willkommen am Hof, {user.username}!</h1>
+      <section className="grid items-center gap-4 lg:grid-cols-[1fr_1.1fr] lg:gap-10">
+        <div className="order-2 flex flex-col gap-4 lg:order-1">
+          <div className="text-center lg:text-left">
+            <h1 className="break-words text-5xl font-bold sm:text-6xl">Willkommen am Hof, {user.username}</h1>
+            {stats && stats.games_played > 0 && (
+              <p className="mt-2 text-parchment/75">
+                <b className="text-gold-soft">{stats.wins}</b> {stats.wins === 1 ? 'Sieg' : 'Siege'} · <b className="text-gold-soft">{stats.crowns}</b>× Großer Jakob
+              </p>
+            )}
+          </div>
+          <PlayActions />
+        </div>
+        <div className="order-1 lg:order-2"><HomeHero /></div>
+      </section>
 
       {friends.incoming.length > 0 && (
         <Card className="flex flex-col gap-3 ring-wax shadow-[0_6px_0_#7f1a22]">
@@ -67,8 +81,6 @@ export default async function Home() {
           </ul>
         </Card>
       )}
-
-      <PlayActions />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link href="/kampagne" className="group">

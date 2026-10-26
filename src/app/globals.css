@@ -98,11 +98,10 @@ html { color-scheme: dark; }
 
 body {
   background-color: var(--color-velvet);
-  /* Damask-like velvet: a faint fleur pattern over a vignette. */
+  /* Calm velvet: warm light from above, darkness towards the floor. */
   background-image:
-    radial-gradient(ellipse at 50% -10%, rgb(255 215 122 / 0.12), transparent 55%),
-    radial-gradient(ellipse at 50% 120%, rgb(0 0 0 / 0.45), transparent 60%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='%23ffffff' fill-opacity='0.035'%3E%3Cpath d='M28 6c3 6 9 8 9 14s-5 8-9 8-9-2-9-8 6-8 9-14zM28 28c3 6 9 8 9 14s-5 8-9 8-9-2-9-8 6-8 9-14z' transform='translate(0 -6)'/%3E%3Ccircle cx='0' cy='28' r='3'/%3E%3Ccircle cx='56' cy='28' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    radial-gradient(ellipse at 50% -10%, rgb(255 215 122 / 0.14), transparent 55%),
+    radial-gradient(ellipse at 50% 120%, rgb(0 0 0 / 0.5), transparent 60%);
   background-attachment: fixed;
   color: var(--color-parchment);
   font-family: var(--font-sans);
@@ -116,12 +115,27 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.005em; line-hei
 
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Parchment surfaces flip text colour back to ink. */
+/*
+ * Panels: dark velvet glass with a fine gold edge. The ink tokens are flipped inside, so every
+ * component written for "ink on parchment" automatically reads light-on-dark here.
+ */
 .parchment {
-  background-color: var(--color-parchment);
-  background-image: radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 0.55), transparent 60%),
-    radial-gradient(ellipse at 100% 100%, rgb(176 122 18 / 0.08), transparent 55%);
+  --color-ink: #f6ead2;
+  --color-ink-soft: #b8a7c8;
+  --color-parchment-dark: #2c1a47;
+  --color-line: rgb(244 183 58 / 0.22);
+  --color-wax: #ef5a62;
+  background-color: rgb(27 14 46 / 0.86);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 45%);
   color: var(--color-ink);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Light paper stays available where it belongs to the content (e.g. card editor canvas). */
+.paper {
+  background-color: #fbf0d9;
+  color: #2b1a12;
 }
 
 .gold-text {

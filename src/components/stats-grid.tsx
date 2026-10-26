@@ -24,11 +24,11 @@ export function StatsGrid({ stats, compact = false }: { stats: PlayerStats; comp
       {TILES.map((t) => (
         <div
           key={t.key}
-          className="flex min-w-0 flex-col-reverse rounded-[1.1rem] bg-parchment px-3 py-2.5 text-ink ring-2 ring-line"
-          style={{ boxShadow: `inset 0 -5px 0 ${t.color}` }}
+          className="flex min-w-0 flex-col-reverse rounded-[1.1rem] bg-velvet-deep/50 px-3 py-2.5 text-parchment ring-1 ring-gold/20"
+          style={{ boxShadow: `inset 0 -3px 0 ${t.color}` }}
         >
-          <dt className="truncate text-sm font-bold text-ink-soft">{t.label}</dt>
-          <dd data-testid={`stat-${t.key}`} className={cx('tabular whitespace-nowrap font-display font-bold', compact ? 'text-2xl sm:text-3xl' : 'text-4xl')}>
+          <dt className="truncate text-sm font-bold text-parchment/65">{t.label}</dt>
+          <dd data-testid={`stat-${t.key}`} className={cx('tabular whitespace-nowrap font-display font-bold text-gold-soft', compact ? 'text-2xl sm:text-3xl' : 'text-4xl')}>
             {values[t.key]}
           </dd>
         </div>

@@ -33,7 +33,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next: str
         </form>
         <p className="mt-6 text-center text-sm text-ink-soft">
           {mode === 'login' ? 'Noch keinen Account? ' : 'Schon dabei? '}
-          <Link className="font-bold text-wine underline-offset-4 hover:underline" href={`${mode === 'login' ? '/registrieren' : '/login'}${nextQuery}`}>
+          <Link className="font-bold text-gold-soft underline-offset-4 hover:underline" href={`${mode === 'login' ? '/registrieren' : '/login'}${nextQuery}`}>
             {mode === 'login' ? 'Registrieren' : 'Einloggen'}
           </Link>
         </p>

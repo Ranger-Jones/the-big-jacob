@@ -99,7 +99,7 @@ export function FriendsClient({ me, lists }: { me: string; lists: FriendLists })
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Benutzername suchen"
             aria-label="Benutzername suchen"
-            className="h-12 rounded-2xl bg-parchment-dark/70 px-4 ring-2 ring-inset ring-line outline-none text-ink placeholder:text-ink-soft/60 focus:bg-white/60 focus:ring-gold-deep"
+            className="h-12 rounded-2xl bg-parchment-dark/70 px-4 ring-1 ring-inset ring-line outline-none text-ink placeholder:text-ink-soft/60 focus:bg-white/10 focus:ring-gold-deep"
           />
           {query.trim().length >= 2 && (
             results.length === 0 ? (

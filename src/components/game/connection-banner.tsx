@@ -1,7 +1,7 @@
 export function ConnectionBanner({ connected }: { connected: boolean }) {
   if (connected) return null;
   return (
-    <div role="status" className="fixed inset-x-0 top-0 z-50 bg-gold px-4 py-2 text-center text-sm font-bold text-ink">
+    <div role="status" className="fixed inset-x-0 top-0 z-50 bg-gold px-4 py-2 text-center text-sm font-bold text-[#2b1a12]">
       Verbindung zum Hof wird wiederhergestellt …
     </div>
   );

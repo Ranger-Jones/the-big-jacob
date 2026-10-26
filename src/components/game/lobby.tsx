@@ -89,7 +89,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
             }
             const deck = deckOf(p.id);
             return (
-              <li key={p.id} className="relative flex items-center gap-2.5 rounded-2xl bg-parchment-dark/70 p-2.5 ring-2 ring-line">
+              <li key={p.id} className="relative flex items-center gap-2.5 rounded-2xl bg-parchment-dark/70 p-2.5 ring-1 ring-line">
                 <span className="relative">
                   <Avatar profile={avatarOf(p.id)} ring={colorOf(p.id)} size="sm" />
                   {!p.bot && (
@@ -116,7 +116,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                     type="button"
                     aria-label={`${nameOf(p.id)} entfernen`}
                     onClick={() => (p.bot ? void g.dispatch({ type: 'removePlayer', playerId: p.id }, { versioned: true }) : setRemoving(p.id))}
-                    className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full text-lg leading-none text-ink-soft hover:bg-white/60 hover:text-wax"
+                    className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full text-lg leading-none text-ink-soft hover:bg-white/10 hover:text-wax"
                   >
                     ×
                   </button>
@@ -159,7 +159,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                 id="deck-select"
                 value={myDeckId ?? PRESETS[0].id}
                 onChange={(e) => g.dispatch({ type: 'setDeck', deckId: e.target.value })}
-                className="h-11 w-full rounded-xl bg-parchment-dark/70 px-3 font-bold text-ink ring-2 ring-inset ring-line outline-none focus:ring-gold-deep"
+                className="h-11 w-full rounded-xl bg-parchment-dark/70 px-3 font-bold text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
               >
                 <optgroup label="Vorlagen">
                   {PRESETS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -170,7 +170,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                   </optgroup>
                 )}
               </select>
-              <Link href="/decks" className="text-sm font-bold text-wine hover:underline">Eigenes Deck gestalten</Link>
+              <Link href="/decks" className="text-sm font-bold text-gold-soft hover:underline">Eigenes Deck gestalten</Link>
             </div>
           </div>
           <p className="text-sm text-ink-soft">Alle sehen deine gelegten Karten in deinem Deck.</p>
@@ -185,7 +185,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
           <h2 className="text-3xl font-bold">Freunde einladen</h2>
           {friends.length === 0 ? (
             <p className="text-ink-soft">
-              Du hast noch keine Freunde hinzugefügt. <Link href="/freunde" className="font-bold text-wine hover:underline">Freunde finden</Link>
+              Du hast noch keine Freunde hinzugefügt. <Link href="/freunde" className="font-bold text-gold-soft hover:underline">Freunde finden</Link>
             </p>
           ) : invitable.length === 0 ? (
             <p className="text-ink-soft">Alle deine Freunde sitzen schon am Tisch.</p>

@@ -62,15 +62,21 @@ export function Seats({ timer }: { timer: number | null }) {
             key={id}
             data-seat={id}
             className={cx(
-              'relative flex w-[5.3rem] shrink-0 snap-start flex-col items-center gap-0.5 rounded-2xl px-1 pb-1.5 pt-2 text-center transition-all sm:w-[6.6rem] sm:gap-1 sm:px-1.5 sm:pb-2 sm:pt-2.5',
-              isTurn ? 'bg-gold/20 ring-2 ring-gold' : 'bg-velvet-deep/60 ring-2 ring-white/10',
+              'relative flex w-[5.1rem] shrink-0 snap-start flex-col items-center gap-1 rounded-2xl px-1 pb-1 pt-2 text-center transition-all duration-300 sm:w-[6.4rem]',
+              passed && !isTurn && 'opacity-55',
               state.teams && state.teams[id] !== undefined && (state.teams[id] === 0 ? 'border-b-4 border-[#6c2a8e]' : 'border-b-4 border-[#2f7a4f]'),
               p.left && 'opacity-40',
             )}
           >
-            <span className="relative">
+            {/* Medallion: gold frame, glowing while on turn */}
+            <span
+              className={cx(
+                'relative rounded-full p-[3px] transition-shadow duration-300',
+                isTurn ? 'bg-gradient-to-b from-gold-soft to-gold-deep shadow-[0_0_0_4px_rgb(244_183_58/0.22),0_0_22px_rgb(244_183_58/0.55)]' : 'bg-gold-deep/70',
+              )}
+            >
               {isTurn && timer !== null && <TimerRing fraction={timer} color="var(--color-gold)" />}
-              <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="md" className={cx('max-sm:!size-10', isTurn && 'animate-pulse-ring')} />
+              <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="md" className="max-sm:!size-10" />
               {!p.bot && !p.left && (
                 <span className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-velvet-deep', g.online.has(id) ? 'bg-vert' : 'bg-ink-soft')} />
               )}
@@ -83,41 +89,43 @@ export function Seats({ timer }: { timer: number | null }) {
                 </span>
               )}
             </span>
-            <span className="w-full truncate text-xs font-bold leading-tight sm:text-sm">
+            <span className={cx('w-full truncate text-xs font-bold leading-tight sm:text-sm', isTurn && 'text-gold-soft')}>
               {state.teams && state.teams[id] !== undefined && <span aria-label={TEAM_INFO[state.teams[id]].name}>{TEAM_INFO[state.teams[id]].emoji} </span>}
               {nameOf(id, true)}
             </span>
             <span className="hidden w-full truncate text-[0.7rem] leading-tight text-parchment/70 sm:block">
               {index >= 0 && state.phase !== 'draw' ? rankTitle(index, present.length) : p.bot ? 'Bot' : 'Höfling'}
             </span>
-            <span className="flex h-7 items-center gap-1 sm:h-8">
+            <span className="flex h-6 items-center gap-1 rounded-full bg-black/30 px-2 sm:h-7">
               {p.left ? (
                 <span className="text-xs font-bold">ist gegangen</span>
               ) : state.phase === 'draw' ? (
                 state.draws[id] !== undefined ? <span className="text-xs font-bold text-gold-soft">zog eine {state.draws[id] === 13 ? 'Narr' : state.draws[id]}</span> : <span className="text-xs">zieht …</span>
+              ) : passed ? (
+                <span className="text-xs font-bold text-parchment/75">passt</span>
               ) : out ? (
-                <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-ink">
+                <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#2b1a12]">
                   {state.shamed.includes(id) ? '🤡 raus' : `${finishedAt + 1}. raus`}
                 </span>
               ) : (
                 <>
-                  <CardBack design={deck.design} size="xs" className="!w-5" />
-                  <span className="tabular font-display text-lg font-bold sm:text-xl" aria-label={`${count} Karten`}>{count}</span>
+                  <CardBack design={deck.design} size="xs" className="!w-3.5" />
+                  <span className="tabular whitespace-nowrap text-xs font-bold sm:text-sm" aria-label={`${count} Karten`}>{count}<span className="hidden sm:inline"> {count === 1 ? 'Karte' : 'Karten'}</span></span>
                 </>
               )}
             </span>
             <AnimatePresence>
-              {(passed || isWaiting) && (
+              {isWaiting && (
                 <motion.span
                   initial={{ opacity: 0, y: 6, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   className={cx(
                     'absolute -bottom-2.5 rounded-full px-2 py-0.5 text-[0.7rem] font-bold shadow',
-                    passed ? 'bg-parchment text-ink' : 'bg-velvet-soft text-parchment',
+                    'bg-velvet-soft text-parchment',
                   )}
                 >
-                  {passed ? 'passt' : 'überlegt …'}
+                  überlegt …
                 </motion.span>
               )}
             </AnimatePresence>
