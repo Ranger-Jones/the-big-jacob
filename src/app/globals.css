@@ -39,6 +39,12 @@
   75% { transform: rotate(4deg); }
 }
 
+@keyframes banner-sway {
+  0%, 100% { transform: rotate(-0.8deg); }
+  50% { transform: rotate(0.8deg); }
+}
+.banner-sway { animation: banner-sway 7s ease-in-out infinite; }
+
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgb(244 183 58 / 0.7); }
   70% { box-shadow: 0 0 0 12px rgb(244 183 58 / 0); }

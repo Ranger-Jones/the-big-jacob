@@ -30,7 +30,7 @@ export function EmojiBar({ onSend, initialQuick }: { onSend: (emoji: string) => 
             key={e}
             type="button"
             onClick={() => onSend(e)}
-            className="flex size-10 items-center justify-center rounded-full text-2xl transition-transform hover:scale-110 hover:bg-white/10 active:scale-90 sm:size-11"
+            className="flex size-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-110 hover:bg-white/10 active:scale-90 sm:size-11 sm:text-2xl"
             aria-label={`${e} senden`}
           >
             {e}
@@ -39,7 +39,7 @@ export function EmojiBar({ onSend, initialQuick }: { onSend: (emoji: string) => 
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex size-10 items-center justify-center rounded-full text-xl font-bold text-parchment/80 hover:bg-white/10 sm:size-11"
+          className="flex size-9 items-center justify-center rounded-full text-lg font-bold text-parchment/80 hover:bg-white/10 sm:size-11 sm:text-xl"
           aria-label="Mehr Reaktionen"
         >
           ＋

@@ -58,6 +58,7 @@ function validate(name: unknown, design: unknown): ServiceResult<{ name: string;
   const parsed = parseDesign(design);
   if (!parsed) return fail('Das Deck ist unvollständig – prüf Namen und Symbole aller Karten.');
   if (parsed.cards.some((c) => c.image && !isDeckArtUrl(c.image))) return fail('Ungültiges Kartenbild.');
+  if (parsed.back.image && !isDeckArtUrl(parsed.back.image)) return fail('Ungültiges Rückseitenbild.');
   return ok({ name: n, design: parsed });
 }
 
@@ -81,7 +82,8 @@ async function ownDeck(admin: AdminClient, userId: string, id: string) {
 async function cleanArt(admin: AdminClient, userId: string, deckId: string, keep: DeckDesign | null) {
   const folder = `${userId}/${deckId}`;
   const { data } = await admin.storage.from('deck-art').list(folder, { limit: 100 });
-  const used = new Set((keep?.cards ?? []).map((c) => c.image?.split('/').pop()).filter(Boolean));
+  const images = [...(keep?.cards ?? []).map((c) => c.image), keep?.back.image];
+  const used = new Set(images.map((url) => url?.split('/').pop()).filter(Boolean));
   const stale = (data ?? []).filter((f) => !used.has(f.name)).map((f) => `${folder}/${f.name}`);
   if (stale.length > 0) await admin.storage.from('deck-art').remove(stale);
 }

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'sonner';
+import { Backdrop } from '@/components/app-shell/backdrop';
 import { Header } from '@/components/app-shell/header';
+import { HeaderSlot } from '@/components/app-shell/header-slot';
 import { InviteListener } from '@/components/app-shell/invite-listener';
 import { OnlinePresenceProvider } from '@/components/app-shell/online-presence';
 import { fontVariables } from '@/lib/fonts';
@@ -21,13 +23,14 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const friendIds = user ? (await listFriends(createAdminClient(), user.id)).friends.map((f) => f.profile.id) : [];
   const content = (
     <>
-      <Header />
+      <HeaderSlot><Header /></HeaderSlot>
       {children}
     </>
   );
   return (
     <html lang="de" className={`${fontVariables} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      <body className="relative isolate flex min-h-full flex-col">
+        <Backdrop />
         {user ? (
           <OnlinePresenceProvider me={user.id} friendIds={friendIds}>
             {content}

@@ -182,15 +182,47 @@ describe('playing tricks', () => {
     expect(applyAction(s, 'a', { type: 'pass' }, seeded(1)).ok).toBe(false);
   });
 
-  it('a passed player may play again later in the trick', () => {
-    let s = playing({ a: [9, 1], b: [8, 2], c: [7, 3] });
+  it('whoever passed sits out the rest of the trick', () => {
+    let s = playing({ a: [9, 3], b: [8, 2], c: [7, 4], d: [10, 5] });
     s = must(s, 'a', { type: 'play', cards: [9] });
     s = must(s, 'b', { type: 'pass' });
     s = must(s, 'c', { type: 'play', cards: [7] });
+    expect(s.turn).toBe('d');
+    s = must(s, 'd', { type: 'pass' });
+    // b passed earlier and is skipped; a is next.
     expect(s.turn).toBe('a');
+    expect(applyAction(s, 'b', { type: 'play', cards: [2] }, seeded(1)).ok).toBe(false);
     s = must(s, 'a', { type: 'pass' });
-    s = must(s, 'b', { type: 'play', cards: [2] });
-    expect(s.trick?.by).toBe('b');
+    expect(s.trick).toBeNull();
+    expect(s.turn).toBe('c');
+  });
+
+  it('an unbeatable card wins the trick at once', () => {
+    let s = playing({ a: [9, 3], b: [1, 2, 6], c: [7, 4] });
+    s = must(s, 'a', { type: 'play', cards: [9] });
+    s = must(s, 'b', { type: 'play', cards: [1] });
+    expect(s.trick).toBeNull();
+    expect(s.turn).toBe('b');
+    expect(s.log.some((e) => e.kind === 'unbeatable' && e.by === 'b')).toBe(true);
+  });
+
+  it('a 2 is unbeatable once the 1 is gone, but not while it is unplayed', () => {
+    let s = playing({ a: [2, 9], b: [3, 8], c: [4, 7] });
+    s = must(s, 'a', { type: 'play', cards: [2] });
+    expect(s.trick?.by).toBe('a');
+    s = { ...s, trick: null, passed: [], turn: 'b', played: [...s.played, 1] };
+    s = must(s, 'b', { type: 'play', cards: [8] });
+    s = must(s, 'c', { type: 'play', cards: [7] });
+    s = { ...s, turn: 'a', hands: { ...s.hands, a: [2, 9] } };
+    s = must(s, 'a', { type: 'play', cards: [2] });
+    expect(s.trick).toBeNull();
+  });
+
+  it('a lone jester still threatens a 1 under jester freedom', () => {
+    let s = playing({ a: [1, 5], b: [13, 6], c: [7, 4] });
+    s = { ...s, event: 'jesterFreedom' };
+    s = must(s, 'a', { type: 'play', cards: [1] });
+    expect(s.trick?.by).toBe('a');
   });
 
   it('when the trick owner went out, the next player leads', () => {
@@ -207,8 +239,8 @@ describe('playing tricks', () => {
   it('finishes the round, scores and starts round end', () => {
     let s = playing({ a: [1], b: [2], c: [3] }, { rounds: 3 });
     s = must(s, 'a', { type: 'play', cards: [1] });
-    s = must(s, 'b', { type: 'pass' });
-    s = must(s, 'c', { type: 'pass' });
+    // The 1 is unbeatable and a is out, so b leads right away.
+    expect(s.turn).toBe('b');
     s = must(s, 'b', { type: 'play', cards: [2] });
     expect(s.phase).toBe('roundEnd');
     expect(s.history[0].finish).toEqual(['a', 'b', 'c']);
@@ -252,9 +284,7 @@ describe('playing tricks', () => {
     let s = playing({ a: [12, 12], b: [1], c: [11, 11] }, { kingFall: true, rounds: 3 });
     s = must(s, 'a', { type: 'play', cards: [12] });
     s = must(s, 'b', { type: 'play', cards: [1] });
-    s = must(s, 'c', { type: 'pass' });
-    s = must(s, 'a', { type: 'pass' });
-    // b went out; c leads.
+    // b went out with the unbeatable 1; c leads.
     expect(s.turn).toBe('c');
     s = must(s, 'c', { type: 'play', cards: [11, 11] });
     expect(s.history[0].finish).toEqual(['b', 'c', 'a']);

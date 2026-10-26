@@ -2,7 +2,7 @@ import {
   containsAll, fullDeck, JESTER, remainingDeck, removeCards, shuffle, sortHand, type RandInt,
 } from './cards';
 import { chooseBotPlay, chooseBotTaxReturn, wantsRevolution } from './bots';
-import { judgePlay, worstCards, bestCards, type RuleContext } from './rules';
+import { bestCards, isUnbeatable, judgePlay, worstCards, type RuleContext } from './rules';
 import {
   BOT_LEVELS, COURT_EVENTS, DEFAULT_SETTINGS, EMPTY_STATS, MAX_PLAYERS, MIN_PLAYERS, ROUND_OPTIONS, TAX_OPTIONS,
   TURN_OPTIONS,
@@ -133,6 +133,15 @@ function log(state: GameState, kind: LogKind, extra: Omit<LogEntry, 'seq' | 'kin
 function bumpStat(state: GameState, id: string, key: keyof PlayerStats, by = 1) {
   if (!state.stats[id]) state.stats[id] = { ...EMPTY_STATS };
   state.stats[id][key] += by;
+}
+
+/** Next player who still holds cards and has not passed on the current trick. */
+function nextToAct(state: GameState, id: string): string | null {
+  let next = nextActiveAfter(state, id);
+  for (let guard = 0; next && state.passed.includes(next) && guard < state.order.length; guard++) {
+    next = nextActiveAfter(state, next);
+  }
+  return next && !state.passed.includes(next) ? next : null;
 }
 
 function nextActiveAfter(state: GameState, id: string): string | null {
@@ -375,8 +384,8 @@ function advanceAfter(state: GameState, actor: string, now: number) {
   }
   const others = activeIds(state).filter((id) => id !== state.trick!.by);
   if (others.every((id) => state.passed.includes(id))) return clearTrick(state, now);
-  // Passing does not lock you out: the turn simply moves on to the next player holding cards.
-  state.turn = nextActiveAfter(state, actor);
+  // Whoever passed sits out the rest of this trick.
+  state.turn = nextToAct(state, actor);
   setTurnDeadline(state, now);
 }
 
@@ -468,7 +477,6 @@ function doPlay(state: GameState, actor: string, cards: number[], rand: RandInt,
   state.played = [...state.played, ...cards];
   bumpStat(state, actor, 'cardsPlayed', cards.length);
   state.trick = { cards: sortHand(cards), rank: verdict.rank, count: cards.length, by: actor, seq: state.moveSeq };
-  state.passed = [];
   log(state, verdict.bomb ? 'bomb' : 'play', { by: actor, cards: sortHand(cards) });
   if (verdict.bomb) bumpStat(state, actor, 'bombs');
 
@@ -486,10 +494,16 @@ function doPlay(state: GameState, actor: string, cards: number[], rand: RandInt,
     clearTrick(state, now);
     return null;
   }
+  // Nobody can go lower (e.g. the Great Jakob card): the trick is won at once.
+  if (isUnbeatable(state.trick, state.played, ruleCtx(state))) {
+    log(state, 'unbeatable', { by: actor });
+    clearTrick(state, now);
+    return null;
+  }
   if (verdict.snap) {
-    const skipped = nextActiveAfter(state, actor);
+    const skipped = nextToAct(state, actor);
     if (skipped && skipped !== actor) {
-      state.passed = [skipped];
+      state.passed = [...state.passed, skipped];
       log(state, 'snap', { by: actor, to: skipped });
       advanceAfter(state, skipped, now);
       return null;
@@ -592,7 +606,7 @@ function dropPlayer(state: GameState, id: string, rand: RandInt, now: number) {
         return clearTrick(state, now);
       }
       if (wasTurn) {
-        state.turn = nextActiveAfter(state, id);
+        state.turn = nextToAct(state, id);
         setTurnDeadline(state, now);
       }
     }

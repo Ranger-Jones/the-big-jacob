@@ -77,7 +77,7 @@ export interface Trick {
 
 export type LogKind =
   | 'play' | 'pass' | 'clear' | 'out' | 'revolution' | 'grandRevolution' | 'tax'
-  | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall';
+  | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall' | 'unbeatable';
 
 export interface LogEntry { seq: number; kind: LogKind; by?: string; to?: string; cards?: number[]; count?: number }
 
@@ -137,7 +137,7 @@ export interface PublicState {
   tax: TaxPair[];
   turn: string | null;
   trick: Trick | null;
-  /** Players who passed since the last card was laid on the current trick. */
+  /** Players who passed on the current trick – they sit it out until the next trick. */
   passed: string[];
   finished: string[];
   /** Players who went out with a jester while "Narrenverbot" is active. */

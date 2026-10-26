@@ -5,16 +5,18 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import { Segmented } from '@/components/ui/segmented';
-import { cropToSquareWebp, validateImageFile } from '@/lib/crop-image';
+import { cropToWebp, validateImageFile } from '@/lib/crop-image';
 import { cx } from '@/lib/cx';
 import {
-  BACK_PATTERNS, DECK_FONTS, FONT_LABELS, PATTERN_LABELS, deckDesignSchema,
+  BACK_PATTERNS, DECK_FONTS, FONT_LABELS, PATTERN_LABELS, PHOTO_FIT_LABELS, PHOTO_FITS, deckDesignSchema,
   type DeckDesign, type DeckEntry,
 } from '@/lib/decks';
 import { copiesOf, JESTER, RANKS } from '@/lib/jakob/cards';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { updateDeckAction } from '@/server/deck-actions';
+import { ART_GROUPS, CardArt, hasArt } from './art';
 import { CardBack, PlayingCard } from './playing-card';
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
@@ -37,10 +39,11 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
   const [design, setDesign] = useState<DeckDesign>(deck.design);
   const [active, setActive] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<number | null>(null);
+  const [uploading, setUploading] = useState<number | 'back' | null>(null);
+  const [picking, setPicking] = useState<number | 'back' | null>(null);
   const [dirty, setDirty] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const uploadRank = useRef<number>(1);
+  const uploadRank = useRef<number | 'back'>(1);
 
   useEffect(() => {
     if (!dirty) return;
@@ -65,12 +68,16 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
     if (invalid) return toast.error(invalid);
     setUploading(rank);
     try {
-      const blob = await cropToSquareWebp(file, 384);
+      // Backs and full-art fronts use the card's 5:7 shape, medallion photos a square.
+      const tall = rank === 'back' || design.photoFit === 'vollbild';
+      const blob = tall ? await cropToWebp(file, 500, 700) : await cropToWebp(file, 384, 384);
       const supabase = createBrowserSupabase();
-      const path = `${me}/${deck.id}/r${rank}-${Date.now()}.webp`;
+      const path = `${me}/${deck.id}/${rank === 'back' ? 'back' : `r${rank}`}-${Date.now()}.webp`;
       const { error } = await supabase.storage.from('deck-art').upload(path, blob, { contentType: 'image/webp' });
       if (error) throw error;
-      updateCard(rank, { image: supabase.storage.from('deck-art').getPublicUrl(path).data.publicUrl });
+      const url = supabase.storage.from('deck-art').getPublicUrl(path).data.publicUrl;
+      if (rank === 'back') update({ back: { ...design.back, image: url } });
+      else updateCard(rank, { image: url });
       toast.success('Bild eingesetzt – vergiss nicht zu speichern.');
     } catch {
       toast.error('Das Bild konnte nicht hochgeladen werden.');
@@ -117,6 +124,8 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
             <ColorField label="Schrift" value={design.ink} onChange={(ink) => update({ ink })} />
           </div>
           <Segmented label="Schriftart" value={design.font} options={DECK_FONTS.map((f) => ({ value: f, label: FONT_LABELS[f] }))} onChange={(font) => update({ font })} />
+          <Segmented label="Fotos auf der Vorderseite" value={design.photoFit} options={PHOTO_FITS.map((f) => ({ value: f, label: PHOTO_FIT_LABELS[f] }))} onChange={(photoFit) => update({ photoFit })} />
+          <p className="-mt-1 text-sm text-ink-soft">„Ganze Karte“: Fotos füllen die komplette Vorderseite, Zahl und Name liegen darüber.</p>
         </Card>
 
         <Card className="flex flex-col gap-3">
@@ -131,11 +140,36 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
             <span className="font-bold">Wappen (Emoji oder Kürzel)</span>
             <input value={design.back.emblem} maxLength={8} onChange={(e) => update({ back: { ...design.back, emblem: e.target.value } })} className={cx(fieldClass, 'w-24 text-center text-xl')} />
           </label>
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-parchment-dark/60 px-3 py-2">
+            <span className="font-bold">Wappen-Grafik</span>
+            <span className="flex items-center gap-1">
+              {hasArt(design.back.art) && <CardArt id={design.back.art} className="size-9" />}
+              <Button size="sm" variant="secondary" onClick={() => setPicking('back')}>🎨 {hasArt(design.back.art) ? 'Ändern' : 'Wählen'}</Button>
+              {design.back.art && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, art: null } })} aria-label="Wappen-Grafik entfernen">✕</Button>}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-parchment-dark/60 px-3 py-2">
+            <span>
+              <span className="block font-bold">Foto über die ganze Rückseite</span>
+              <span className="block text-sm text-ink-soft">Ersetzt Muster und Wappen.</span>
+            </span>
+            <span className="flex gap-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={uploading !== null}
+                onClick={() => { uploadRank.current = 'back'; fileInput.current?.click(); }}
+              >
+                {uploading === 'back' ? 'Lädt …' : design.back.image ? '📷 Ändern' : '📷 Foto'}
+              </Button>
+              {design.back.image && <Button size="sm" variant="ghost" onClick={() => update({ back: { ...design.back, image: null } })} aria-label="Rückseitenfoto entfernen">✕</Button>}
+            </span>
+          </div>
         </Card>
 
         <Card className="flex flex-col gap-3">
           <h2 className="text-3xl font-bold">Die 13 Karten</h2>
-          <p className="text-sm text-ink-soft">Name, Symbol und optional ein Foto pro Karte. Die Zahl bestimmt den Rang und bleibt fest.</p>
+          <p className="text-sm text-ink-soft">Name und Symbol pro Karte, dazu wahlweise eine gezeichnete Grafik 🎨 oder ein Foto 📷. Die Zahl bestimmt den Rang und bleibt fest.</p>
           <ul className="flex flex-col gap-2">
             {RANKS.map((rank) => {
               const c = design.cards[rank - 1];
@@ -152,6 +186,10 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
                   <input aria-label={`Name Karte ${rank}`} value={c.name} maxLength={24} onChange={(e) => updateCard(rank, { name: e.target.value })} className={cx(fieldClass, 'flex-1 basis-32 font-bold')} />
                   <input aria-label={`Symbol Karte ${rank}`} value={c.emoji} maxLength={8} onChange={(e) => updateCard(rank, { emoji: e.target.value })} className={cx(fieldClass, 'w-16 text-center text-xl')} />
                   <span className="flex gap-1">
+                    <Button size="sm" variant="secondary" onClick={() => { setActive(rank); setPicking(rank); }} aria-label={`Grafik für Karte ${rank} wählen`}>
+                      {hasArt(c.art) ? <CardArt id={c.art} className="size-6" /> : '🎨'}
+                    </Button>
+                    {c.art && <Button size="sm" variant="ghost" onClick={() => updateCard(rank, { art: null })} aria-label={`Grafik von Karte ${rank} entfernen`}>✕</Button>}
                     <Button
                       size="sm"
                       variant="secondary"
@@ -168,6 +206,34 @@ export function DeckEditor({ deck, me }: { deck: DeckEntry; me: string }) {
           </ul>
           <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         </Card>
+
+        <Modal open={picking !== null} onClose={() => setPicking(null)} title={picking === 'back' ? 'Wappen-Grafik wählen' : `Grafik für Karte ${picking === JESTER ? 'Narr' : picking}`} wide>
+          <div className="flex max-h-[60dvh] flex-col gap-4 overflow-y-auto pr-1">
+            {ART_GROUPS.map((group) => (
+              <section key={group.label}>
+                <h3 className="mb-1 text-xl font-bold">{group.label}</h3>
+                <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-7">
+                  {group.ids.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        if (picking === 'back') update({ back: { ...design.back, art: id } });
+                        else if (picking !== null) updateCard(picking, { art: id, image: null });
+                        setPicking(null);
+                      }}
+                      className="rounded-xl p-1 hover:bg-parchment-dark"
+                      aria-label={`Grafik ${id}`}
+                    >
+                      <CardArt id={id} className="w-full" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+          <Button variant="secondary" onClick={() => setPicking(null)}>Abbrechen</Button>
+        </Modal>
       </div>
 
       <aside className="order-first flex flex-col gap-4 lg:order-none lg:sticky lg:top-4">

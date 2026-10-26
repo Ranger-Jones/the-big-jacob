@@ -1,7 +1,7 @@
 'use client';
 
 /** Tiny synthesized sound effects (no audio files). Muted state is a per-device preference. */
-export type SoundName = 'card' | 'pass' | 'turn' | 'clear' | 'revolution' | 'crown' | 'chat' | 'deal';
+export type SoundName = 'card' | 'pass' | 'turn' | 'clear' | 'revolution' | 'crown' | 'chat' | 'deal' | 'snap' | 'bomb';
 
 const KEY = 'jakob-sound';
 let ctx: AudioContext | null = null;
@@ -87,6 +87,35 @@ export function playSound(name: SoundName) {
     case 'clear': swish(ac, t, 0.25, 0.06); break;
     case 'chat': tone(ac, 990, t, 0.07, 'sine', 0.04); break;
     case 'crown': [523, 659, 784, 1047].forEach((f, i) => tone(ac, f, t + i * 0.09, 0.3, 'triangle', 0.07)); break;
+    case 'snap': {
+      // Electric zap: a fast falling sawtooth plus a crackle.
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1400, t);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.25);
+      g.gain.setValueAtTime(0.07, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      osc.connect(g).connect(ac.destination);
+      osc.start(t);
+      osc.stop(t + 0.32);
+      swish(ac, t, 0.18, 0.1);
+      break;
+    }
+    case 'bomb': {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.6);
+      g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      osc.connect(g).connect(ac.destination);
+      osc.start(t);
+      osc.stop(t + 0.72);
+      swish(ac, t, 0.5, 0.18);
+      break;
+    }
     case 'revolution':
       [392, 392, 392, 523].forEach((f, i) => tone(ac, f, t + i * 0.13, i === 3 ? 0.5 : 0.11, 'sawtooth', 0.05));
       break;

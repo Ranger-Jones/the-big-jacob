@@ -47,7 +47,8 @@ export default function RulesPage() {
           <li><b>Hofzeremonie:</b> Wer beide Narren hat, darf jetzt die Revolution ausrufen (siehe unten). Alle bestätigen mit „Bereit“.</li>
           <li><b>Steuern:</b> Der Große Knecht gibt dem Großen Jakob seine 2 besten Karten, der gibt 2 beliebige zurück. Kleiner Knecht und Kleiner Jakob tauschen je 1 Karte.</li>
           <li><b>Ausspielen:</b> Der Große Jakob legt beliebig viele <b>gleiche</b> Karten. Reihum muss jeder <b>genauso viele</b> Karten mit einer <b>kleineren</b> Zahl legen – oder passen.</li>
-          <li><b>Stich:</b> Passen alle anderen, ist der Stich vorbei und wer zuletzt gelegt hat, spielt neu aus. Passen sperrt dich nicht: Kommst du im selben Stich wieder dran, darfst du wieder legen.</li>
+          <li><b>Stich:</b> Wer passt, ist für den Rest dieses Stichs raus und wird übersprungen. Haben alle anderen gepasst, gewinnt der Letzte, der gelegt hat, den Stich und spielt neu aus.</li>
+          <li><b>Unschlagbar:</b> Kann mit den noch nicht gespielten Karten niemand mehr drunter (z. B. bei der 1), gewinnt der Leger den Stich sofort.</li>
           <li><b>Ausgehen:</b> Wer keine Karten mehr hat, ist raus und wird in der nächsten Runde entsprechend befördert. Wer übrig bleibt, wird Großer Knecht.</li>
         </ol>
       </Card>

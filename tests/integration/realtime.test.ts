@@ -55,6 +55,8 @@ describe('live hands', () => {
         })
         .subscribe(async (status) => {
           if (status !== 'SUBSCRIBED') return;
+          // Postgres changes start flowing shortly after SUBSCRIBED.
+          await new Promise((r) => setTimeout(r, 1500));
           // Both draws deal the cards: both hand rows change.
           await performAction(admin, host.id, id, { type: 'draw' });
           await performAction(admin, guest.id, id, { type: 'draw' });

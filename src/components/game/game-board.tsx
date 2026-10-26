@@ -99,21 +99,30 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   else status = '';
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 px-4 pb-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-5">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-2 px-4 pb-2 pt-2 sm:gap-3 sm:pb-6 sm:pt-0 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-5">
       <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-display text-2xl text-gold-soft">
-            {state.phase === 'draw' ? 'Auslosung der Ränge' : `Runde ${state.round} von ${settings.rounds}`}
-            {myIndex >= 0 && <span className="ml-2 font-sans text-sm text-parchment/70">· {state.points[me] ?? 0} Punkte</span>}
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
+            {state.phase === 'draw' ? 'Auslosung' : (
+              <>
+                <span className="sm:hidden">Runde {state.round}/{settings.rounds}</span>
+                <span className="hidden sm:inline">Runde {state.round} von {settings.rounds}</span>
+              </>
+            )}
+            {myIndex >= 0 && <span className="ml-2 hidden font-sans text-sm text-parchment/70 sm:inline">· {state.points[me] ?? 0} Punkte</span>}
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {chatButton}
             {settings.tracker && state.phase === 'play' && (
               <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis">🧠</Button>
             )}
             <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? 'Ton an' : 'Ton aus'}>{muted ? '🔇' : '🔊'}</Button>
             <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label="Regeln">📜</Link>
-            {canSkip && <Button variant="velvet" size="sm" onClick={() => setSkipping(true)}>⏭ Überspringen</Button>}
+            {canSkip && (
+              <Button variant="velvet" size="sm" onClick={() => setSkipping(true)} aria-label="Überspringen">
+                ⏭<span className="hidden sm:inline">Überspringen</span>
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => setLeaving(true)}>Gehen</Button>
           </div>
         </div>
@@ -129,13 +138,13 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         {state.phase !== 'draw' && state.phase !== 'roundEnd' && (
           <section
             className={cx(
-              'z-10 -mx-4 flex flex-col gap-3 rounded-t-[1.6rem] bg-velvet-deep/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 ring-2 ring-white/10 backdrop-blur sm:mx-0 sm:rounded-[1.6rem]',
+              'z-10 -mx-4 flex flex-col gap-2 rounded-t-[1.6rem] bg-velvet-deep/95 px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5 ring-2 sm:gap-3 sm:pb-4 sm:pt-3 ring-white/10 backdrop-blur sm:mx-0 sm:rounded-[1.6rem]',
               myTurn && 'ring-gold/60',
             )}
             aria-label="Deine Hand"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className={cx('min-w-0 basis-full font-bold sm:basis-auto sm:flex-1', myTurn ? 'text-gold-soft' : 'text-parchment/80')} aria-live="polite">
+              <p className={cx('min-w-0 basis-full text-sm font-bold sm:basis-auto sm:flex-1 sm:text-base', myTurn ? 'text-gold-soft' : 'text-parchment/80')} aria-live="polite">
                 {status}
                 {myTurn && secondsLeft !== null && <span className={cx('tabular ml-2 rounded-full px-2 text-sm', secondsLeft <= 5 ? 'bg-wax' : 'bg-white/10')}>{secondsLeft} s</span>}
               </p>

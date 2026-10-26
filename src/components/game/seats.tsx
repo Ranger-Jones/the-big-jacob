@@ -44,7 +44,7 @@ export function Seats({ timer }: { timer: number | null }) {
     ul.scrollTo({ left: li.offsetLeft - (ul.clientWidth - li.clientWidth) / 2, behavior: 'smooth' });
   }, [focus]);
   return (
-    <ul ref={list} className="no-scrollbar relative -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label="Spieler am Tisch">
+    <ul ref={list} className="no-scrollbar relative -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-2 pt-2 sm:gap-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label="Spieler am Tisch">
       {order.map((id) => {
         const p = state.players.find((x) => x.id === id);
         if (!p) return null;
@@ -61,14 +61,14 @@ export function Seats({ timer }: { timer: number | null }) {
             key={id}
             data-seat={id}
             className={cx(
-              'relative flex w-[6.6rem] shrink-0 snap-start flex-col items-center gap-1 rounded-2xl px-1.5 pb-2 pt-2.5 text-center transition-all',
+              'relative flex w-[5.3rem] shrink-0 snap-start flex-col items-center gap-0.5 rounded-2xl px-1 pb-1.5 pt-2 text-center transition-all sm:w-[6.6rem] sm:gap-1 sm:px-1.5 sm:pb-2 sm:pt-2.5',
               isTurn ? 'bg-gold/20 ring-2 ring-gold' : 'bg-velvet-deep/60 ring-2 ring-white/10',
               p.left && 'opacity-40',
             )}
           >
             <span className="relative">
               {isTurn && timer !== null && <TimerRing fraction={timer} color="var(--color-gold)" />}
-              <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="md" className={cx(isTurn && 'animate-pulse-ring')} />
+              <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="md" className={cx('max-sm:!size-10', isTurn && 'animate-pulse-ring')} />
               {!p.bot && !p.left && (
                 <span className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-velvet-deep', g.online.has(id) ? 'bg-vert' : 'bg-ink-soft')} />
               )}
@@ -78,11 +78,11 @@ export function Seats({ timer }: { timer: number | null }) {
                 </span>
               )}
             </span>
-            <span className="w-full truncate text-sm font-bold leading-tight">{nameOf(id, true)}</span>
-            <span className="w-full truncate text-[0.7rem] leading-tight text-parchment/70">
+            <span className="w-full truncate text-xs font-bold leading-tight sm:text-sm">{nameOf(id, true)}</span>
+            <span className="hidden w-full truncate text-[0.7rem] leading-tight text-parchment/70 sm:block">
               {index >= 0 && state.phase !== 'draw' ? rankTitle(index, present.length) : p.bot ? 'Bot' : 'Höfling'}
             </span>
-            <span className="flex h-8 items-center gap-1">
+            <span className="flex h-7 items-center gap-1 sm:h-8">
               {p.left ? (
                 <span className="text-xs font-bold">ist gegangen</span>
               ) : state.phase === 'draw' ? (
@@ -94,7 +94,7 @@ export function Seats({ timer }: { timer: number | null }) {
               ) : (
                 <>
                   <CardBack design={deck.design} size="xs" className="!w-5" />
-                  <span className="tabular font-display text-xl font-bold" aria-label={`${count} Karten`}>{count}</span>
+                  <span className="tabular font-display text-lg font-bold sm:text-xl" aria-label={`${count} Karten`}>{count}</span>
                 </>
               )}
             </span>

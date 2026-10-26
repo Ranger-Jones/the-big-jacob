@@ -1,14 +1,25 @@
 'use client';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { PlayingCard } from '@/components/deck/playing-card';
+import { CrownMark } from '@/components/ui/logo';
 import { describeCards, describeLog, EVENT_TEXT } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
+import { BURST_KINDS, TableBurst, type BurstKind } from './table-burst';
+import type { LogEntry } from '@/lib/jakob/types';
 
 function tilt(seq: number, i: number) {
   return (((seq * 37 + i * 53) % 17) - 8) * 0.9;
 }
 
-/** The velvet table in the middle: the current trick, who laid it and a short log. */
+/** Fine velvet grain for the felt (SVG turbulence as a data URI). */
+const FELT_GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
+/**
+ * The royal table: carved wooden rim with gold inlay around wine-red velvet.
+ * All rows have fixed heights so the table never grows or shrinks during play.
+ */
 export function TrickArea() {
   const { state, me, nameOf, deckOf } = useTable();
   const reduce = useReducedMotion();
@@ -21,74 +32,122 @@ export function TrickArea() {
     .map((e) => ({ seq: e.seq, kind: e.kind, text: describeLog(e, (id) => nameOf(id, true)) }))
     .filter((e) => e.text);
 
+  // Special plays get a burst over the table – only ones that happen while we watch.
+  const [mountedAt] = useState(() => state.log.at(-1)?.seq ?? -1);
+  const burst = (state.log.slice(-3).reverse().find((e) => BURST_KINDS.includes(e.kind) && e.seq > mountedAt) ?? null) as
+    (LogEntry & { kind: BurstKind }) | null;
+  const burstSubtitle = !burst ? null
+    : burst.kind === 'snap' ? `${nameOf(burst.to ?? '', true)} setzt aus`
+      : burst.kind === 'bomb' ? `${nameOf(burst.by ?? '', true)} ${burst.by === me ? 'sprengst' : 'sprengt'} den Stich`
+        : `${nameOf(burst.by ?? '', true)} ${burst.by === me ? 'gewinnst' : 'gewinnt'} den Stich`;
+  const [rim, animateRim] = useAnimate();
+  const burstKey = burst ? `${burst.kind}-${burst.seq}` : null;
+  useEffect(() => {
+    if (!burstKey || reduce || !rim.current) return;
+    void animateRim(rim.current, burstKey.startsWith('unbeatable') ? { scale: [1, 1.03, 1] } : { x: [0, -10, 9, -6, 5, -2, 0] }, { duration: 0.5 });
+  }, [burstKey, reduce, animateRim, rim]);
+
   return (
-    <div className="relative mx-auto flex w-full max-w-3xl flex-col items-center gap-3 rounded-[50%/38%] border-4 border-gold-deep/70 bg-wine px-4 py-5 shadow-[inset_0_0_60px_rgb(0_0_0/0.55),0_10px_0_rgb(0_0_0/0.35)] sm:py-7">
-      <span aria-hidden className="pointer-events-none absolute inset-2 rounded-[50%/38%] border border-gold/25" />
+    <div className="relative mx-auto w-full max-w-3xl pt-2.5 sm:pt-3">
       {state.event && (
-        <span className="absolute -top-4 rounded-full bg-velvet-deep px-3 py-1 text-xs font-bold text-gold-soft ring-2 ring-gold/40" title={EVENT_TEXT[state.event].text}>
+        <span
+          className="absolute left-1/2 top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-velvet-deep px-3 py-1 text-xs font-bold text-gold-soft ring-2 ring-gold/50 shadow-[0_3px_0_rgb(0_0_0/0.4)]"
+          title={EVENT_TEXT[state.event].text}
+        >
           {EVENT_TEXT[state.event].emoji} {EVENT_TEXT[state.event].title}
         </span>
       )}
 
-      <div className="relative flex min-h-[7rem] items-center justify-center sm:min-h-[9rem]" aria-live="polite">
-        <AnimatePresence mode="popLayout">
-          {trick ? (
-            <motion.div
-              key={trick.seq}
-              className="flex items-center"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: fromMe ? 160 : -140, scale: 0.7, rotate: fromMe ? 0 : -8 }}
-              animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: -18, filter: 'blur(2px)' }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            >
-              {trick.cards.map((c, i) => (
-                <PlayingCard
-                  key={i}
-                  rank={c}
-                  deck={deckOf(trick.by)}
-                  size="lg"
-                  className="-ml-10 first:ml-0 max-sm:!w-[4.2rem] max-sm:-ml-9"
-                  style={{ rotate: `${tilt(trick.seq, i)}deg`, zIndex: i }}
-                />
-              ))}
-            </motion.div>
-          ) : (
-            <motion.p
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="max-w-xs text-center font-display text-2xl text-parchment/70"
-            >
-              {state.phase === 'play' && state.turn ? `${nameOf(state.turn, true)} ${state.turn === me ? 'spielst' : 'spielt'} aus` : 'Der Tisch ist leer'}
-            </motion.p>
-          )}
-        </AnimatePresence>
+      {/* Carved wooden rim */}
+      <div
+        ref={rim}
+        className="relative rounded-[50%/42%] p-[7px] shadow-[0_10px_0_rgb(0_0_0/0.35),0_20px_34px_rgb(0_0_0/0.45)] sm:p-[14px]"
+        style={{
+          background:
+            'repeating-linear-gradient(100deg, rgb(255 255 255 / 0.04) 0 6px, transparent 6px 14px), linear-gradient(180deg, #8a5a2e 0%, #5c3519 45%, #3a1f0d 100%)',
+        }}
+      >
+        {/* Gold inlay */}
+        <div className="rounded-[50%/42%] bg-gradient-to-b from-gold-soft via-gold to-gold-deep p-[3px]">
+          {/* Velvet felt */}
+          <div
+            className="relative flex h-[12.75rem] flex-col items-center overflow-hidden rounded-[50%/42%] px-4 pt-4 sm:h-[19.5rem] sm:pt-8"
+            style={{
+              backgroundColor: '#5e1626',
+              backgroundImage: `${FELT_GRAIN}, radial-gradient(ellipse at 50% 35%, #8e2a3d 0%, #6b1e2e 45%, #3d0e19 100%)`,
+              boxShadow: 'inset 0 0 50px rgb(0 0 0 / 0.6), inset 0 6px 0 rgb(0 0 0 / 0.25)',
+            }}
+          >
+            <TableBurst entry={burst} subtitle={burstSubtitle} />
+            {/* Woven border and crest watermark */}
+            <span aria-hidden className="pointer-events-none absolute inset-3 rounded-[50%/42%] border border-dashed border-gold/25" />
+            <CrownMark className="pointer-events-none absolute left-1/2 top-1/2 size-28 sm:size-40 -translate-x-1/2 -translate-y-1/2 opacity-[0.07] grayscale" />
+            <span aria-hidden className="pointer-events-none absolute inset-x-[20%] top-0 h-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_50%_0%,rgb(255_220_160/0.18),transparent_70%)]" />
+
+            <div className="relative flex h-[6.4rem] w-full items-center justify-center sm:h-[9.5rem]" aria-live="polite">
+              <AnimatePresence mode="popLayout">
+                {trick ? (
+                  <motion.div
+                    key={trick.seq}
+                    className="flex items-center"
+                    initial={reduce ? { opacity: 0 } : { opacity: 0, y: fromMe ? 160 : -140, scale: 0.7, rotate: fromMe ? 0 : -8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: -18, filter: 'blur(2px)' }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                  >
+                    {trick.cards.map((c, i) => (
+                      <PlayingCard
+                        key={i}
+                        rank={c}
+                        deck={deckOf(trick.by)}
+                        size="lg"
+                        className="-ml-10 first:ml-0 max-sm:!w-[3.7rem] max-sm:-ml-8 shadow-[0_6px_10px_rgb(0_0_0/0.45)]"
+                        style={{ rotate: `${tilt(trick.seq, i)}deg`, zIndex: i }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="max-w-xs text-center font-display text-2xl text-parchment/70"
+                  >
+                    {state.phase === 'play' && state.turn ? `${nameOf(state.turn, true)} ${state.turn === me ? 'spielst' : 'spielt'} aus` : 'Der Tisch ist leer'}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <p className="relative h-5 max-w-full truncate text-center text-xs font-bold text-parchment/90 sm:h-6 sm:text-sm">
+              {trick ? (
+                <>
+                  {nameOf(trick.by, true)}: {describeCards(trick.cards)}
+                  <span className="text-parchment/60"> · schlage mit {trick.count} {trick.count === 1 ? 'Karte' : 'Karten'}</span>
+                </>
+              ) : ' '}
+            </p>
+
+            <ul className="relative flex h-[2.6rem] w-full max-w-md flex-col items-center gap-0.5 overflow-hidden text-center text-xs text-parchment/70 sm:h-[3.9rem] sm:text-sm">
+              <AnimatePresence initial={false}>
+                {log.map((e, i) => (
+                  <motion.li
+                    key={`${e.seq}-${e.kind}`}
+                    layout
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1 - i * 0.3, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="max-w-full truncate"
+                  >
+                    {e.text}
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+          </div>
+        </div>
       </div>
-
-      {trick && (
-        <p className="text-center text-sm font-bold text-parchment/90">
-          {nameOf(trick.by, true)}: {describeCards(trick.cards)}
-          <span className="text-parchment/60"> · schlage mit {trick.count} {trick.count === 1 ? 'Karte' : 'Karten'}</span>
-        </p>
-      )}
-
-      <ul className="flex min-h-[3.6rem] w-full max-w-md flex-col items-center gap-0.5 text-center text-xs text-parchment/70 sm:text-sm">
-        <AnimatePresence initial={false}>
-          {log.map((e, i) => (
-            <motion.li
-              key={`${e.seq}-${e.kind}`}
-              layout
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1 - i * 0.3, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="truncate"
-            >
-              {e.text}
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </ul>
     </div>
   );
 }

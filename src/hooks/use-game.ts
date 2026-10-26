@@ -184,7 +184,6 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       const next: PublicState = {
         ...s,
         trick: { cards: [...action.cards].sort((a, b) => a - b), rank: verdict.rank, count: action.cards.length, by: me, seq: s.moveSeq + 1 },
-        passed: [],
         turn: null,
         handCounts: { ...s.handCounts, [me]: (s.handCounts[me] ?? 0) - action.cards.length },
       };

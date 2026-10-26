@@ -1,4 +1,4 @@
-import { countBy, JESTER, playShape, type PlayShape } from './cards';
+import { countBy, fullDeck, JESTER, playShape, removeCards, type PlayShape } from './cards';
 import type { CourtEvent, Settings, Trick } from './types';
 
 export interface RuleContext {
@@ -89,4 +89,12 @@ export function legalPlays(hand: readonly number[], trick: Trick | null, ctx: Ru
   }
   for (let j = 1; j <= jesters; j++) if (!trick || trick.count === j) add(Array(j).fill(JESTER));
   return plays;
+}
+
+/**
+ * True if no combination of the still unplayed cards could beat the trick. Uses public knowledge only
+ * (everything played this round, including the trick), so an instant win never reveals anyone's hand.
+ */
+export function isUnbeatable(trick: Trick, played: readonly number[], ctx: RuleContext): boolean {
+  return legalPlays(removeCards(fullDeck(), played), trick, ctx).length === 0;
 }

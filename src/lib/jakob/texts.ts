@@ -27,13 +27,14 @@ export function describeLog(entry: LogEntry, name: (id: string) => string): stri
     case 'timeout': return `⏳ ${who} war zu langsam`;
     case 'clear': return entry.by ? `Neuer Stich – ${name(entry.by)} spielt aus` : 'Neuer Stich';
     case 'out': return `🎉 ${who} hat keine Karten mehr`;
-    case 'snap': return `⚡ Schnapp! ${entry.to ? name(entry.to) : ''} muss aussetzen`;
+    case 'snap': return `⚡ Schnapp! ${entry.to ? name(entry.to) : ''} setzt aus`;
     case 'revolution': return `✊ ${who} ruft die Revolution aus – keine Steuern!`;
     case 'grandRevolution': return `🔥 Große Revolution von ${who}! Die Ordnung kehrt sich um.`;
     case 'tax': return null;
     case 'event': return null;
     case 'left': return `🚪 ${who} hat den Tisch verlassen`;
     case 'jesterOut': return `🤡 ${who} ging mit einem Narren raus und landet ganz unten`;
+    case 'unbeatable': return `👑 Unschlagbar! ${who} gewinnt den Stich sofort`;
     case 'kingFall': return `👑💥 Königssturz! ${who} fällt auf den letzten Platz`;
   }
 }
@@ -46,7 +47,7 @@ export const SETTING_TEXT = {
   jestersTaxable: { label: 'Narren sind steuerpflichtig', hint: 'Knechte müssen auch ihre Narren als beste Karten abgeben.' },
   chat: { label: 'Chat', hint: 'Nachrichten an den ganzen Tisch.' },
   tracker: { label: 'Kartengedächtnis', hint: 'Zeigt, welche Karten in dieser Runde schon gespielt wurden.' },
-  snap: { label: 'Schnapp!', hint: 'Du darfst die gleiche Zahl legen – der Nächste muss dann aussetzen.' },
+  snap: { label: 'Schnapp!', hint: 'Du darfst die gleiche Zahl legen – der Nächste ist dann für diesen Stich raus.' },
   bomb: { label: 'Bombe', hint: 'Vier oder mehr gleiche Karten ohne Narren schlagen jeden Stich und gewinnen ihn sofort.' },
   kingFall: { label: 'Königssturz', hint: 'Wird der Große Jakob nicht Erster, stürzt er auf den letzten Platz.' },
   jesterBan: { label: 'Narrenverbot', hint: 'Wer mit einem Narren ausgeht, landet auf dem letzten Platz.' },

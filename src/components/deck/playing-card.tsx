@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { JESTER } from '@/lib/jakob/cards';
 import { cx } from '@/lib/cx';
 import { cardDesign, type BackPattern, type DeckDesign, type DeckEntry, type DeckFont } from '@/lib/decks';
+import { CardArt, hasArt } from './art';
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -44,28 +45,39 @@ interface FaceProps {
 export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked, className, style, onClick, label }: FaceProps) {
   const d = deck.design;
   const card = cardDesign(deck, rank);
+  const fullArt = !!card.image && d.photoFit === 'vollbild';
+  // On full-art cards the numbers sit on small paper tabs so they stay readable on any photo.
+  const cornerStyle = fullArt
+    ? { color: d.accent, backgroundColor: d.paper, padding: '0.1em 0.18em', borderRadius: '0.25em', boxShadow: '0 1px 2px rgb(0 0 0 / 0.35)' }
+    : { color: d.accent };
   const content: ReactNode = (
     <>
+      {fullArt && <img src={card.image!} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />}
       <span
         className="absolute inset-[5%] rounded-[8%] border"
-        style={{ borderColor: `${d.accent}88` }}
+        style={{ borderColor: fullArt ? `${d.paper}aa` : `${d.accent}88` }}
         aria-hidden
       />
-      <span className={cx('absolute left-[9%] top-[5%] font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={{ color: d.accent }}>
+      <span className={cx('absolute left-[9%] top-[5%] font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
         {cornerLabel(rank)}
       </span>
       {size !== 'xs' && (
-        <span className={cx('absolute bottom-[5%] right-[9%] rotate-180 font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={{ color: d.accent }}>
+        <span className={cx('absolute bottom-[5%] right-[9%] rotate-180 font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
           {cornerLabel(rank)}
         </span>
       )}
-      <span
-        className={cx('absolute left-1/2 top-[44%] flex aspect-square w-[62%] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full', MEDAL[size])}
-        style={{ backgroundColor: `${d.frame}18`, boxShadow: `inset 0 0 0 2px ${d.frame}55` }}
-        aria-hidden
-      >
-        {card.image ? <img src={card.image} alt="" className="size-full object-cover" draggable={false} /> : <span className="leading-none">{card.emoji}</span>}
-      </span>
+      {!fullArt && !card.image && hasArt(card.art) && (
+        <CardArt id={card.art} className="absolute left-1/2 top-[43%] w-[78%] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_1px_rgb(0_0_0/0.25)]" />
+      )}
+      {!fullArt && (card.image || !hasArt(card.art)) && (
+        <span
+          className={cx('absolute left-1/2 top-[44%] flex aspect-square w-[62%] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden rounded-full', MEDAL[size])}
+          style={{ backgroundColor: `${d.frame}18`, boxShadow: `inset 0 0 0 2px ${d.frame}55` }}
+          aria-hidden
+        >
+          {card.image ? <img src={card.image} alt="" className="size-full object-cover" draggable={false} /> : <span className="leading-none">{card.emoji}</span>}
+        </span>
+      )}
       <span
         className={cx('absolute inset-x-[8%] bottom-[13%] truncate rounded-sm px-0.5 text-center font-bold leading-tight', NAME[size], FONT_CLASS[d.font])}
         style={{ backgroundColor: d.frame, color: d.paper }}
@@ -120,7 +132,12 @@ export function CardBack({ design, size = 'md', className, style, onClick, label
   design: DeckDesign; size?: CardSize; className?: string; style?: CSSProperties; onClick?: () => void; label?: string;
 }) {
   const id = `back-${design.back.pattern}-${design.back.a.slice(1)}-${design.back.b.slice(1)}`;
-  const inner = (
+  const inner = design.back.image ? (
+    <>
+      <img src={design.back.image} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />
+      <span className="absolute inset-[7%] rounded-[8%] border-2" style={{ borderColor: `${design.paper}cc` }} aria-hidden />
+    </>
+  ) : (
     <>
       <svg className="absolute inset-0 size-full" aria-hidden>
         <defs>{patternFor(design.back.pattern, design.back.a, design.back.b, id)}</defs>
@@ -132,7 +149,7 @@ export function CardBack({ design, size = 'md', className, style, onClick, label
         style={{ backgroundColor: design.paper, boxShadow: `0 0 0 3px ${design.accent}` }}
         aria-hidden
       >
-        {design.back.emblem}
+        {hasArt(design.back.art) ? <CardArt id={design.back.art} className="size-[88%]" /> : design.back.emblem}
       </span>
     </>
   );

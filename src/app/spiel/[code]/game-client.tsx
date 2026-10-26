@@ -63,8 +63,14 @@ function useTableEffects(state: PublicState | undefined, me: string, name: (id: 
         toast.success('👑 Du bist der neue Große Jakob!');
       } else toast(`👑 ${name(last.finish[0])} ist der neue Große Jakob`);
     }
-    const bomb = state.log.at(-1);
-    if (bomb?.kind === 'bomb' && bomb.seq !== before.log.at(-1)?.seq) toast(`💣 ${bomb.by === me ? 'Deine Bombe' : `Bombe von ${name(bomb.by ?? '')}`}!`);
+    // Special plays: the table shows a burst, here we add the sound.
+    const known = new Set(before.log.map((e) => `${e.kind}-${e.seq}`));
+    for (const e of state.log.slice(-3)) {
+      if (known.has(`${e.kind}-${e.seq}`)) continue;
+      if (e.kind === 'snap') playSound('snap');
+      else if (e.kind === 'bomb') playSound('bomb');
+      else if (e.kind === 'unbeatable') playSound('crown');
+    }
     if (before.phase === 'tax' && state.phase === 'play' && received.length > 0 && before.tax.some((t) => t.from === me)) {
       toast(`Du hast ${describeCards(received)} zurückbekommen.`);
     }

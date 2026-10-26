@@ -35,7 +35,7 @@ pnpm lint && pnpm typecheck
 
 ```
 src/lib/jakob/         Karten, Regeln, Zustandsmaschine, Bots, Texte (reines TypeScript, getestet)
-src/lib/decks.ts       Deck-Schema (zod) und Vorlagen (Hofstaat, Rettungswache, Tierreich, Piraten)
+src/lib/decks.ts       Deck-Schema (zod) und Vorlagen (Hofstaat, Rettungswache, Tierreich, Piraten, Heraldik, Kosmos, Schatzkammer)
 src/server/*-service   Spiel-, Deck-, Freundes-, Profil- und Chat-Logik (Service-Role, prüft jede Aktion)
 src/server/*-actions   Server Actions (Login + Zugangsfrage prüfen, Eingaben validieren)
 src/hooks/use-game     Live-Spielzustand, eigene Hand, Presence, Reaktionen, Bot- und Zeit-Anstöße
