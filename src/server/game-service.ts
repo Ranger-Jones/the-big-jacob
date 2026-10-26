@@ -5,6 +5,7 @@ import {
 } from '@/lib/jakob/engine';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
+import { isStale, LOBBY_IDLE_HOURS } from '@/lib/jakob/stale';
 import { fail, ok, STALE, type ServiceResult } from './result';
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -166,7 +167,42 @@ export async function findOpenSoloGame(admin: AdminClient, userId: string, mode:
   return data?.[0]?.code ?? null;
 }
 
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+let lastCleanup = 0;
+
+/**
+ * Closes tables nobody plays at any more (see isStale). Deleting a game cascades to its players,
+ * hands, chat and invites; anyone still watching gets the realtime DELETE and is sent home.
+ * Runs lazily (home page, new tables) at most every 10 minutes per server instance.
+ */
+export async function closeStaleGames(admin: AdminClient, now = Date.now(), force = false): Promise<number> {
+  if (!force && now - lastCleanup < CLEANUP_INTERVAL_MS) return 0;
+  lastCleanup = now;
+  const oldest = new Date(now - LOBBY_IDLE_HOURS * 3600_000).toISOString();
+  const { data, error } = await admin.from('games')
+    .select('id, status, created_at, started_at, wait:state->>waitSince')
+    .in('status', ['lobby', 'playing']).lt('created_at', oldest).limit(500);
+  if (error) throw error;
+  const stale = data
+    .filter((g) => isStale({ status: g.status, createdAt: g.created_at, startedAt: g.started_at, waitSince: (g.wait as string | null) ?? null }, now))
+    .map((g) => g.id);
+  if (stale.length === 0) return 0;
+  const { error: delError } = await admin.from('games').delete().in('id', stale);
+  if (delError) throw delError;
+  return stale.length;
+}
+
+/** Cleanup must never break the page that triggered it. */
+export async function closeStaleGamesQuietly(admin: AdminClient) {
+  try {
+    await closeStaleGames(admin);
+  } catch (err) {
+    console.error('closeStaleGames failed', err);
+  }
+}
+
 export async function createGame(admin: AdminClient, userId: string, deckId: string | null = null) {
+  await closeStaleGamesQuietly(admin);
   const state = createGameState(userId);
   state.players[0].deckId = deckId;
   return insertGame(admin, state);

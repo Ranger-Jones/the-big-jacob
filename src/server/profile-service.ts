@@ -4,6 +4,7 @@ import { monthOf, monthRange, sameMonth, shiftMonth, type MonthKey } from '@/lib
 import { isValidQuickEmojis, normalizeQuickEmojis } from '@/lib/emojis';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { USERNAME_RE } from '@/lib/username';
+import { closeStaleGamesQuietly } from './game-service';
 import { fail, ok, type ServiceResult } from './result';
 import type { ProfileLite } from './social-service';
 
@@ -129,6 +130,8 @@ export async function removeAvatar(admin: AdminClient, userId: string): Promise<
 }
 
 export async function listActiveGames(admin: AdminClient, userId: string) {
+  // Abandoned tables should not linger in "Deine offenen Tische".
+  await closeStaleGamesQuietly(admin);
   const { data, error } = await admin.from('game_players')
     .select('left_game, games!inner(code, status, state)')
     .eq('user_id', userId).eq('left_game', false).in('games.status', ['lobby', 'playing']);
