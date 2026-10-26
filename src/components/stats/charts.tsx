@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 
-/** Single-series mark colour, validated against the parchment card surface. */
-const MARK = '#a8324a';
-const MARK_HOVER = '#c4485f';
+/** Single-series mark colour, validated (dataviz checks, dark mode) against the velvet panel surface. */
+const MARK = '#c0842a';
+const MARK_HOVER = '#d99a35';
 const GRID = 'var(--color-line)';
-const SURFACE = 'var(--color-parchment)';
+const SURFACE = '#1b0e2e';
 
 function niceMax(v: number): number {
   if (v <= 4) return Math.max(1, v);
@@ -14,7 +14,7 @@ function niceMax(v: number): number {
   return (n <= 2 ? 2 : n <= 5 ? 5 : 10) * step;
 }
 
-/** Rendered width of the chart box, so tooltips can be placed in pixels. */
+/** Rendered width of the chart box: charts draw at true pixel size, so marks keep their spec on any screen. */
 function useWidth(ref: RefObject<HTMLDivElement | null>, fallback: number) {
   const [width, setWidth] = useState(fallback);
   useEffect(() => {
@@ -27,11 +27,18 @@ function useWidth(ref: RefObject<HTMLDivElement | null>, fallback: number) {
   return width;
 }
 
+/** Gridline values: halves for larger ranges, whole numbers for small ones (never a repeated label). */
+function ticks(min: number, max: number): number[] {
+  const range = max - min;
+  if (range <= 4) return Array.from({ length: range + 1 }, (_, i) => min + i);
+  return [min, min + range / 2, max];
+}
+
 function Tooltip({ x, y, children }: { x: number; y: number; children: ReactNode }) {
   return (
     <div
       role="presentation"
-      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xl bg-ink px-3 py-1.5 text-sm text-parchment shadow-lg"
+      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xl bg-[#120a1f] px-3 py-1.5 text-sm text-[#f6ead2] shadow-lg ring-1 ring-gold/40"
       style={{ left: x, top: y - 8 }}
     >
       {children}
@@ -51,32 +58,35 @@ function TableToggle({ head, rows }: { head: string[]; rows: (string | number)[]
   );
 }
 
+/** Unit text with an {n} placeholder, e.g. ['{n} Spiel', '{n} Spiele'] (functions can't cross to the client). */
+export type Unit = [one: string, many: string];
+const fmt = ([one, many]: Unit, n: number) => (n === 1 ? one : many).replace('{n}', n.toLocaleString('de-DE'));
+
 export interface Column { label: string; short: string; value: number }
 
 /**
  * Columns from one baseline with a hover/focus tooltip. `labelAll` puts every value on its cap,
  * otherwise only the largest column is labelled.
  */
-export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data: Column[]; unit: (n: number) => string; labelAll?: boolean; tableHead: [string, string] }) {
+export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data: Column[]; unit: Unit; labelAll?: boolean; tableHead: [string, string] }) {
   const box = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
-  const slot = 40;
+  const width = useWidth(box, 280);
+  const slot = width / data.length;
   const top = 22;
   const plot = 120;
-  const width = data.length * slot;
   const max = niceMax(Math.max(...data.map((d) => d.value), 1));
   const peak = data.reduce((best, d, i) => (d.value > data[best].value ? i : best), 0);
   const bar = Math.min(24, slot - 10);
   const y = (v: number) => top + plot - (v / max) * plot;
-  const scale = useWidth(box, width) / width;
-  const tipPos = (i: number) => ({ x: (i * slot + slot / 2) * scale, y: y(data[i].value) * scale });
+  const tipPos = (i: number) => ({ x: i * slot + slot / 2, y: y(data[i].value) });
 
   return (
     <div>
       <div ref={box} className="relative" onPointerLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${width} ${top + plot + 22}`} className="block w-full" role="img" aria-label={data.map((d) => `${d.label}: ${unit(d.value)}`).join(', ')}>
-          {[0, 0.5, 1].map((f) => (
-            <line key={f} x1={0} x2={width} y1={y(max * f)} y2={y(max * f)} stroke={GRID} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <svg width={width} height={top + plot + 22} className="block" role="img" aria-label={data.map((d) => `${d.label}: ${fmt(unit, d.value)}`).join(', ')}>
+          {ticks(0, max).map((v) => (
+            <line key={v} x1={0} x2={width} y1={y(v)} y2={y(v)} stroke={GRID} strokeWidth={1} />
           ))}
           {data.map((d, i) => {
             const cx = i * slot + slot / 2;
@@ -97,18 +107,18 @@ export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data:
                 <text x={cx} y={top + plot + 15} textAnchor="middle" className="fill-ink-soft text-[11px]">{d.short}</text>
                 <rect
                   x={i * slot} y={0} width={slot} height={top + plot + 22} fill="transparent" tabIndex={0}
-                  aria-label={`${d.label}: ${unit(d.value)}`}
+                  aria-label={`${d.label}: ${fmt(unit, d.value)}`}
                   onPointerEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
                   className="outline-none focus-visible:stroke-gold-deep focus-visible:[stroke-width:2]"
                 />
               </g>
             );
           })}
-          <line x1={0} x2={width} y1={top + plot} y2={top + plot} stroke="var(--color-ink-soft)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <line x1={0} x2={width} y1={top + plot} y2={top + plot} stroke="var(--color-ink-soft)" strokeWidth={1} />
         </svg>
         {hover !== null && (
           <Tooltip {...tipPos(hover)}>
-            <b className="tabular">{unit(data[hover].value)}</b> <span className="text-parchment/70">{data[hover].label}</span>
+            <b className="tabular">{fmt(unit, data[hover].value)}</b> <span className="text-[#b8a7c8]">{data[hover].label}</span>
           </Tooltip>
         )}
       </div>
@@ -120,11 +130,11 @@ export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data:
 export interface LinePoint { label: string; value: number; detail: string }
 
 /** One line with a 10% wash, a crosshair that snaps to the nearest game and an end label. */
-export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: (n: number) => string; tableHead: [string, string, string] }) {
+export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: Unit; tableHead: [string, string, string] }) {
   const box = useRef<HTMLDivElement>(null);
   const gradient = useId();
   const [hover, setHover] = useState<number | null>(null);
-  const width = 600;
+  const width = useWidth(box, 280);
   const top = 18;
   const plot = 140;
   const pad = 14;
@@ -144,7 +154,6 @@ export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: 
     data.forEach((_, i) => { if (Math.abs(x(i) - vx) < Math.abs(x(best) - vx)) best = i; });
     setHover(best);
   };
-  const scale = useWidth(box, width) / width;
 
   return (
     <div>
@@ -158,33 +167,32 @@ export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: 
         }}
         onBlur={() => setHover(null)}
       >
-        <svg viewBox={`0 0 ${width} ${top + plot + 10}`} className="block w-full" role="img" aria-label={`Punkte der letzten ${data.length} Spiele`}>
+        <svg width={width} height={top + plot + 10} className="block" role="img" aria-label={`Punkte der letzten ${data.length} Spiele`}>
           <defs>
             <linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stopColor={MARK} stopOpacity="0.14" />
               <stop offset="1" stopColor={MARK} stopOpacity="0.04" />
             </linearGradient>
           </defs>
-          {[0, 0.5, 1].map((f) => {
-            const v = min + (max - min) * f;
+          {ticks(min, max).map((v) => {
             return (
-              <g key={f}>
-                <line x1={0} x2={width} y1={y(v)} y2={y(v)} stroke={GRID} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+              <g key={v}>
+                <line x1={0} x2={width} y1={y(v)} y2={y(v)} stroke={GRID} strokeWidth={1} />
                 <text x={width} y={y(v) - 4} textAnchor="end" className="fill-ink-soft text-[11px]">{Math.round(v)}</text>
               </g>
             );
           })}
           {data.length > 1 && <path d={`${path} L${x(last)},${y(min)} L${x(0)},${y(min)} Z`} fill={`url(#${gradient})`} />}
-          <path d={path} fill="none" stroke={MARK} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-          {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={top - 6} y2={top + plot} stroke="var(--color-ink-soft)" strokeWidth={1} vectorEffect="non-scaling-stroke" />}
+          <path d={path} fill="none" stroke={MARK} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+          {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={top - 6} y2={top + plot} stroke="var(--color-ink-soft)" strokeWidth={1} />}
           {[hover ?? last].map((i) => (
             <circle key={i} cx={x(i)} cy={y(data[i].value)} r={5} fill={MARK} stroke={SURFACE} strokeWidth={2} />
           ))}
           {hover === null && <text x={x(last) + 9} y={y(data[last].value) + 4} className="fill-ink text-[12px] font-bold">{data[last].value}</text>}
         </svg>
         {hover !== null && (
-          <Tooltip x={x(hover) * scale} y={y(data[hover].value) * scale}>
-            <b className="tabular">{unit(data[hover].value)}</b> <span className="text-parchment/70">{data[hover].detail}</span>
+          <Tooltip x={x(hover)} y={y(data[hover].value)}>
+            <b className="tabular">{fmt(unit, data[hover].value)}</b> <span className="text-[#b8a7c8]">{data[hover].detail}</span>
           </Tooltip>
         )}
       </div>

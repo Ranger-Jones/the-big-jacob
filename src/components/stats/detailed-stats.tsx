@@ -5,7 +5,6 @@ import { PRESETS } from '@/lib/decks';
 import type { DetailedStats } from '@/server/profile-service';
 import { ColumnChart, LineChart } from './charts';
 
-const games = (n: number) => `${n} ${n === 1 ? 'Spiel' : 'Spiele'}`;
 const day = (iso: string) => new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
 
 /** Placement distribution, favourite card and recent form on the profile. */
@@ -24,9 +23,9 @@ export function DetailedStatsSection({ stats, isMe }: { stats: DetailedStats; is
       <div className="grid gap-3 md:grid-cols-[1fr_auto]">
         <Card className="flex flex-col gap-2">
           <h3 className="text-2xl font-bold">Platzierungen</h3>
-          <p className="-mt-1 text-sm text-ink-soft">{Math.round((podium / total) * 100)} % auf dem Treppchen, aus {games(total)}</p>
+          <p className="-mt-1 text-sm text-ink-soft">{Math.round((podium / total) * 100)} % auf dem Treppchen, aus {total} {total === 1 ? 'Spiel' : 'Spielen'}</p>
           <ColumnChart
-            labelAll tableHead={['Platz', 'Spiele']} unit={games}
+            labelAll tableHead={['Platz', 'Spiele']} unit={['{n} Spiel', '{n} Spiele']}
             data={stats.placeCounts.map((n, i) => ({ label: `Platz ${i + 1}`, short: `${i + 1}.`, value: n }))}
           />
         </Card>
@@ -46,10 +45,10 @@ export function DetailedStatsSection({ stats, isMe }: { stats: DetailedStats; is
         <Card className="flex flex-col gap-2">
           <h3 className="text-2xl font-bold">Formkurve</h3>
           <p className="-mt-1 text-sm text-ink-soft">
-            Punkte in den letzten {games(stats.trend.length)} · zuletzt im Schnitt Platz {recentAvg.toLocaleString('de-DE', { maximumFractionDigits: 1 })}
+            Punkte in den letzten {stats.trend.length} Spielen · zuletzt im Schnitt Platz {recentAvg.toLocaleString('de-DE', { maximumFractionDigits: 1 })}
           </p>
           <LineChart
-            unit={(n) => `${n} Punkte`} tableHead={['Datum', 'Platz', 'Punkte']}
+            unit={['{n} Punkt', '{n} Punkte']} tableHead={['Datum', 'Platz', 'Punkte']}
             data={stats.trend.map((t) => ({ label: day(t.finishedAt), value: t.points, detail: `Platz ${t.place}${t.players ? ` von ${t.players}` : ''} · ${day(t.finishedAt)}` }))}
           />
         </Card>
@@ -60,7 +59,7 @@ export function DetailedStatsSection({ stats, isMe }: { stats: DetailedStats; is
           <h3 className="text-2xl font-bold">Gelegte Karten</h3>
           <p className="-mt-1 text-sm text-ink-soft">{played} Karten insgesamt, nach Rang</p>
           <ColumnChart
-            tableHead={['Karte', 'Gelegt']} unit={(n) => `${n}× gelegt`}
+            tableHead={['Karte', 'Gelegt']} unit={['{n}× gelegt', '{n}× gelegt']}
             data={stats.byRank.map((n, i) => ({ label: RANK_NAMES[i + 1], short: i + 1 === JESTER ? 'N' : String(i + 1), value: n }))}
           />
         </Card>

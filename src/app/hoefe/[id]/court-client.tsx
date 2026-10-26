@@ -28,7 +28,7 @@ export function InviteBox({ code }: { code: string }) {
     <Card tone="velvet" className="flex flex-wrap items-center justify-between gap-3">
       <span>
         <span className="block text-sm font-bold text-gold-soft">Einladungscode</span>
-        <span className="tabular block font-display text-4xl font-bold tracking-[0.2em]">{code}</span>
+        <span className="tabular block font-sans text-3xl font-bold tracking-[0.25em] text-gold-soft">{code}</span>
       </span>
       <Button onClick={share}>Einladen</Button>
     </Card>
