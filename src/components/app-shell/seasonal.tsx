@@ -69,26 +69,33 @@ function Garland() {
   );
 }
 
+/** Muted autumn leaves in rust and old gold – quiet enough to sit behind the game. */
+const LEAF_COLORS = ['#a8461f', '#c9822c', '#8a3a24', '#b8892f'];
+
+function Leaves() {
+  return (
+    <Falling count={16} duration={[14, 26]} render={(i) => (
+      <svg width="16" height="16" viewBox="0 0 16 16" style={{ transform: `rotate(${spread(i, 11) * 360}deg)`, opacity: 0.35 + spread(i, 12) * 0.3 }}>
+        <path d="M8 1 C11 4 14 6 14 9 C14 12 11 15 8 15 C5 15 2 12 2 9 C2 6 5 4 8 1 Z" fill={LEAF_COLORS[i % LEAF_COLORS.length]} />
+        <path d="M8 3 V14" stroke="rgb(0 0 0 / 0.25)" strokeWidth="0.8" />
+      </svg>
+    )} />
+  );
+}
+
 function Halloween() {
   return (
     <>
-      {[0, 1, 2].map((i) => (
+      <Leaves />
+      {[0, 1].map((i) => (
         <svg
           key={i}
-          className="season-bat absolute h-6 w-10 text-black/70"
-          style={{ top: `${12 + i * 14}%`, animationDelay: `${-i * 7}s`, animationDuration: `${18 + i * 5}s` }}
+          className="season-bat absolute h-5 w-8 text-black/45"
+          style={{ top: `${10 + i * 16}%`, animationDelay: `${-i * 9}s`, animationDuration: `${24 + i * 6}s` }}
           viewBox="0 0 40 20"
           aria-hidden
         >
           <path d="M20 8 C16 2 10 2 2 6 C8 8 9 12 8 16 C12 12 16 13 20 18 C24 13 28 12 32 16 C31 12 32 8 38 6 C30 2 24 2 20 8 Z" fill="currentColor" />
-        </svg>
-      ))}
-      {[{ side: 'left-4', delay: '0s' }, { side: 'right-4', delay: '1.3s' }].map((p) => (
-        <svg key={p.side} className={`season-glow absolute bottom-4 hidden size-20 sm:block ${p.side}`} style={{ animationDelay: p.delay }} viewBox="0 0 80 80" aria-hidden>
-          <path d="M40 18 C40 10 46 6 50 8" stroke="#3f7a3a" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <ellipse cx="40" cy="48" rx="34" ry="28" fill="#e2701c" />
-          <path d="M40 22 C30 30 30 66 40 76 M40 22 C50 30 50 66 40 76 M20 28 C10 40 12 66 24 72 M60 28 C70 40 68 66 56 72" stroke="#b6520f" strokeWidth="2" fill="none" />
-          <path d="M26 40 L34 46 L24 48 Z M54 40 L46 46 L56 48 Z M28 58 L34 62 L40 58 L46 62 L52 58 L50 66 L30 66 Z" fill="#ffd25a" />
         </svg>
       ))}
     </>
