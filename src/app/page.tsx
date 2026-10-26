@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FriendRequests } from '@/components/dashboard/friend-requests';
 import { FriendsOnline } from '@/components/dashboard/friends-online';
 import { InviteList } from '@/components/dashboard/invite-list';
 import { PlayActions } from '@/components/dashboard/play-actions';
@@ -9,7 +10,8 @@ import { Card } from '@/components/ui/card';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { getStatsByUsername, listActiveGames } from '@/server/profile-service';
-import { listFriends, listPendingInvites } from '@/server/social-service';
+import { getFriendLists } from '@/lib/supabase/cached';
+import { listPendingInvites } from '@/server/social-service';
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -19,13 +21,23 @@ export default async function Home() {
   const [invites, active, friends, stats] = await Promise.all([
     listPendingInvites(admin, user.id),
     listActiveGames(admin, user.id),
-    listFriends(admin, user.id),
+    getFriendLists(user.id),
     getStatsByUsername(admin, user.username),
   ]);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 pb-12">
       <h1 className="break-words text-5xl font-bold sm:text-6xl">Willkommen am Hof, {user.username}!</h1>
+
+      {friends.incoming.length > 0 && (
+        <Card className="flex flex-col gap-3 ring-wax shadow-[0_6px_0_#7f1a22]">
+          <h2 className="flex items-center gap-2 text-3xl font-bold">
+            Freundschaftsanfragen
+            <span className="flex size-7 items-center justify-center rounded-full bg-wax font-sans text-base text-parchment">{friends.incoming.length}</span>
+          </h2>
+          <FriendRequests requests={friends.incoming} />
+        </Card>
+      )}
 
       {invites.length > 0 && (
         <Card className="flex flex-col gap-3 ring-gold shadow-[0_6px_0_var(--color-gold-deep)]">

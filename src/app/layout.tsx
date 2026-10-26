@@ -6,9 +6,9 @@ import { HeaderSlot } from '@/components/app-shell/header-slot';
 import { InviteListener } from '@/components/app-shell/invite-listener';
 import { OnlinePresenceProvider } from '@/components/app-shell/online-presence';
 import { fontVariables } from '@/lib/fonts';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getFriendLists } from '@/lib/supabase/cached';
 import { getCurrentUser } from '@/lib/supabase/server';
-import { listFriends } from '@/server/social-service';
+import { FriendRequestListener } from '@/components/app-shell/friend-request-listener';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export const viewport: Viewport = { themeColor: '#2a1745', width: 'device-width'
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const user = await getCurrentUser();
-  const friendIds = user ? (await listFriends(createAdminClient(), user.id)).friends.map((f) => f.profile.id) : [];
+  const friendIds = user ? (await getFriendLists(user.id)).friends.map((f) => f.profile.id) : [];
   const content = (
     <>
       <HeaderSlot><Header /></HeaderSlot>
@@ -35,6 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
           <OnlinePresenceProvider me={user.id} friendIds={friendIds}>
             {content}
             <InviteListener me={user.id} />
+            <FriendRequestListener me={user.id} />
           </OnlinePresenceProvider>
         ) : content}
         <Toaster

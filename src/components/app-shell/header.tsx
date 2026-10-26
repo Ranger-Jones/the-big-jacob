@@ -3,11 +3,13 @@ import { cookies } from 'next/headers';
 import { Avatar } from '@/components/ui/avatar';
 import { Logo } from '@/components/ui/logo';
 import { GATE_COOKIE, verifyGateToken } from '@/lib/gate';
+import { getFriendLists } from '@/lib/supabase/cached';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { NavLink } from './nav-link';
 
 export async function Header() {
   const user = await getCurrentUser();
+  const requests = user ? (await getFriendLists(user.id)).incoming.length : 0;
   const unlocked = await verifyGateToken((await cookies()).get(GATE_COOKIE)?.value, process.env.SUPABASE_SECRET_KEY);
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4">
@@ -18,7 +20,7 @@ export async function Header() {
       {user ? (
         <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">
           <NavLink href="/decks" icon="🎴">Decks</NavLink>
-          <NavLink href="/freunde" icon="🤝">Freunde</NavLink>
+          <NavLink href="/freunde" icon="🤝" badge={requests}>Freunde</NavLink>
           <NavLink href="/bestenliste" icon="🏆">Bestenliste</NavLink>
           <NavLink href="/regeln" icon="📜">Regeln</NavLink>
           <Link href={`/profil/${user.username}`} className="ml-1 shrink-0 rounded-full" aria-label="Dein Profil">
