@@ -23,7 +23,77 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "daily_results": {
+            "court_members": {
+                  Row: {
+                    "court_id": string,"joined_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "court_id": string,"joined_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "court_id"?: string,"joined_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "court_members_court_id_fkey"
+      columns: ["court_id"]
+isOneToOne: false
+      referencedRelation: "courts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "court_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "court_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "court_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"courts": {
+                  Row: {
+                    "created_at": string,"crest": string,"id": string,"invite_code": string,"name": string,"owner_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"crest"?: string,"id"?: string,"invite_code": string,"name": string,"owner_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"crest"?: string,"id"?: string,"invite_code"?: string,"name"?: string,"owner_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "courts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "courts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "courts_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"daily_results": {
                   Row: {
                     "created_at": string,"day": string,"game_id": string | null,"place": number,"points": number,"user_id": string
                   }
@@ -61,16 +131,54 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"decks": {
+                },"deck_likes": {
                   Row: {
-                    "created_at": string,"design": NonNullable<Json>,"id": string,"name": string,"owner_id": string,"updated_at": string
+                    "created_at": string,"deck_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"design": NonNullable<Json>,"id"?: string,"name": string,"owner_id": string,"updated_at"?: string
+                    "created_at"?: string,"deck_id": string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"design"?: NonNullable<Json>,"id"?: string,"name"?: string,"owner_id"?: string,"updated_at"?: string
+                    "created_at"?: string,"deck_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "deck_likes_deck_id_fkey"
+      columns: ["deck_id"]
+isOneToOne: false
+      referencedRelation: "decks"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "deck_likes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "deck_likes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "deck_likes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"decks": {
+                  Row: {
+                    "created_at": string,"design": NonNullable<Json>,"id": string,"name": string,"owner_id": string,"public": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"design": NonNullable<Json>,"id"?: string,"name": string,"owner_id": string,"public"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"design"?: NonNullable<Json>,"id"?: string,"name"?: string,"owner_id"?: string,"public"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -423,6 +531,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"id": string,"p256dh": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"id"?: string,"p256dh": string,"user_id": string
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"id"?: string,"p256dh"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "push_subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "push_subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -453,6 +593,9 @@ isOneToOne: false
                            },
 "commit_game":
 { Args: { "p_expected_version": number,"p_game_id": string,"p_hands": Json,"p_players": Json,"p_secret": Json,"p_state": Json }; Returns: number
+                           },
+"is_court_member":
+{ Args: { "cid": string }; Returns: boolean
                            },
 "is_game_member":
 { Args: { "gid": string }; Returns: boolean

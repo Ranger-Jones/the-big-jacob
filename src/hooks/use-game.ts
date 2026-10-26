@@ -132,11 +132,11 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
             if (row?.user_id === me && row.hand) applyHand(row.hand, row.version ?? 0);
           })
         .on('broadcast', { event: 'emoji' }, ({ payload }) => {
-          // The channel only admits players and spectators, so any well-formed reaction may be shown.
+          // Broadcast payloads are not authenticated: only accept senders that are present on the channel.
           const e = payload as Partial<EmojiEvent> | null;
           if (!e || typeof e.id !== 'string' || typeof e.from !== 'string' || !isAllowedEmoji(e.emoji)) return;
+          if (!Object.keys(ch.presenceState()).includes(e.from)) return;
           setEmojis((list) => [...list.slice(-15), { id: e.id!, emoji: e.emoji!, from: e.from! }]);
-          setWatchers((w) => (w.includes(e.from!) ? w : [...w, e.from!]));
         })
         .on('broadcast', { event: 'kicked' }, ({ payload }) => {
           if ((payload as { userId?: string } | null)?.userId !== me) return;

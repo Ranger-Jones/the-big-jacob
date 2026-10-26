@@ -711,7 +711,13 @@ function finishGame(state: GameState) {
   for (const id of Object.keys(state.hands)) state.hands[id] = [];
   state.notes = {};
   if (getSettings(state).missions) state.missionsRevealed = structuredClone(state.missions);
-  state.replay = structuredClone(state.replayLog);
+  // A daily challenge deal must stay secret for everyone who has not played yet.
+  state.replay = state.mode === 'daily' ? null : structuredClone(state.replayLog);
+  if (state.mode === 'daily') {
+    // Finished games are readable by everyone: do not leak played cards of today's deal.
+    state.log = [];
+    state.played = [];
+  }
 }
 
 // ---------------------------------------------------------------------------------------------

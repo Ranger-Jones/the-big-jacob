@@ -159,6 +159,13 @@ export async function createSoloGame(
   return created.ok ? ok({ code: created.data.code }) : created;
 }
 
+/** Any game (also left or finished) of a solo kind for this user – each daily challenge allows one attempt. */
+export async function hasSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<boolean> {
+  const { data } = await admin.from('games').select('id, game_players!inner(user_id)')
+    .eq('mode', mode).eq('mode_ref', ref).eq('game_players.user_id', userId).limit(1);
+  return (data?.length ?? 0) > 0;
+}
+
 /** Unfinished solo game of this kind, so a reload continues instead of starting over. */
 export async function findOpenSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<string | null> {
   const { data } = await admin.from('games').select('code, game_players!inner(user_id, left_game)')
