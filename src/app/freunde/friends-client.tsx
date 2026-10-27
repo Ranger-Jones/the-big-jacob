@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { InviteToTableButton } from '@/components/social/invite-to-table-button';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -147,6 +148,7 @@ export function FriendsClient({ me, lists }: { me: string; lists: FriendLists })
           <ul className="divide-y divide-line">
             {friendsSorted.map((f) => (
               <Row key={f.friendshipId} profile={f.profile} online={online.has(f.profile.id)}>
+                <InviteToTableButton friendId={f.profile.id} username={f.profile.username} compact />
                 <Button size="sm" variant="ghost" onClick={() => setRemoving(f)}>Entfernen</Button>
               </Row>
             ))}

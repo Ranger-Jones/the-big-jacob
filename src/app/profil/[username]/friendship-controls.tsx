@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { InviteToTableButton } from '@/components/social/invite-to-table-button';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { removeFriendAction, respondFriendRequestAction, sendFriendRequestAction
 import type { FriendshipWith } from '@/server/social-service';
 
 /** Friendship status with the person whose profile is shown, plus the matching actions. */
-export function FriendshipControls({ username, initial }: { username: string; initial: FriendshipWith }) {
+export function FriendshipControls({ username, friendId, initial }: { username: string; friendId?: string; initial: FriendshipWith }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -67,6 +68,7 @@ export function FriendshipControls({ username, initial }: { username: string; in
           <span className="flex items-center gap-1.5 rounded-full bg-vert/15 px-3 py-1 text-sm font-bold text-[#7fe0a8] ring-1 ring-vert/50">
             <Icon name="check-circle" /> Ihr seid befreundet
           </span>
+          {friendId && <InviteToTableButton friendId={friendId} username={username} />}
           <Button size="sm" variant="ghost" onClick={() => setConfirmRemove(true)} disabled={busy}>Freund entfernen</Button>
           <Modal open={confirmRemove} onClose={() => setConfirmRemove(false)} title="Freund entfernen?">
             <p className="text-ink-soft">{username} verschwindet aus deiner Freundesliste. Ihr könnt euch jederzeit wieder eine Anfrage schicken.</p>

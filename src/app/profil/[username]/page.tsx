@@ -59,7 +59,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60"><Icon name="crown" /> {t}</li>)}
             </ul>
           )}
-          {friendship && <FriendshipControls key={`${friendship.status}-${friendship.friendshipId}`} username={stats.username} initial={friendship} />}
+          {friendship && <FriendshipControls key={`${friendship.status}-${friendship.friendshipId}`} username={stats.username} friendId={stats.user_id} initial={friendship} />}
           {isMe && (
             <div className="flex flex-wrap items-center gap-2">
               <RenameForm current={stats.username} />

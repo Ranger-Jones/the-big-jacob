@@ -1,6 +1,6 @@
 import { maxPlayers } from '@/lib/jakob/engine';
 import type { AdminClient } from '@/lib/supabase/admin';
-import { joinGame, loadGame } from './game-service';
+import { createGame, joinGame, loadGame } from './game-service';
 import { fail, ok, type ServiceResult } from './result';
 
 export interface ProfileLite { id: string; username: string; avatar_url: string | null; avatar_frame?: string | null }
@@ -144,4 +144,41 @@ export async function listPendingInvites(admin: AdminClient, userId: string): Pr
     gameCode: (i.games as { code: string }).code,
     from: i.from as ProfileLite,
   }));
+}
+
+type LobbyRow = { game_id: string; games: { code: string; host_id: string; created_at: string; state: { mode?: string; players: { id: string; left: boolean }[] } } };
+
+/**
+ * "An den Tisch einladen" from the friend list or a profile: invites into my open private lobby
+ * (one I host first, newest first) or opens a new table for it. Returns where to go.
+ */
+export async function inviteFriendToTable(
+  admin: AdminClient, userId: string, friendId: string, deckId: string | null,
+): Promise<ServiceResult<{ gameId: string; code: string; created: boolean; alreadyThere: boolean }>> {
+  if (friendId === userId) return fail('Das bist du selbst.');
+  const f = await findFriendship(admin, userId, friendId);
+  if (f?.status !== 'accepted') return fail('Ihr seid nicht befreundet.');
+
+  const { data, error } = await admin.from('game_players')
+    .select('game_id, games!inner(code, host_id, created_at, state)')
+    .eq('user_id', userId).eq('left_game', false).eq('games.status', 'lobby');
+  if (error) throw error;
+  const lobbies = (data as unknown as LobbyRow[])
+    .filter((r) => (r.games.state.mode ?? 'normal') === 'normal')
+    .sort((x, y) => Number(y.games.host_id === userId) - Number(x.games.host_id === userId)
+      || y.games.created_at.localeCompare(x.games.created_at));
+
+  const withFriend = lobbies.find((r) => r.games.state.players.some((p) => p.id === friendId && !p.left));
+  if (withFriend) return ok({ gameId: withFriend.game_id, code: withFriend.games.code, created: false, alreadyThere: true });
+
+  for (const lobby of lobbies) {
+    const res = await inviteToGame(admin, userId, lobby.game_id, friendId);
+    if (res.ok) return ok({ gameId: lobby.game_id, code: lobby.games.code, created: false, alreadyThere: false });
+  }
+
+  const created = await createGame(admin, userId, deckId);
+  if (!created.ok) return created;
+  const invited = await inviteToGame(admin, userId, created.data.id, friendId);
+  if (!invited.ok) return invited;
+  return ok({ gameId: created.data.id, code: created.data.code, created: true, alreadyThere: false });
 }
