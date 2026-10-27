@@ -7,6 +7,7 @@ import { isAllowedEmoji } from '@/lib/emojis';
 import { removeCards } from '@/lib/jakob/cards';
 import { botToMove, type GameAction, type PrivateHand, type PublicState } from '@/lib/jakob/engine';
 import { judgePlay } from '@/lib/jakob/rules';
+import { isStaleBuildError, reloadOnce } from '@/lib/stale-build';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { gameAction } from '@/server/game-actions';
 import type { GameView } from '@/server/game-service';
@@ -221,7 +222,9 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       await refetch();
       if (res.error !== STALE && !opts.silent) toast.error(res.error);
       return false;
-    } catch {
+    } catch (err) {
+      // A new deployment went live while this tab was open: reload to get the matching version.
+      if (isStaleBuildError(err) && reloadOnce()) return false;
       await refetch();
       if (!opts.silent) toast.error('Keine Verbindung zum Hof. Bitte nochmal versuchen.');
       return false;
