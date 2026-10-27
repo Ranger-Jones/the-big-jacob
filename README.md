@@ -4,6 +4,9 @@ Online-Kartenspiel nach dem Vorbild von „Der Große Dalmuti“ für Freundesru
 Bots, Revolution & Große Revolution, Steuern, Hofzeremonie, optionale Kniffe (Schnapp!, Bombe, Königssturz,
 Narrenverbot, Hofgeflüster-Ereignisse, Kartengedächtnis), Zugzeit, eigene Decks mit Fotos, Chat, Emoji-Reaktionen,
 Freunde mit Online-Status, Einladungen, Revanche, Profilbilder, Abzeichen, Spielverlauf und Bestenliste.
+Dazu: Kampagne, tägliche Herausforderung, Monatsliga, Elo und offene Online-Lobby, Zuschauen, Wiederholungen,
+Höfe (Clans mit eigener Tabelle), Deck-Galerie mit Likes, Rivalitäten, König der Woche, ausführliche Statistiken,
+ein interaktives Tutorial mit lokalem Übungsspiel sowie Installation als App (PWA) mit Push-Benachrichtigungen.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · motion · Supabase (Auth, Postgres, Realtime, Storage) · Vitest · Playwright
 

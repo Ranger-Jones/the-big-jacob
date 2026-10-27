@@ -62,7 +62,22 @@ Er signiert auch das Zugangs-Cookie der Passwortfrage.
 3. **Deploy**. Nach 1–2 Minuten hast du deine Adresse.
 4. Die Adresse in Supabase als **Site URL** eintragen (Schritt 4.2).
 
-## 7. Ausprobieren
+## 6b. Push-Benachrichtigungen (optional)
+
+Ohne diesen Schritt läuft alles, nur Handy-Benachrichtigungen („Du bist dran“, Einladungen, Freundschaftsanfragen) bleiben aus.
+
+1. Einmal im Projektordner Schlüssel erzeugen: `npx web-push generate-vapid-keys`
+2. In Vercel unter **Settings → Environment Variables** eintragen:
+
+| Variable | Wert |
+|---|---|
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | der **Public Key** |
+| `VAPID_PRIVATE_KEY` | der **Private Key** (geheim, nur in Vercel!) |
+| `VAPID_SUBJECT` | optional, z. B. `mailto:du@beispiel.de` |
+
+3. In Vercel **Redeploy**. Danach kann jeder im Profil unter **Benachrichtigungen** zustimmen. Auf dem iPhone geht das nur, wenn die Seite vorher über **Teilen → Zum Home-Bildschirm** als App installiert wurde.
+
+
 
 1. Seite öffnen → Frage **„Wer ist mein Lieblings Rettungsdienstmitarbeiter?“** → **Peschel** (Groß-/Kleinschreibung egal).
 2. Account erstellen, Freunde unter **Freunde** hinzufügen.
@@ -73,7 +88,7 @@ Er signiert auch das Zugangs-Cookie der Passwortfrage.
 - **Passwortfrage ändern:** in `src/lib/gate.ts` (`GATE_QUESTION`, `ANSWER`). Wer schon drin ist, bleibt drin – um alle auszusperren, auch `PAYLOAD` ändern.
 - **Pausiertes Projekt:** Kostenlose Supabase-Projekte schlafen nach 7 Tagen ohne Nutzung ein → im Dashboard **Restore project**.
 - **Passwort vergessen:** Im Supabase-Dashboard unter **Authentication → Users** ein neues Passwort setzen.
-- **Updates:** `git push` → Vercel deployt automatisch. Neue Migrationen danach mit `pnpm exec supabase db push`.
+- **Updates:** Neue Datenbank-Migrationen (Ordner `supabase/migrations`) **zuerst** mit `pnpm exec supabase db push --linked` einspielen, **dann** `git push`. Sonst läuft auf Vercel kurz neuer Code gegen eine alte Datenbank, und Seiten wie Decks, Höfe oder die Tagesaufgabe zeigen Fehler.
 - **Realtime-Einstellungen:** Nichts ändern. **„Allow public access“** unter Realtime → Settings eingeschaltet lassen, sonst kommen Einladungen nicht live an.
 - **Kosten:** Für eine Freundesrunde reichen die Free-Tarife locker. Kartenbilder und Profilbilder werden auf 384 bzw. 256 px verkleinert.
 - **Lokal weiterentwickeln:** siehe [README.md](README.md). Läuft parallel zu Kniffel (eigene Ports 553xx, App auf Port 3002).

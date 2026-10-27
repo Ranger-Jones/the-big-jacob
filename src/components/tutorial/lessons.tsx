@@ -5,6 +5,7 @@ import { PlayingCard } from '@/components/deck/playing-card';
 import { Hand, selectedCards, type Selection } from '@/components/game/hand';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 import { cx } from '@/lib/cx';
 import type { DeckEntry } from '@/lib/decks';
 import { legalPlays } from '@/lib/jakob/rules';
@@ -24,8 +25,17 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
     setIndex(next);
     setSelection({});
     setVerdict(null);
+    setLaid([]);
   };
-  const answer = (a: Parameters<typeof checkLesson>[1]) => setVerdict(checkLesson(lesson, a));
+  const [laid, setLaid] = useState<number[]>([]);
+  const answer = (a: Parameters<typeof checkLesson>[1]) => {
+    const v = checkLesson(lesson, a);
+    setVerdict(v);
+    if (v.ok && lesson.kind === 'play' && a.cards) setLaid(a.cards);
+  };
+  // A correct play moves from the hand onto the table.
+  const handLeft = laid.reduce((h, c) => { const i = h.indexOf(c); return i < 0 ? h : [...h.slice(0, i), ...h.slice(i + 1)]; }, lesson.hand);
+  const tableCards = laid.length > 0 ? laid : trick?.cards ?? null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,10 +65,10 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
 
             {lesson.kind !== 'tax' && lesson.kind !== 'quiz' && (
               <div className="flex min-h-36 items-center justify-center rounded-3xl bg-[radial-gradient(ellipse_at_center,#2f6b45,#173b27)] p-4 ring-4 ring-[#6b4423] shadow-inner">
-                {trick ? (
-                  <div className="flex -space-x-6">
-                    {trick.cards.map((c, i) => <PlayingCard key={i} rank={c} deck={deck} size="sm" style={{ rotate: `${(i - (trick.cards.length - 1) / 2) * 6}deg` }} />)}
-                  </div>
+                {tableCards ? (
+                  <motion.div key={tableCards.join()} initial={{ y: laid.length ? 60 : 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex -space-x-6">
+                    {tableCards.map((c, i) => <PlayingCard key={i} rank={c} deck={deck} size="sm" style={{ rotate: `${(i - (tableCards.length - 1) / 2) * 6}deg` }} />)}
+                  </motion.div>
                 ) : <p className="font-display text-2xl text-parchment/80">Der Tisch ist leer, du eröffnest.</p>}
               </div>
             )}
@@ -73,7 +83,7 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
             ) : (
               <>
                 <Hand
-                  cards={lesson.hand} deck={deck} selection={selection} trick={trick}
+                  cards={handLeft} deck={deck} selection={laid.length ? {} : selection} trick={trick}
                   onChange={(s) => { setSelection(s); setVerdict(null); }}
                   mode={lesson.kind === 'tax' ? 'tax' : 'play'} taxCount={lesson.taxCount} playable={playable}
                   received={lesson.kind === 'tax' ? [1, 2] : []}
@@ -93,7 +103,7 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
                   key={verdict.message} initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   className={cx('rounded-2xl px-4 py-3 font-bold', verdict.ok ? 'bg-vert/25 text-[#9be3b8] ring-1 ring-vert/60' : 'bg-wax/20 text-[#ffb3b8] ring-1 ring-wax/60')}
                 >
-                  {verdict.ok ? '✓ ' : ''}{verdict.message}
+                  {verdict.ok && <Icon name="check-circle" className="mr-1.5 inline size-5 align-[-0.2em]" />}{verdict.message}
                 </motion.p>
               )}
             </div>

@@ -5,11 +5,12 @@ import { PlayingCard } from '@/components/deck/playing-card';
 import { Hand, selectedCards, type Selection } from '@/components/game/hand';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 import { cx } from '@/lib/cx';
 import type { DeckEntry } from '@/lib/decks';
 import { chooseBotPlay } from '@/lib/jakob/bots';
 import { countBy, JESTER } from '@/lib/jakob/cards';
-import { applyAction, placements, rankTitle, type GameAction, type GameState } from '@/lib/jakob/engine';
+import { applyAction, placements, privateHand, rankTitle, type GameAction, type GameState } from '@/lib/jakob/engine';
 import { legalPlays, worstCards } from '@/lib/jakob/rules';
 import { describeCards, describeLog } from '@/lib/jakob/texts';
 import { ctxOf, newPracticeGame as newGame, PRACTICE_ME as ME, practiceRand as rand } from '@/lib/tutorial';
@@ -91,7 +92,7 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
   const myTax = state.phase === 'tax' ? state.tax.find((t) => t.to === ME && !t.done) : undefined;
   const ctx = ctxOf(state);
   const playable = myTurn ? new Set(legalPlays(hand, state.trick, ctx).flat()) : null;
-  const log = state.log.slice(-5).map((e) => ({ seq: e.seq, text: describeLog(e, name) })).filter((e) => e.text);
+  const log = state.log.map((e, i) => ({ key: `${e.seq}-${i}`, text: describeLog(e, name) })).slice(-5).filter((e) => e.text);
   const others = state.order.length ? state.order.filter((id) => id !== ME) : state.players.filter((p) => p.id !== ME).map((p) => p.id);
 
   const hint = () => {
@@ -114,7 +115,7 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
     const mine = places[ME];
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl" aria-hidden>{mine === 1 ? '👑' : '🎓'}</span>
+        <Icon name={mine === 1 ? 'crown' : 'medal'} className="size-16 text-gold-soft" />
         <h2 className="text-5xl font-bold">{mine === 1 ? 'Du bist der Große Jakob!' : `Platz ${mine}. Gut geübt!`}</h2>
         <ol className="flex flex-col gap-1">
           {Object.entries(places).sort((a, b) => a[1] - b[1]).map(([id, place]) => (
@@ -145,7 +146,7 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
               <span className="text-3xl" aria-hidden>{p?.bot?.emoji}</span>
               <span className="w-full truncate font-bold">{name(id)}</span>
               {pos >= 0 && <span className="text-xs text-parchment/70">{rankTitle(pos, state.order.length)}</span>}
-              <span className="tabular text-sm">{state.finished.includes(id) ? '✓ fertig' : state.passed.includes(id) ? 'passt' : `🂠 ${state.hands[id]?.length ?? 0}`}</span>
+              <span className="tabular text-sm">{state.finished.includes(id) ? <><Icon name="check" /> fertig</> : state.passed.includes(id) ? 'passt' : <><Icon name="cards" /> {state.hands[id]?.length ?? 0}</>}</span>
             </li>
           );
         })}
@@ -170,7 +171,7 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
 
       <Card className="flex flex-col gap-3">
         <p className="flex gap-2 rounded-2xl bg-gold/15 px-4 py-3 text-gold-soft ring-1 ring-gold/40">
-          <span aria-hidden>🦉</span><span>{coach(state, name)}</span>
+          <Icon name="info" className="mt-0.5 size-5 shrink-0" /><span>{coach(state, name)}</span>
         </p>
         {message && <p className={cx('rounded-xl px-3 py-2 font-bold', message.good ? 'bg-vert/25' : 'bg-white/10')} aria-live="polite">{message.text}</p>}
 
@@ -197,6 +198,7 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
             cards={hand} deck={deck} selection={selection} trick={state.trick}
             onChange={(s) => { setSelection(s); setMessage(null); }}
             mode={myTax ? 'tax' : myTurn ? 'play' : 'view'} taxCount={myTax?.count} playable={playable}
+            received={state.phase === 'tax' || state.phase === 'play' ? privateHand(state, ME).received : []}
           />
         )}
         {(myTurn || myTax) && (
@@ -204,13 +206,13 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
             {myTurn && <Button onClick={() => act(ME, { type: 'play', cards: selectedCards(selection) })} disabled={selectedCards(selection).length === 0}>Legen</Button>}
             {myTurn && state.trick && <Button variant="velvet" onClick={() => act(ME, { type: 'pass' })}>Passen</Button>}
             {myTax && <Button onClick={() => act(ME, { type: 'taxReturn', cards: selectedCards(selection) })} disabled={selectedCards(selection).length !== myTax.count}>Zurückgeben</Button>}
-            <Button variant="ghost" onClick={hint}>💡 Tipp</Button>
+            <Button variant="ghost" onClick={hint}><Icon name="sparkles" /> Tipp</Button>
           </div>
         )}
 
         {log.length > 0 && (
           <ul className="flex flex-col gap-0.5 border-t border-line/60 pt-2 text-sm text-ink-soft" aria-label="Verlauf">
-            {log.map((e) => <li key={e.seq}>{e.text}</li>)}
+            {log.map((e) => <li key={e.key}>{e.text}</li>)}
           </ul>
         )}
       </Card>
