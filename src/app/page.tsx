@@ -89,7 +89,7 @@ export default async function Home() {
         <Card tone="velvet" className="flex items-center gap-4 ring-gold/60">
           <span className="relative">
             <Avatar profile={king} size="lg" className="ring-4 ring-gold" />
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl drop-shadow" aria-hidden>👑</span>
+            <Icon name="crown" className="absolute -top-7 left-1/2 size-8 -translate-x-1/2 text-gold drop-shadow" />
           </span>
           <span>
             <span className="block text-sm font-bold text-gold-soft">König der Woche</span>

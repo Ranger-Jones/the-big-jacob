@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { removePushSubscriptionAction, savePushSubscriptionAction, testPushAction } from '@/server/push-actions';
+import { Icon } from '@/components/ui/icons';
 
 /** Registers the service worker once per page load. */
 export function PwaRegister() {
@@ -93,9 +94,9 @@ export function AppSettings() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h3 className="text-2xl font-bold">📲 Als App installieren</h3>
+        <h3 className="text-2xl font-bold"><Icon name="home" className="text-gold-soft" /> Als App installieren</h3>
         {standalone ? (
-          <p className="text-sm text-ink-soft">Läuft bereits als App. 👑</p>
+          <p className="text-sm text-ink-soft">Läuft bereits als App. <Icon name="crown" className="text-gold-soft" /></p>
         ) : canPrompt ? (
           <Button size="sm" className="mt-2" onClick={async () => { await deferred?.prompt(); deferred = null; }}>App installieren</Button>
         ) : isIos() ? (
@@ -105,7 +106,7 @@ export function AppSettings() {
         )}
       </div>
       <div>
-        <h3 className="text-2xl font-bold">🔔 Benachrichtigungen</h3>
+        <h3 className="text-2xl font-bold"><Icon name="bell" className="text-gold-soft" /> Benachrichtigungen</h3>
         <p className="text-sm text-ink-soft">Wenn du dran bist, eingeladen wirst oder eine Freundschaftsanfrage bekommst – auch wenn die Seite zu ist.</p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {push === 'on' && (

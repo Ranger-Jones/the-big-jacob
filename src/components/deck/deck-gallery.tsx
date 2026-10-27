@@ -13,7 +13,7 @@ import type { GalleryDeck, GallerySort } from '@/server/deck-service';
 import { DeckFan } from './deck-fan';
 import { Icon } from '@/components/ui/icons';
 
-function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; isDefault: boolean; children: React.ReactNode; subtitle?: string }) {
+function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; isDefault: boolean; children: React.ReactNode; subtitle?: React.ReactNode }) {
   return (
     <li>
       <Card className={cx('flex h-full flex-col gap-3 p-4', isDefault && 'ring-gold shadow-[0_6px_0_var(--color-gold-deep)]')}>
@@ -48,7 +48,7 @@ function LikeButton({ deck }: { deck: GalleryDeck }) {
       type="button" onClick={toggle} aria-pressed={state.liked} aria-label={state.liked ? 'Gefällt mir nicht mehr' : 'Gefällt mir'}
       className={cx('tabular inline-flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-bold transition-colors', state.liked ? 'bg-wax text-parchment' : 'bg-parchment-dark text-ink hover:bg-wax/20')}
     >
-      <span aria-hidden className={cx(state.liked && 'animate-[pop_0.3s_ease-out]')}>{state.liked ? '❤️' : '🤍'}</span>{state.likes}
+      <span aria-hidden className={cx(state.liked && 'animate-[pop_0.3s_ease-out]')}><Icon name="heart" className={cx('size-5', state.liked ? 'text-wax [&_path]:fill-current [&_path]:[fill-opacity:1]' : 'text-ink-soft')} /></span>{state.likes}
     </button>
   );
 }
@@ -118,9 +118,9 @@ export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, share
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {mine.map((d) => (
-              <DeckTile key={d.id} deck={d} isDefault={effectiveDefault === d.id} subtitle={sharedSet.has(d.id) ? '🖼️ In der Galerie' : undefined}>
+              <DeckTile key={d.id} deck={d} isDefault={effectiveDefault === d.id} subtitle={sharedSet.has(d.id) ? <><Icon name="image" /> In der Galerie</> : undefined}>
                 <Link href={`/decks/${d.id}`} className={buttonClass('primary', 'sm')}>Bearbeiten</Link>
-                <Button size="sm" variant="ghost" onClick={() => share(d, !sharedSet.has(d.id))}>{sharedSet.has(d.id) ? 'Aus Galerie nehmen' : '🖼️ Teilen'}</Button>
+                <Button size="sm" variant="ghost" onClick={() => share(d, !sharedSet.has(d.id))}>{sharedSet.has(d.id) ? 'Aus Galerie nehmen' : <><Icon name="image" /> Teilen</>}</Button>
                 {defaultButton(d.id)}
                 <Button size="sm" variant="ghost" onClick={() => copy(d.id, false)} disabled={busy}>Duplizieren</Button>
                 <Button size="sm" variant="ghost" className="text-wax" onClick={() => setDeleting(d)}>Löschen</Button>
@@ -167,7 +167,7 @@ export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, share
           </nav>
         </div>
         {gallery.length === 0 ? (
-          <Card tone="velvet"><p>Noch hängt nichts in der Galerie. Teile eins deiner Decks mit „🖼️ Teilen“ und sei der Erste.</p></Card>
+          <Card tone="velvet"><p>Noch hängt nichts in der Galerie. Teile eins deiner Decks mit „Teilen“ und sei der Erste.</p></Card>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {gallery.map((d) => (

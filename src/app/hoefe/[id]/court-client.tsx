@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { leaveCourtAction, removeCourtMemberAction, updateCourtAction } from '@/server/court-actions';
 import type { ProfileLite } from '@/server/social-service';
+import { Icon } from '@/components/ui/icons';
 
 export function InviteBox({ code }: { code: string }) {
   const share = async () => {
@@ -40,7 +41,7 @@ export function KickButton({ courtId, member }: { courtId: string; member: Profi
   const [pending, start] = useTransition();
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="flex size-9 items-center justify-center rounded-xl text-ink-soft hover:bg-wax/15 hover:text-wax" aria-label={`${member.username} verbannen`}>✕</button>
+      <button type="button" onClick={() => setOpen(true)} className="flex size-9 items-center justify-center rounded-xl text-ink-soft hover:bg-wax/15 hover:text-wax" aria-label={`${member.username} verbannen`}><Icon name="close" className="size-4" strokeWidth={2.2} /></button>
       <Modal open={open} onClose={() => setOpen(false)} title={`${member.username} verbannen?`}>
         <p>{member.username} verliert den Platz am Hof und kann nur mit dem Code wieder beitreten.</p>
         <div className="mt-4 flex justify-end gap-2">

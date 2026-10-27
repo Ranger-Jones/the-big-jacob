@@ -9,9 +9,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getCourt } from '@/server/court-service';
 import { CourtAdmin, InviteBox, KickButton } from './court-client';
+import { Icon, Medal } from '@/components/ui/icons';
 
 export const metadata: Metadata = { title: 'Hof' };
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 export default async function CourtPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -46,12 +46,12 @@ export default async function CourtPage({ params }: { params: Promise<{ id: stri
             <tbody>
               {court.standings.map((s, i) => (
                 <tr key={s.profile.id} className={cx('border-t border-line/60', s.profile.id === user.id && 'bg-gold/15')}>
-                  <td className="px-4 py-2.5 font-display text-2xl">{s.games > 0 ? MEDALS[i] ?? i + 1 : '–'}</td>
+                  <td className="px-4 py-2.5 font-display text-2xl">{s.games > 0 ? <Medal place={i + 1} /> : '–'}</td>
                   <td className="px-2 py-2.5">
                     <Link href={`/profil/${s.profile.username}`} className="flex items-center gap-2 font-bold hover:underline">
                       <Avatar profile={s.profile} size="sm" />
                       <span className="truncate">{s.profile.username}</span>
-                      {s.owner && <span title="Hofherr" aria-label="Hofherr">👑</span>}
+                      {s.owner && <span title="Hofherr" aria-label="Hofherr"><Icon name="crown" className="text-gold-soft" /></span>}
                     </Link>
                   </td>
                   <td className="tabular px-2 py-2.5 text-right font-bold">{s.wins}</td>
