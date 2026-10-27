@@ -14,6 +14,11 @@ describe('i18n core', () => {
   it('translates finished sentences through placeholder keys', () => {
     expect(translate('en', 'Dein Profil, Level 7')).toBe('Your profile, level 7');
   });
+  it('leaves user text that matches Object.prototype keys alone', () => {
+    expect(translate('en', 'constructor')).toBe('constructor');
+    expect(translate('en', '__proto__')).toBe('__proto__');
+    expect(translate('en', 'toString')).toBe('toString');
+  });
   it('reads the browser language', () => {
     expect(localeFromHeader('en-US,en;q=0.9')).toBe('en');
     expect(localeFromHeader('de-DE,de;q=0.9,en;q=0.8')).toBe('de');

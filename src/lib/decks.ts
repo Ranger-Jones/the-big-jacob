@@ -281,6 +281,11 @@ export function isPresetId(id: string): boolean {
   return PRESETS.some((p) => p.id === id);
 }
 
+/** Preset names are translated; names people gave their own decks are shown as typed. */
+export function deckName(deck: { id: string; name: string }, t: (text: string) => string): string {
+  return isPresetId(deck.id) ? t(deck.name) : deck.name;
+}
+
 export function presetById(id: string | null | undefined): DeckEntry | undefined {
   return PRESETS.find((p) => p.id === id);
 }

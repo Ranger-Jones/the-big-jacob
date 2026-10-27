@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
-import { isPresetId, PRESETS, resolveDeck, type DeckEntry } from '@/lib/decks';
+import { deckName, PRESETS, resolveDeck, type DeckEntry } from '@/lib/decks';
 import { useT } from '@/lib/i18n/client';
 import { getSettings, maxPlayers } from '@/lib/jakob/engine';
 import { TEAM_INFO } from '@/lib/jakob/texts';
@@ -121,7 +121,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
                   {!p.bot && ratings[p.id] ? (
                     <RatingBadge {...ratings[p.id]} className="block truncate text-ink-soft" />
                   ) : (
-                    <span className="block truncate text-xs text-ink-soft"><Icon name="cards" /> {isPresetId(deck.id) ? t(deck.name) : deck.name}</span>
+                    <span className="block truncate text-xs text-ink-soft"><Icon name="cards" /> {deckName(deck, t)}</span>
                   )}
                   {teamMode && (
                     <span className="mt-0.5 inline-block rounded-full px-1.5 text-[0.7rem] font-bold text-parchment" style={{ backgroundColor: TEAM_INFO[(seat % 2) as 0 | 1].color }}>

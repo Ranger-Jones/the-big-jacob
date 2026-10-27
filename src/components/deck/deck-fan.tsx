@@ -1,6 +1,6 @@
 'use client';
 import { cx } from '@/lib/cx';
-import type { DeckEntry } from '@/lib/decks';
+import { deckName, type DeckEntry } from '@/lib/decks';
 import { useT } from '@/lib/i18n/client';
 import { JESTER } from '@/lib/jakob/cards';
 import { CardBack, PlayingCard, type CardSize } from './playing-card';
@@ -17,7 +17,7 @@ export function DeckFan({ deck, size = 'sm', className }: { deck: DeckEntry; siz
     <div
       className={cx('relative shrink-0', className)}
       style={{ width: `${WIDTH[size] + step * 3}rem`, height: `${WIDTH[size] * 1.4 + 0.6}rem` }}
-      aria-label={t('Deck {name}', { name: t(deck.name) })}
+      aria-label={t('Deck {name}', { name: deckName(deck, t) })}
     >
       <span className="absolute bottom-0 left-0 origin-bottom -rotate-12">
         <CardBack design={deck.design} size={size} />

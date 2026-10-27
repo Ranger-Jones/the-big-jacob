@@ -48,7 +48,8 @@ function patternList() {
 }
 
 function lookup(text: string): string | null {
-  if (EN[text] !== undefined) return EN[text];
+  // Own keys only: user text such as a deck called "constructor" must not hit Object.prototype.
+  if (Object.hasOwn(EN, text)) return EN[text];
   for (const p of patternList()) {
     const m = p.re.exec(text);
     if (m) return format(p.en, Object.fromEntries(p.names.map((n, i) => [n, m[i + 1]])));

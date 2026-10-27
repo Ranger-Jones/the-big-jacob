@@ -7,7 +7,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
-import { PRESETS, type DeckEntry } from '@/lib/decks';
+import { deckName, PRESETS, type DeckEntry } from '@/lib/decks';
 import { copyDeckAction, deleteDeckAction, setDeckPublicAction, setDefaultDeckAction, toggleDeckLikeAction } from '@/server/deck-actions';
 import type { GalleryDeck, GallerySort } from '@/server/deck-service';
 import { DeckFan } from './deck-fan';
@@ -23,7 +23,7 @@ function DeckTile({ deck, isDefault, children, subtitle }: { deck: DeckEntry; is
           <DeckFan deck={deck} size="sm" />
         </div>
         <div className="min-w-0">
-          <h3 className="truncate text-2xl font-bold">{t(deck.name)}</h3>
+          <h3 className="truncate text-2xl font-bold">{deckName(deck, t)}</h3>
           <p className="text-sm text-ink-soft">{isDefault ? <><Icon name="star" className="text-gold-deep" /> {t('Dein Standard-Deck')}</> : subtitle ?? '\u00a0'}</p>
         </div>
         <div className="mt-auto flex flex-wrap gap-2">{children}</div>
@@ -87,14 +87,14 @@ export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, share
     setDeleting(null);
     const res = await deleteDeckAction(deck.id);
     if (!res.ok) return toast.error(t(res.error));
-    toast.success(t('„{name}“ gelöscht', { name: t(deck.name) }));
+    toast.success(t('„{name}“ gelöscht', { name: deckName(deck, t) }));
     router.refresh();
   }
 
   async function share(deck: DeckEntry, isPublic: boolean) {
     const res = await setDeckPublicAction(deck.id, isPublic);
     if (!res.ok) return toast.error(t(res.error));
-    toast.success(isPublic ? t('„{name}“ hängt jetzt in der Galerie.', { name: t(deck.name) }) : t('„{name}“ ist wieder privat.', { name: t(deck.name) }));
+    toast.success(isPublic ? t('„{name}“ hängt jetzt in der Galerie.', { name: deckName(deck, t) }) : t('„{name}“ ist wieder privat.', { name: deckName(deck, t) }));
     router.refresh();
   }
 
@@ -185,7 +185,7 @@ export function DeckGallery({ me, mine, friends, defaultId, gallery, sort, share
       </section>
 
       <Modal open={deleting !== null} onClose={() => setDeleting(null)} title={t('Deck löschen?')}>
-        <p className="text-ink-soft">{t('„{name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', { name: deleting ? t(deleting.name) : '' })}</p>
+        <p className="text-ink-soft">{t('„{name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', { name: deleting ? deckName(deleting, t) : '' })}</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeleting(null)}>{t('Behalten')}</Button>
           <Button variant="danger" onClick={() => deleting && remove(deleting)}>{t('Löschen')}</Button>
