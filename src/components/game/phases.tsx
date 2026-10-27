@@ -7,7 +7,7 @@ import { CrownMark } from '@/components/ui/logo';
 import { cx } from '@/lib/cx';
 import { JESTER } from '@/lib/jakob/cards';
 import { getSettings, rankTitle, teamPoints } from '@/lib/jakob/engine';
-import { describeCards, EVENT_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
+import { describeCards, EVENT_TEXT, MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
 import { EVENT_ICONS, Icon, rankIcon, TEAM_ICONS } from '@/components/ui/icons';
 
@@ -170,6 +170,16 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
       {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold"><Icon name="throne" /> Der Große Jakob hat abgedankt.</p>}
 
       <RankLadder order={present} showDraws={state.round === 1} />
+
+      {settings.missions && g.hand.mission && (
+        <p className={cx('flex items-start gap-2 rounded-2xl px-3 py-2 text-sm', g.hand.mission.done ? 'bg-vert/15' : 'bg-gold/20')}>
+          <Icon name={g.hand.mission.done ? 'check-circle' : 'target'} className="mt-0.5 size-5 shrink-0 text-gold-deep" />
+          <span>
+            <b>Deine Mission: {MISSION_TEXT[g.hand.mission.id].title}</b> – {MISSION_TEXT[g.hand.mission.id].text}
+            {g.hand.mission.done && <b className="text-vert"> Erfüllt!</b>}
+          </span>
+        </p>
+      )}
 
       {settings.mercy && !rev && !state.mercyRound && present.at(-1) === me && !state.mercyUsed.includes(me) && (
         <div className="rounded-2xl border-2 border-dashed border-azure p-3">

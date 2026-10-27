@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useNow } from '@/hooks/use-now';
@@ -9,7 +9,7 @@ import { cx } from '@/lib/cx';
 import { countBy, JESTER } from '@/lib/jakob/cards';
 import { canSkip as skipAllowed, getSettings, taxSecondsFor, turnSecondsFor, waitingOn } from '@/lib/jakob/engine';
 import { judgePlay, legalPlays } from '@/lib/jakob/rules';
-import { describeCards, MISSION_TEXT } from '@/lib/jakob/texts';
+import { describeCards } from '@/lib/jakob/texts';
 import { isMuted, onMutedChange, setMuted } from '@/lib/sound';
 import { MusicToggle } from '@/components/app-shell/music-toggle';
 import { CardTracker } from './card-tracker';
@@ -20,7 +20,8 @@ import { deadlineFraction, Seats } from './seats';
 import { useTable } from './table-context';
 import { TrickArea } from './trick-area';
 import { TurnBanner } from './turn-banner';
-import { Icon, MISSION_ICONS } from '@/components/ui/icons';
+import { Icon } from '@/components/ui/icons';
+import { MissionCard } from './mission-card';
 
 const DRAW_SECONDS = 30;
 const COURT_SECONDS = 20;
@@ -41,7 +42,27 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   const [leaving, setLeaving] = useState(false);
   const [skipping, setSkipping] = useState(false);
   const [missionOpen, setMissionOpen] = useState(false);
+  const [missionFlip, setMissionFlip] = useState(false);
   const mission = g.hand.mission ?? null;
+  const gameId = g.game?.id ?? '';
+
+  // Reveal the secret mission once per game, right after the seating draw, as a card that turns over.
+  const showMission = settings.missions && !!mission && state.phase !== null && state.phase !== 'draw';
+  useEffect(() => {
+    if (!showMission || !gameId) return;
+    const key = `jakob-mission-seen:${gameId}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch {
+      // Without storage the reveal may simply show again after a reload.
+    }
+    const t = setTimeout(() => {
+      setMissionFlip(true);
+      setMissionOpen(true);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [showMission, gameId]);
 
   const hand = g.hand.cards;
   const phaseKey = `${state.round}-${state.phase}`;
@@ -131,8 +152,15 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
             )}
             {chatButton}
             {settings.missions && mission && (
-              <Button variant="velvet" size="sm" onClick={() => setMissionOpen(true)} aria-label="Deine Mission" className={cx(mission.done && 'ring-gold')}>
+              <Button
+                variant="velvet"
+                size="sm"
+                onClick={() => { setMissionFlip(false); setMissionOpen(true); }}
+                aria-label="Deine Mission"
+                className={cx(mission.done ? 'ring-gold' : 'animate-pulse-ring')}
+              >
                 <Icon name={mission.done ? 'check-circle' : 'target'} className="size-5" />
+                <span className="hidden sm:inline">Mission</span>
               </Button>
             )}
             {settings.tracker && state.phase === 'play' && (
@@ -252,19 +280,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
       </Modal>
 
       <Modal open={missionOpen} onClose={() => setMissionOpen(false)} title="Deine geheime Mission">
-        {mission && (
-          <div className="flex items-center gap-4 rounded-2xl bg-parchment-dark/70 p-4">
-            <Icon name={MISSION_ICONS[mission.id] ?? 'target'} className="size-14 text-gold-soft" />
-            <span>
-              <span className="block font-display text-3xl font-bold">{MISSION_TEXT[mission.id].title}</span>
-              <span className="block">{MISSION_TEXT[mission.id].text}</span>
-              <span className={cx('mt-1 block font-bold', mission.done ? 'text-vert' : 'text-ink-soft')}>
-                {mission.done ? <><Icon name="check-circle" /> Erfüllt – +3 Punkte!</> : 'Noch offen · bringt 3 Bonuspunkte'}
-              </span>
-            </span>
-          </div>
-        )}
-        <p className="text-sm text-ink-soft">Die anderen sehen deine Mission erst am Spielende.</p>
+        {mission && <MissionCard key={`${missionFlip}`} mission={mission} flip={missionFlip} />}
+        <p className="text-center text-sm text-ink-soft">Nur du kennst sie – die anderen sehen deine Mission erst am Spielende. Du findest sie jederzeit oben unter der Zielscheibe.</p>
         <Button onClick={() => setMissionOpen(false)}>Verstanden</Button>
       </Modal>
     </main>
