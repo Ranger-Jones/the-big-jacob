@@ -14,11 +14,19 @@ export function isRated(state: Pick<GameState, 'mode'>): boolean {
  * being farmed against hand-picked easy bots.
  */
 export function ratedParticipants(state: GameState): GameState['players'] {
-  const kicked = new Set(state.kicked ?? []);
-  const field = state.players.filter((p) => !kicked.has(p.id));
-  if (state.mode === 'public') return field;
-  const humans = field.filter((p) => !p.bot);
+  if (state.mode === 'public') return state.players;
+  const humans = state.players.filter((p) => !p.bot);
   return humans.filter((p) => !p.left).length >= 2 ? humans : [];
+}
+
+/**
+ * Places for the rating. Players who walked out are last; players the host kicked keep the standing
+ * their points earned them (frozen at the kick) instead of the leaver penalty.
+ */
+export function ratingPlaces(state: GameState): Record<string, number> {
+  const kicked = new Set(state.kicked ?? []);
+  if (kicked.size === 0) return placements(state);
+  return placements({ ...state, players: state.players.map((p) => (kicked.has(p.id) ? { ...p, left: false } : p)) });
 }
 
 /**
@@ -26,17 +34,19 @@ export function ratedParticipants(state: GameState): GameState['players'] {
  * player at most once per game.
  */
 export async function bookGameResults(admin: AdminClient, gameId: string, state: GameState) {
-  // A game that ended before the first round was over (everyone left) is not booked.
-  if (state.history.length === 0) return;
   const kicked = new Set(state.kicked ?? []);
-  const humans = state.players.filter((p) => !p.bot && !kicked.has(p.id));
+  const humans = state.players.filter((p) => !p.bot);
   if (humans.length === 0) return;
+  // Ended before the first round was over: only book it if someone walked out (they take the Elo loss);
+  // nobody earns experience from such a short game.
+  const early = state.history.length === 0;
+  if (early && !humans.some((p) => p.left && !kicked.has(p.id))) return;
 
   const { data: profiles, error } = await admin.from('profiles').select('id, rating, rated_games').in('id', humans.map((p) => p.id));
   if (error) throw error;
   const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-  const places = placements(state);
+  const places = ratingPlaces(state);
   const field = isRated(state) ? ratedParticipants(state) : [];
   const participants: RatedParticipant[] = field.map((p) => ({
     id: p.id,
@@ -56,7 +66,7 @@ export async function bookGameResults(admin: AdminClient, gameId: string, state:
       delta: deltas[p.id] ?? 0,
       place: places[p.id] ?? null,
       players: state.players.length,
-      xp: experienceFor({
+      xp: early ? 0 : experienceFor({
         place: places[p.id] ?? state.players.length,
         players: state.players.length,
         left: p.left,

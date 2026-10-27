@@ -1079,7 +1079,8 @@ export function applyAction(
         return done();
       }
       if (state.status !== 'playing') return fail('Das Spiel ist schon vorbei.');
-      // Kicked players are not booked as losers in the rating (only leaving on your own costs Elo).
+      // Kicked players are rated by their points at this moment: no leaver penalty from a hostile host,
+      // and no escape from a lost game by having a friend kick you.
       if (!target.bot) state.kicked = [...state.kicked, target.id];
       dropPlayer(state, target.id, rand, now);
       return done();

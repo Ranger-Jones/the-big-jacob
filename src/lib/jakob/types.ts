@@ -253,7 +253,7 @@ export interface PublicState {
   modeRef: string | null;
   /** Open online lobby: when the game starts at the latest (bots fill up if few people came). */
   autoStartAt: string | null;
-  /** Humans the host removed from a running game: not booked in the rating. */
+  /** Humans the host removed from a running game: rated by their points at that moment, not as leavers. */
   kicked: string[];
   /** Full replay, revealed when the game is over. */
   replay: ReplayRound[] | null;

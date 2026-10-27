@@ -3,7 +3,7 @@ import { applyAction, createGameState, type GameState } from '@/lib/jakob/engine
 import { seeded } from '@/lib/jakob/test-utils';
 import { createGame, joinGame, loadGame, loadGameByCode, performAction } from '@/server/game-service';
 import { findOrCreatePublicLobby, publicLobbyStats } from '@/server/matchmaking-service';
-import { bookGameResults, ratedParticipants } from '@/server/rating-service';
+import { bookGameResults, ratedParticipants, ratingPlaces } from '@/server/rating-service';
 import { admin, createTestUser } from './helpers';
 
 const createdGames: string[] = [];
@@ -98,23 +98,57 @@ describe('anti-farming rules', () => {
     expect(ratedParticipants({ ...base, mode: 'public', players: players(['a'], 4) } as GameState)).toHaveLength(5);
   });
 
-  it('kicked players are neither opponents nor booked', async () => {
-    const a = await createTestUser('ka');
-    const b = await createTestUser('kb');
-    const c = await createTestUser('kc');
+  it('kicked players keep the place their points earned; walking out means last', () => {
+    const state = {
+      ...base,
+      mode: 'normal',
+      players: [
+        { id: 'a', left: false, deckId: null },
+        { id: 'b', left: true, deckId: null },
+        { id: 'c', left: true, deckId: null },
+      ],
+      kicked: ['b'],
+      points: { a: 3, b: 5, c: 9 },
+      history: [{ round: 1, start: ['a', 'b', 'c'], finish: ['a'], points: {}, event: null, revolution: 'none' }],
+    } as unknown as GameState;
+    const places = ratingPlaces(state);
+    // b was kicked while leading: still ahead of a. c walked out: last despite the points.
+    expect(places.b).toBeLessThan(places.a);
+    expect(places.c).toBeGreaterThan(places.a);
+  });
+});
+
+describe('early leavers', () => {
+  it('walking out before the first round ends costs Elo; nobody earns XP from it', async () => {
+    const a = await createTestUser('la');
+    const b = await createTestUser('lb');
     const created = await createGame(admin, a.id);
     if (!created.ok) throw new Error(created.error);
     createdGames.push(created.data.id);
-    const state = finishedState(a.id, b.id);
-    const withC = {
-      ...state,
-      players: [...state.players, { id: c.id, left: true, deckId: null }],
-      kicked: [c.id],
-      history: [{ ...state.history[0], finish: [...state.history[0].finish] }],
+    const base = finishedState(a.id, b.id);
+    const state = {
+      ...base,
+      mode: 'public',
+      history: [],
+      players: base.players.map((p) => (p.id === a.id ? { ...p, left: true } : p)),
     } as GameState;
-    await bookGameResults(admin, created.data.id, withC);
+    await bookGameResults(admin, created.data.id, state);
+    const { data: rows } = await admin.from('rating_history').select('user_id, delta, xp').eq('game_id', created.data.id);
+    const byUser = Object.fromEntries(rows!.map((r) => [r.user_id, r]));
+    expect(byUser[a.id].delta).toBeLessThan(0);
+    expect(byUser[b.id].delta).toBeGreaterThan(0);
+    expect(rows!.every((r) => r.xp === 0)).toBe(true);
+  });
+
+  it('a game that ended early without anyone leaving is not booked', async () => {
+    const a = await createTestUser('lc');
+    const b = await createTestUser('ld');
+    const created = await createGame(admin, a.id);
+    if (!created.ok) throw new Error(created.error);
+    createdGames.push(created.data.id);
+    await bookGameResults(admin, created.data.id, { ...finishedState(a.id, b.id), history: [] } as GameState);
     const { data: rows } = await admin.from('rating_history').select('user_id').eq('game_id', created.data.id);
-    expect(rows!.map((r) => r.user_id).sort()).toEqual([a.id, b.id].sort());
+    expect(rows).toEqual([]);
   });
 });
 
