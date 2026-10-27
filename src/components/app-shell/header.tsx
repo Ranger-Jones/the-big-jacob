@@ -18,7 +18,8 @@ export async function Header() {
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4">
       <Link href="/" aria-label="Startseite" className="shrink-0">
         <span className="hidden sm:inline"><Logo /></span>
-        <span className="sm:hidden"><Logo compact /></span>
+        {/* Narrow phones: just the crown, so all icons and the avatar fit in one row. */}
+        <span className="sm:hidden"><Logo compact textClassName="hidden min-[440px]:inline" /></span>
       </Link>
       {user ? (
         <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">

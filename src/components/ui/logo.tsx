@@ -20,11 +20,11 @@ export function CrownMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
+export function Logo({ className, compact, textClassName }: { className?: string; compact?: boolean; textClassName?: string }) {
   return (
     <span className={cx('inline-flex items-center gap-2 font-display text-2xl font-bold leading-none tracking-wide', className)}>
       <CrownMark className="size-9 -rotate-6 drop-shadow-[0_2px_0_rgb(0_0_0/0.4)]" />
-      <span className="gold-text">{compact ? 'Jakob' : 'Der Große Jakob'}</span>
+      <span className={cx('gold-text', textClassName)}>{compact ? 'Jakob' : 'Der Große Jakob'}</span>
     </span>
   );
 }

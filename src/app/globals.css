@@ -102,6 +102,14 @@
 
 html { color-scheme: dark; }
 
+/* The page only ever scrolls vertically – nothing may push it sideways on phones.
+   "clip" (unlike "hidden") creates no scroll container, so the sticky header keeps working. */
+html, body {
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+  max-width: 100%;
+}
+
 body {
   background-color: var(--color-velvet);
   /* Calm velvet: warm light from above, darkness towards the floor. */
