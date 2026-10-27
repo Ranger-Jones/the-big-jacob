@@ -124,7 +124,7 @@ export type LogKind =
   | 'play' | 'pass' | 'clear' | 'out' | 'revolution' | 'grandRevolution' | 'tax'
   | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall' | 'unbeatable'
   | 'mission' | 'mercy' | 'abdicate' | 'jesterCurse' | 'courtSwap' | 'pest' | 'audit' | 'charity'
-  | 'autopilot' | 'resume' | 'throne';
+  | 'autopilot' | 'resume' | 'throne' | 'fastForward';
 
 export interface LogEntry {
   seq: number;

@@ -162,6 +162,24 @@ describe('draw and court', () => {
 });
 
 describe('playing tricks', () => {
+  it('plays the round out at once when only bots are left holding cards', () => {
+    let s = playing({ a: [2], b: [9, 8, 7, 12], c: [10, 11, 6, 5] }, { rounds: 3 });
+    s = { ...s, players: s.players.map((p) => (p.id === 'a' ? p : { ...p, bot: { name: p.id, emoji: '🤖', level: 'easy' as const } })) };
+    s = must(s, 'a', { type: 'play', cards: [2] });
+    // The human went out; the bots finished the round within the same action.
+    expect(s.phase).toBe('roundEnd');
+    expect(s.history[0].finish[0]).toBe('a');
+    expect(s.log.some((e) => e.kind === 'fastForward')).toBe(true);
+  });
+
+  it('keeps playing normally while a human still has cards', () => {
+    let s = playing({ a: [9, 3], b: [8, 2], c: [10, 4] }, { rounds: 3 });
+    s = { ...s, players: s.players.map((p) => (p.id === 'b' ? { ...p, bot: { name: 'b', emoji: '🤖', level: 'easy' as const } } : p)) };
+    s = must(s, 'a', { type: 'play', cards: [9] });
+    expect(s.phase).toBe('play');
+    expect(s.log.some((e) => e.kind === 'fastForward')).toBe(false);
+  });
+
   it('must follow with the same count and a better rank', () => {
     let s = playing({ a: [9, 9, 5], b: [8, 8, 4], c: [12, 12, 3] });
     s = must(s, 'a', { type: 'play', cards: [9, 9] });

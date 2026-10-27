@@ -827,6 +827,20 @@ function automatedPlay(state: GameState, id: string, rand: RandInt, now: number)
   if (error) forcedMove(state, id, rand, now);
 }
 
+/**
+ * Once every player still holding cards is a bot (or on autopilot), nobody needs to watch the rest
+ * of the round: the server plays it out at once and the table jumps straight to the round end.
+ */
+function fastForwardBotsOnly(state: GameState, rand: RandInt, now: number) {
+  if (state.status !== 'playing' || state.phase !== 'play') return;
+  const active = activeIds(state);
+  if (active.length < 2 || !active.every((id) => isAutomated(player(state, id)))) return;
+  log(state, 'fastForward');
+  for (let guard = 0; guard < 2000 && state.phase === 'play' && state.turn; guard++) {
+    automatedPlay(state, state.turn, rand, now);
+  }
+}
+
 /** Resolves whatever the game is waiting for (deadline passed or skip). */
 function resolveWaiting(state: GameState, rand: RandInt, now: number) {
   switch (state.phase) {
@@ -974,6 +988,17 @@ function beginGame(state: GameState, rand: RandInt, now: number) {
 
 export function applyAction(
   stored: GameState, actor: string, action: GameAction, rand: RandInt, now: number = Date.now(),
+): ActionResult {
+  const res = applyActionInner(stored, actor, action, rand, now);
+  if (!res.ok) return res;
+  const state = res.state === stored ? clone(stored) : res.state;
+  const before = state.moveSeq;
+  fastForwardBotsOnly(state, rand, now);
+  return state.moveSeq === before && res.state === stored ? res : { ok: true, state };
+}
+
+function applyActionInner(
+  stored: GameState, actor: string, action: GameAction, rand: RandInt, now: number,
 ): ActionResult {
   const input = stored;
   const state = normalizeState(clone(stored));

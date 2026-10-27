@@ -60,6 +60,7 @@ export function describeLog(entry: LogEntry, name: (id: string) => string): stri
     case 'audit': return `🔍 Steuerprüfung: ${who} hat ${describeCards(entry.cards ?? [])}`;
     case 'charity': return `🤲 ${who} schenkt ${entry.to ? name(entry.to) : ''} ${describeCards(entry.cards ?? [])}`;
     case 'autopilot': return `🤖 Ein Bot spielt für ${who}`;
+    case 'fastForward': return '⏩ Nur noch Bots haben Karten – die Runde wurde zu Ende gespielt';
     case 'resume': return `👋 ${who} ist zurück`;
     case 'throne': return `🏰 Thronfolge! ${who} war dreimal in Folge Großer Jakob`;
   }
