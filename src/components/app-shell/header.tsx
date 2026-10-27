@@ -8,36 +8,41 @@ import { GATE_COOKIE, verifyGateToken } from '@/lib/gate';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { MusicToggle } from './music-toggle';
+import { getT } from '@/lib/i18n/server';
+import { LanguageSwitch } from './language-switch';
 import { NavLink } from './nav-link';
 
 export async function Header() {
   const user = await getCurrentUser();
   const requests = user ? (await getFriendLists(user.id)).incoming.length : 0;
   const unlocked = await verifyGateToken((await cookies()).get(GATE_COOKIE)?.value, process.env.SUPABASE_SECRET_KEY);
+  const t = await getT();
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4">
-      <Link href="/" aria-label="Startseite" className="shrink-0">
+      <Link href="/" aria-label={t('Startseite')} className="shrink-0">
         <span className="hidden sm:inline"><Logo /></span>
         {/* Narrow phones: just the crown, so all icons and the avatar fit in one row. */}
         <span className="sm:hidden"><Logo compact textClassName="hidden min-[440px]:inline" /></span>
       </Link>
       {user ? (
-        <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label="Hauptmenü">
-          <NavLink href="/decks" icon="cards">Decks</NavLink>
-          <NavLink href="/freunde" icon="friends" badge={requests}>Freunde</NavLink>
-          <NavLink href="/hoefe" icon="castle">Höfe</NavLink>
-          <NavLink href="/bestenliste" icon="trophy">Bestenliste</NavLink>
-          <NavLink href="/regeln" icon="scroll">Regeln</NavLink>
+        <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1" aria-label={t('Hauptmenü')}>
+          <NavLink href="/decks" icon="cards">{t('Decks')}</NavLink>
+          <NavLink href="/freunde" icon="friends" badge={requests}>{t('Freunde')}</NavLink>
+          <NavLink href="/hoefe" icon="castle">{t('Höfe')}</NavLink>
+          <NavLink href="/bestenliste" icon="trophy">{t('Bestenliste')}</NavLink>
+          <NavLink href="/regeln" icon="scroll">{t('Regeln')}</NavLink>
           <MusicToggle className="hidden text-parchment/80 sm:flex" />
-          <Link href={`/profil/${user.username}`} className="relative ml-1 shrink-0 rounded-full" aria-label={`Dein Profil, Level ${levelFromXp(user.xp ?? 0)}`}>
+          <LanguageSwitch className="hidden sm:flex" />
+          <Link href={`/profil/${user.username}`} className="relative ml-1 shrink-0 rounded-full" aria-label={t('Dein Profil, Level {level}', { level: levelFromXp(user.xp ?? 0) })}>
             <Avatar profile={user} size="sm" />
             <LevelPip xp={user.xp ?? 0} className="absolute -bottom-1.5 -right-1.5" />
           </Link>
         </nav>
       ) : unlocked && (
         <nav className="flex items-center gap-1">
-          <NavLink href="/regeln" icon="scroll">Regeln</NavLink>
-          <NavLink href="/login" icon="key">Einloggen</NavLink>
+          <LanguageSwitch />
+          <NavLink href="/regeln" icon="scroll">{t('Regeln')}</NavLink>
+          <NavLink href="/login" icon="key">{t('Einloggen')}</NavLink>
         </nav>
       )}
     </header>

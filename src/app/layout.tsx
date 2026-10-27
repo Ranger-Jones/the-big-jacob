@@ -7,20 +7,26 @@ import { PwaRegister } from '@/components/app-shell/pwa';
 import { InviteListener } from '@/components/app-shell/invite-listener';
 import { OnlinePresenceProvider } from '@/components/app-shell/online-presence';
 import { fontVariables } from '@/lib/fonts';
+import { I18nProvider } from '@/lib/i18n/client';
+import { getLocale, getT } from '@/lib/i18n/server';
 import { getFriendLists } from '@/lib/supabase/cached';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { FriendRequestListener } from '@/components/app-shell/friend-request-listener';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: { default: 'Der Große Jakob', template: '%s – Der Große Jakob' },
-  appleWebApp: { capable: true, title: 'Jakob', statusBarStyle: 'black-translucent' },
-  description: 'Das Kartenspiel um Krone und Knechtschaft – online mit deinen Freunden.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    title: { default: 'Der Große Jakob', template: '%s – Der Große Jakob' },
+    appleWebApp: { capable: true, title: 'Jakob', statusBarStyle: 'black-translucent' },
+    description: t('Das Kartenspiel um Krone und Knechtschaft – online mit deinen Freunden.'),
+  };
+}
 
 export const viewport: Viewport = { themeColor: '#2a1745', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
+  const locale = await getLocale();
   const user = await getCurrentUser();
   const friendIds = user ? (await getFriendLists(user.id)).friends.map((f) => f.profile.id) : [];
   const content = (
@@ -30,8 +36,9 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
     </>
   );
   return (
-    <html lang="de" className={`${fontVariables} h-full antialiased`}>
+    <html lang={locale} className={`${fontVariables} h-full antialiased`}>
       <body className="relative isolate flex min-h-full flex-col">
+        <I18nProvider locale={locale}>
         <Backdrop />
         <PwaRegister />
         {user ? (
@@ -57,6 +64,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
             },
           }}
         />
+        </I18nProvider>
       </body>
     </html>
   );
