@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PlayingCard } from '@/components/deck/playing-card';
 import { Card } from '@/components/ui/card';
@@ -25,6 +26,9 @@ export default function RulesPage() {
       <p className="text-lg text-parchment/85">
         Der Große Jakob ist ein Ablegespiel um Rang und Würden, nach dem Vorbild von „Der Große Dalmuti“.
         Ziel jeder Runde: als Erster alle Karten loswerden.
+      </p>
+      <p>
+        Lieber ausprobieren statt lesen? <Link href="/lernen" className="font-bold text-gold-soft hover:underline">Spielen lernen</Link> führt dich in sieben Lektionen durchs Spiel.
       </p>
 
       <Card className="flex flex-col gap-3">

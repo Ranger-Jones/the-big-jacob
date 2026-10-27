@@ -123,6 +123,15 @@ export default async function Home() {
             </span>
           </Card>
         </Link>
+        <Link href="/lernen" className="group sm:col-span-2">
+          <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
+            <Icon name="book" className="size-12 text-gold-soft" />
+            <span>
+              <span className="block font-display text-3xl font-bold">Spielen lernen</span>
+              <span className="block text-parchment/75">Sieben kurze Lektionen und ein Übungsspiel mit Tipps, ganz ohne Druck</span>
+            </span>
+          </Card>
+        </Link>
       </div>
 
       {friendTables.length > 0 && (
