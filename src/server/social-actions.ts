@@ -27,6 +27,7 @@ export async function sendFriendRequestAction(username: string) {
   const admin = createAdminClient();
   const res = await sendFriendRequest(admin, user.id, q.data);
   revalidatePath('/freunde');
+  revalidatePath('/profil/[username]', 'page');
   if (res.ok && res.data.status === 'pending') {
     const { data: target } = await admin.from('profiles').select('id').eq('username', q.data).maybeSingle();
     if (target) {
@@ -43,6 +44,7 @@ export async function respondFriendRequestAction(friendshipId: string, accept: b
   if (!uuid.safeParse(friendshipId).success) return fail('Anfrage nicht gefunden.');
   const res = await respondFriendRequest(createAdminClient(), user.id, friendshipId, accept === true);
   revalidatePath('/freunde');
+  revalidatePath('/profil/[username]', 'page');
   return res;
 }
 
@@ -51,6 +53,7 @@ export async function removeFriendAction(friendshipId: string) {
   if (!uuid.safeParse(friendshipId).success) return fail('Freundschaft nicht gefunden.');
   const res = await removeFriend(createAdminClient(), user.id, friendshipId);
   revalidatePath('/freunde');
+  revalidatePath('/profil/[username]', 'page');
   return res;
 }
 

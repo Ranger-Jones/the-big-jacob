@@ -27,6 +27,18 @@ async function findFriendship(admin: AdminClient, x: string, y: string) {
   return data;
 }
 
+export type FriendshipStatus = 'none' | 'friends' | 'outgoing' | 'incoming';
+export interface FriendshipWith { status: FriendshipStatus; friendshipId: string | null }
+
+/** How I stand with another person: friends, a request in either direction, or nothing yet. */
+export async function getFriendshipWith(admin: AdminClient, userId: string, otherId: string): Promise<FriendshipWith> {
+  if (userId === otherId) return { status: 'none', friendshipId: null };
+  const f = await findFriendship(admin, userId, otherId);
+  if (!f) return { status: 'none', friendshipId: null };
+  if (f.status === 'accepted') return { status: 'friends', friendshipId: f.id };
+  return { status: f.requester_id === userId ? 'outgoing' : 'incoming', friendshipId: f.id };
+}
+
 export async function sendFriendRequest(
   admin: AdminClient, userId: string, username: string,
 ): Promise<ServiceResult<{ status: 'pending' | 'accepted' }>> {

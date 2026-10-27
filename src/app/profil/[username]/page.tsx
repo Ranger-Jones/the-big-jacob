@@ -18,6 +18,8 @@ import { AvatarUpload } from './avatar-upload';
 import { AppSettings } from '@/components/app-shell/pwa';
 import { CosmeticsPicker } from './cosmetics-picker';
 import { RenameForm } from './rename-form';
+import { FriendshipControls } from './friendship-controls';
+import { getFriendshipWith } from '@/server/social-service';
 import { BADGE_ICONS, Icon, Medal } from '@/components/ui/icons';
 
 const dateFmt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
@@ -38,6 +40,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     getHistory(admin, stats.user_id), getMonthlyChampions(admin, 12), getRivalries(admin, stats.user_id), getDetailedStats(admin, stats.user_id),
     getRatingSummary(admin, stats.user_id),
   ]);
+  const friendship = isMe ? null : await getFriendshipWith(admin, me.id, stats.user_id);
   const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
   const badges = badgesFor(stats);
 
@@ -56,6 +59,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60"><Icon name="crown" /> {t}</li>)}
             </ul>
           )}
+          {friendship && <FriendshipControls key={`${friendship.status}-${friendship.friendshipId}`} username={stats.username} initial={friendship} />}
           {isMe && (
             <div className="flex flex-wrap items-center gap-2">
               <RenameForm current={stats.username} />
