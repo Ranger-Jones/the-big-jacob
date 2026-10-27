@@ -6,7 +6,7 @@ import { cx } from '@/lib/cx';
 import { LOCALES } from '@/lib/i18n/core';
 import { setLocaleAction } from '@/server/locale-actions';
 
-/** Compact DE | EN toggle; the whole page re-renders in the chosen language. */
+/** Compact DE | EN toggle (header and profile settings); the whole page re-renders in the chosen language. */
 export function LanguageSwitch({ className }: { className?: string }) {
   const locale = useLocale();
   const t = useT();

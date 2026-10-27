@@ -26,7 +26,7 @@ export function format(template: string, vars?: Vars): string {
  * Keys with placeholders also match finished German sentences, so texts built on the server
  * ("Der Tisch ist voll (8 Plätze).") translate via the key "Der Tisch ist voll ({n} Plätze).".
  */
-let patterns: { re: RegExp; names: string[]; en: string }[] | null = null;
+let patterns: { re: RegExp; names: string[]; en: string; literal: number }[] | null = null;
 function patternList() {
   patterns ??= Object.entries(EN)
     .filter(([de]) => /\{\w+\}/.test(de))
@@ -40,8 +40,10 @@ function patternList() {
         }
         return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       }).join('');
-      return { re: new RegExp(`^${source}$`), names, en };
-    });
+      return { re: new RegExp(`^${source}$`), names, en, literal: de.replace(/\{\w+\}/g, '').length };
+    })
+    // Most specific first, so "Gib genau {n} Karten zurück." wins over "{count} Karten".
+    .sort((a, b) => b.literal - a.literal);
   return patterns;
 }
 

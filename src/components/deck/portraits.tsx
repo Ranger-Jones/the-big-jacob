@@ -1,4 +1,5 @@
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { JesterWord } from './jester-word';
 
 /**
  * Court portraits for the default "Hofstaat" deck (viewBox 0 0 100 100).
@@ -63,7 +64,7 @@ export function RankNumeral({ rank, id }: { rank: number; id: string }) {
         </text>
       ) : (
         <text x="50" y="42" textAnchor="middle" fontSize="27" fontWeight="700" fill={`url(#${grad})`} stroke={INK} strokeWidth="1.6" paintOrder="stroke" style={{ fontFamily: 'var(--font-grenze), Georgia, serif' }}>
-          Narr
+          <JesterWord />
         </text>
       )}
     </g>

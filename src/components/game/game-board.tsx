@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useNow } from '@/hooks/use-now';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { countBy, JESTER } from '@/lib/jakob/cards';
 import { canSkip as skipAllowed, getSettings, taxSecondsFor, turnSecondsFor, waitingOn } from '@/lib/jakob/engine';
 import { judgePlay, legalPlays } from '@/lib/jakob/rules';
@@ -34,6 +35,7 @@ function useMuted() {
 
 export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode; chat: ReactNode; chatButton: ReactNode }) {
   const router = useRouter();
+  const t = useT();
   const { g, state, me, nameOf, deckOf } = useTable();
   const settings = getSettings(state);
   const muted = useMuted();
@@ -120,10 +122,10 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
 
   let status: string;
   if (state.phase === 'play') {
-    if (state.finished.includes(me) || state.shamed.includes(me)) status = 'Du bist raus – schau zu, wer Knecht wird';
-    else if (myTurn) status = state.trick ? `Du bist dran · schlage ${describeCards(state.trick.cards)}` : 'Du bist dran · spiel aus';
-    else status = `${nameOf(state.turn ?? '', true)} ist dran`;
-  } else if (pendingTax) status = `Wähle ${pendingTax.count} ${pendingTax.count === 1 ? 'Karte' : 'Karten'} zum Zurückgeben.`;
+    if (state.finished.includes(me) || state.shamed.includes(me)) status = t('Du bist raus – schau zu, wer Knecht wird');
+    else if (myTurn) status = state.trick ? t('Du bist dran · schlage {cards}', { cards: describeCards(state.trick.cards, t) }) : t('Du bist dran · spiel aus');
+    else status = t('{name} ist dran', { name: nameOf(state.turn ?? '', true) });
+  } else if (pendingTax) status = pendingTax.count === 1 ? t('Wähle 1 Karte zum Zurückgeben.') : t('Wähle {count} Karten zum Zurückgeben.', { count: pendingTax.count });
   else status = '';
 
   return (
@@ -132,21 +134,23 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         {/* Game toolbar: on phones it stays pinned right below the status bar while the page scrolls. */}
         <div className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 flex items-center justify-between gap-2 bg-velvet/80 px-4 py-1.5 backdrop-blur-md sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
-            {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="sword" /> Station {state.modeRef}</span>}
-            {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="calendar" /> Tagesaufgabe</span>}
-            {state.phase === 'draw' ? 'Auslosung' : (
+            {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="sword" /> {t('Station {n}', { n: state.modeRef ?? '' })}</span>}
+            {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="calendar" /> {t('Tagesaufgabe')}</span>}
+            {state.phase === 'draw' ? t('Auslosung') : (
               <>
                 <span className="sm:hidden">R{state.round}{settings.goal === null ? `/${settings.rounds}` : ''}</span>
                 <span className="hidden sm:inline">
-                  Runde {state.round}{settings.goal === null ? ` von ${settings.rounds}` : ` · Ziel ${settings.goal} P.`}
+                  {settings.goal === null
+                    ? t('Runde {round} von {rounds}', { round: state.round, rounds: settings.rounds })
+                    : t('Runde {round} · Ziel {goal} P.', { round: state.round, goal: settings.goal })}
                 </span>
               </>
             )}
-            {myIndex >= 0 && <span className="ml-2 hidden font-sans text-sm text-parchment/70 sm:inline">· {state.points[me] ?? 0} Punkte</span>}
+            {myIndex >= 0 && <span className="ml-2 hidden font-sans text-sm text-parchment/70 sm:inline">· {t('{points} Punkte', { points: state.points[me] ?? 0 })}</span>}
           </p>
           <div className="flex shrink-0 items-center gap-1">
             {g.spectators.length > 0 && (
-              <span className="rounded-xl bg-velvet-soft px-2 py-1 text-sm font-bold" title={`Es schauen zu: ${g.spectators.map((id) => g.profiles[id]?.username ?? '…').join(', ')}`}>
+              <span className="rounded-xl bg-velvet-soft px-2 py-1 text-sm font-bold" title={t('Es schauen zu: {names}', { names: g.spectators.map((id) => g.profiles[id]?.username ?? '…').join(', ') })}>
                 <Icon name="eye" /> {g.spectators.length}
               </span>
             )}
@@ -156,25 +160,25 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
                 variant="velvet"
                 size="sm"
                 onClick={() => { setMissionFlip(false); setMissionOpen(true); }}
-                aria-label="Deine Mission"
+                aria-label={t('Deine Mission')}
                 className={cx(mission.done ? 'ring-gold' : 'animate-pulse-ring')}
               >
                 <Icon name={mission.done ? 'check-circle' : 'target'} className="size-5" />
-                <span className="hidden sm:inline">Mission</span>
+                <span className="hidden sm:inline">{t('Mission')}</span>
               </Button>
             )}
             {settings.tracker && state.phase === 'play' && (
-              <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label="Kartengedächtnis"><Icon name="book" className="size-5" /></Button>
+              <Button variant="velvet" size="sm" onClick={() => setTrackerOpen(true)} aria-label={t('Kartengedächtnis')}><Icon name="book" className="size-5" /></Button>
             )}
-            <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? 'Ton an' : 'Ton aus'}><Icon name={muted ? 'volume-off' : 'volume'} className="size-5" /></Button>
+            <Button variant="velvet" size="sm" onClick={() => setMuted(!muted)} aria-label={muted ? t('Ton an') : t('Ton aus')}><Icon name={muted ? 'volume-off' : 'volume'} className="size-5" /></Button>
 <MusicToggle className="bg-velvet-soft ring-2 ring-inset ring-white/10" />
-            <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label="Regeln"><Icon name="scroll" className="size-5" /></Link>
+            <Link href="/regeln" target="_blank" className="flex min-h-9 items-center rounded-xl bg-velvet-soft px-3 text-sm font-bold ring-2 ring-inset ring-white/10" aria-label={t('Regeln')}><Icon name="scroll" className="size-5" /></Link>
             {canSkip && (
-              <Button variant="velvet" size="sm" onClick={() => setSkipping(true)} aria-label="Überspringen">
-                <Icon name="skip" className="size-5" /><span className="hidden sm:inline">Überspringen</span>
+              <Button variant="velvet" size="sm" onClick={() => setSkipping(true)} aria-label={t('Überspringen')}>
+                <Icon name="skip" className="size-5" /><span className="hidden sm:inline">{t('Überspringen')}</span>
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setLeaving(true)}>Gehen</Button>
+            <Button variant="ghost" size="sm" onClick={() => setLeaving(true)}>{t('Gehen')}</Button>
           </div>
         </div>
 
@@ -194,14 +198,14 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               'z-10 -mx-4 flex flex-col gap-2 rounded-t-[1.6rem] border-t border-gold/30 bg-velvet-deep/95 px-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur sm:mx-0 sm:gap-3 sm:rounded-[1.6rem] sm:border sm:border-gold/20 sm:pb-4',
               myTurn && 'shadow-[0_-10px_34px_rgb(244_183_58/0.14)]',
             )}
-            aria-label="Deine Hand"
+            aria-label={t('Deine Hand')}
           >
             {state.phase !== 'play' && status && (
               <p className="pt-2 text-sm font-bold text-gold-soft sm:text-base" aria-live="polite">{status}</p>
             )}
-            {myTurn && verdict && !verdict.ok && <p className="-mt-1 text-sm font-bold text-wax brightness-150">{verdict.error}</p>}
-            {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bomb" /> Bombe! Damit gewinnst du den Stich sofort.</p>}
-            {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bolt" /> Schnapp! Der Nächste muss aussetzen.</p>}
+            {myTurn && verdict && !verdict.ok && <p className="-mt-1 text-sm font-bold text-wax brightness-150">{t(verdict.error)}</p>}
+            {myTurn && verdict?.ok && verdict.bomb && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bomb" /> {t('Bombe! Damit gewinnst du den Stich sofort.')}</p>}
+            {myTurn && verdict?.ok && verdict.snap && <p className="-mt-1 text-sm font-bold text-gold-soft"><Icon name="bolt" /> {t('Schnapp! Der Nächste muss aussetzen.')}</p>}
             <Hand
               key={state.round}
               cards={hand}
@@ -215,20 +219,20 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               received={state.phase === 'tax' || state.phase === 'play' ? g.hand.received : []}
             />
             <div className="flex items-center gap-2">
-              {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>Abwählen</Button>}
+              {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>{t('Abwählen')}</Button>}
               {state.phase === 'play' && myTurn && state.trick && (
                 <Button variant="secondary" className="flex-1" onClick={() => { setSelection({}); void g.dispatch({ type: 'pass' }, { move: true }); }} disabled={g.busy}>
-                  Passen
+                  {t('Passen')}
                 </Button>
               )}
               {state.phase === 'play' && (
                 <Button className="flex-[1.5]" onClick={play} disabled={!myTurn || !verdict?.ok || g.busy}>
-                  {picked.length > 0 ? `${describeCards(picked)} legen` : myTurn ? 'Karten wählen' : 'Warte auf deinen Zug'}
+                  {picked.length > 0 ? t('{cards} legen', { cards: describeCards(picked, t) }) : myTurn ? t('Karten wählen') : t('Warte auf deinen Zug')}
                 </Button>
               )}
               {pendingTax && (
                 <Button className="flex-1" onClick={giveBack} disabled={picked.length !== pendingTax.count || g.busy}>
-                  Zurückgeben ({picked.length}/{pendingTax.count})
+                  {t('Zurückgeben ({picked}/{count})', { picked: picked.length, count: pendingTax.count })}
                 </Button>
               )}
             </div>
@@ -240,15 +244,15 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
 
       <aside className="hidden lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100dvh-2rem)] lg:flex-col">{chat}</aside>
 
-      <Modal open={trackerOpen} onClose={() => setTrackerOpen(false)} title="Kartengedächtnis" wide>
+      <Modal open={trackerOpen} onClose={() => setTrackerOpen(false)} title={t('Kartengedächtnis')} wide>
         <CardTracker hand={hand} />
-        <Button onClick={() => setTrackerOpen(false)}>Schließen</Button>
+        <Button onClick={() => setTrackerOpen(false)}>{t('Schließen')}</Button>
       </Modal>
 
-      <Modal open={leaving} onClose={() => setLeaving(false)} title="Den Tisch verlassen?">
-        <p className="text-ink-soft">Deine Karten verfallen und du kannst diesem Spiel nicht wieder beitreten. Die anderen spielen ohne dich weiter.</p>
+      <Modal open={leaving} onClose={() => setLeaving(false)} title={t('Den Tisch verlassen?')}>
+        <p className="text-ink-soft">{t('Deine Karten verfallen und du kannst diesem Spiel nicht wieder beitreten. Die anderen spielen ohne dich weiter.')}</p>
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setLeaving(false)}>Bleiben</Button>
+          <Button variant="ghost" onClick={() => setLeaving(false)}>{t('Bleiben')}</Button>
           <Button
             variant="danger"
             onClick={async () => {
@@ -256,33 +260,33 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               if (await g.dispatch({ type: 'leave' })) router.push('/');
             }}
           >
-            Verlassen
+            {t('Verlassen')}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={skipping} onClose={() => setSkipping(false)} title="Hängt jemand fest?">
+      <Modal open={skipping} onClose={() => setSkipping(false)} title={t('Hängt jemand fest?')}>
         <p className="text-ink-soft">
-          <b>Einmal überspringen:</b> Für {waiting.map((id) => nameOf(id)).join(', ')} wird jetzt automatisch entschieden.
+          <b>{t('Einmal überspringen:')}</b> {t('Für {names} wird jetzt automatisch entschieden.', { names: waiting.map((id) => nameOf(id)).join(', ') })}
         </p>
         <p className="text-ink-soft">
-          <b>Bot übernimmt:</b> Ein Bot spielt dauerhaft weiter, bis die Person zurück am Tisch ist.
+          <b>{t('Bot übernimmt:')}</b> {t('Ein Bot spielt dauerhaft weiter, bis die Person zurück am Tisch ist.')}
         </p>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="ghost" onClick={() => setSkipping(false)}>Abbrechen</Button>
-          <Button variant="secondary" onClick={async () => { setSkipping(false); await g.dispatch({ type: 'skip' }, { move: true }); }}>Einmal überspringen</Button>
+          <Button variant="ghost" onClick={() => setSkipping(false)}>{t('Abbrechen')}</Button>
+          <Button variant="secondary" onClick={async () => { setSkipping(false); await g.dispatch({ type: 'skip' }, { move: true }); }}>{t('Einmal überspringen')}</Button>
           {waiting.filter((id) => !state.players.find((p) => p.id === id)?.bot).map((id) => (
             <Button key={id} onClick={async () => { setSkipping(false); await g.dispatch({ type: 'takeover', playerId: id }, { move: true }); }}>
-              <Icon name="bot" /> Bot für {nameOf(id)}
+              <Icon name="bot" /> {t('Bot für {name}', { name: nameOf(id) })}
             </Button>
           ))}
         </div>
       </Modal>
 
-      <Modal open={missionOpen} onClose={() => setMissionOpen(false)} title="Deine geheime Mission">
+      <Modal open={missionOpen} onClose={() => setMissionOpen(false)} title={t('Deine geheime Mission')}>
         {mission && <MissionCard key={`${missionFlip}`} mission={mission} flip={missionFlip} />}
-        <p className="text-center text-sm text-ink-soft">Nur du kennst sie – die anderen sehen deine Mission erst am Spielende. Du findest sie jederzeit oben unter der Zielscheibe.</p>
-        <Button onClick={() => setMissionOpen(false)}>Verstanden</Button>
+        <p className="text-center text-sm text-ink-soft">{t('Nur du kennst sie – die anderen sehen deine Mission erst am Spielende. Du findest sie jederzeit oben unter der Zielscheibe.')}</p>
+        <Button onClick={() => setMissionOpen(false)}>{t('Verstanden')}</Button>
       </Modal>
     </main>
   );

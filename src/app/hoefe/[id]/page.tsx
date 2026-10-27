@@ -5,13 +5,18 @@ import { Crest } from '@/components/courts/crest';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { cx } from '@/lib/cx';
+import { intlLocale } from '@/lib/i18n/core';
+import { getLocale, getT } from '@/lib/i18n/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getCourt } from '@/server/court-service';
 import { CourtAdmin, InviteBox, KickButton } from './court-client';
 import { Icon, Medal } from '@/components/ui/icons';
 
-export const metadata: Metadata = { title: 'Hof' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Hof') };
+}
 
 export default async function CourtPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -20,28 +25,29 @@ export default async function CourtPage({ params }: { params: Promise<{ id: stri
   const court = await getCourt(createAdminClient(), user.id, id);
   if (!court) notFound();
   const owner = court.ownerId === user.id;
-  const since = new Date(court.createdAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+  const t = await getT();
+  const since = new Date(court.createdAt).toLocaleDateString(intlLocale(await getLocale()), { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-4 pb-12">
-      <Link href="/hoefe" className="w-fit text-parchment/70 hover:text-parchment">‹ Alle Höfe</Link>
+      <Link href="/hoefe" className="w-fit text-parchment/70 hover:text-parchment">‹ {t('Alle Höfe')}</Link>
       <header className="flex flex-wrap items-center gap-5">
         <Crest id={court.crest} size="lg" />
         <div className="min-w-0">
           <h1 className="break-words text-6xl font-bold">{court.name}</h1>
-          <p className="text-parchment/75">Gegründet am {since} · {court.courtGames} {court.courtGames === 1 ? 'Hofspiel' : 'Hofspiele'}</p>
+          <p className="text-parchment/75">{t('Gegründet am {date}', { date: since })} · {court.courtGames === 1 ? t('{n} Hofspiel', { n: court.courtGames }) : t('{n} Hofspiele', { n: court.courtGames })}</p>
         </div>
       </header>
 
       <InviteBox code={court.inviteCode} />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-4xl font-bold">Hoftabelle</h2>
-        <p className="-mt-2 text-sm text-parchment/70">Es zählen normale Spiele mit mindestens zwei Mitgliedern. Einen Sieg holt, wer von den Mitgliedern am besten abschneidet.</p>
+        <h2 className="text-4xl font-bold">{t('Hoftabelle')}</h2>
+        <p className="-mt-2 text-sm text-parchment/70">{t('Es zählen normale Spiele mit mindestens zwei Mitgliedern. Einen Sieg holt, wer von den Mitgliedern am besten abschneidet.')}</p>
         <Card className="overflow-x-auto p-0">
           <table className="w-full text-left">
             <thead className="bg-parchment-dark/70 text-sm text-ink-soft">
-              <tr><th className="px-4 py-3">#</th><th className="px-2 py-3">Mitglied</th><th className="px-2 py-3 text-right">Siege</th><th className="px-2 py-3 text-right">Spiele</th><th className="px-4 py-3 text-right">Punkte</th>{owner && <th className="w-12" />}</tr>
+              <tr><th className="px-4 py-3">#</th><th className="px-2 py-3">{t('Mitglied')}</th><th className="px-2 py-3 text-right">{t('Siege')}</th><th className="px-2 py-3 text-right">{t('Spiele')}</th><th className="px-4 py-3 text-right">{t('Punkte')}</th>{owner && <th className="w-12" />}</tr>
             </thead>
             <tbody>
               {court.standings.map((s, i) => (
@@ -51,7 +57,7 @@ export default async function CourtPage({ params }: { params: Promise<{ id: stri
                     <Link href={`/profil/${s.profile.username}`} className="flex items-center gap-2 font-bold hover:underline">
                       <Avatar profile={s.profile} size="sm" />
                       <span className="truncate">{s.profile.username}</span>
-                      {s.owner && <span title="Hofherr" aria-label="Hofherr"><Icon name="crown" className="text-gold-soft" /></span>}
+                      {s.owner && <span title={t('Hofherr')} aria-label={t('Hofherr')}><Icon name="crown" className="text-gold-soft" /></span>}
                     </Link>
                   </td>
                   <td className="tabular px-2 py-2.5 text-right font-bold">{s.wins}</td>

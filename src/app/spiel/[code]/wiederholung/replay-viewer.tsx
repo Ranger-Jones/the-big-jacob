@@ -8,6 +8,8 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cx } from '@/lib/cx';
 import { resolveDeck, type DeckEntry } from '@/lib/decks';
+import { useT } from '@/lib/i18n/client';
+import type { T } from '@/lib/i18n/core';
 import { countBy, removeCards } from '@/lib/jakob/cards';
 import { rankTitle, type Player, type ReplayRound, type RoundResult } from '@/lib/jakob/engine';
 import { describeCards, EVENT_TEXT } from '@/lib/jakob/texts';
@@ -34,59 +36,63 @@ interface Snapshot {
 }
 
 /** Re-plays the recorded moves of one round up to `step`. */
-function snapshotAt(round: ReplayRound, step: number, name: (id: string) => string): Snapshot {
+function snapshotAt(round: ReplayRound, step: number, name: (id: string) => string, t: T): Snapshot {
   const hands = structuredClone(round.hands);
   let trick: Snapshot['trick'] = null;
   let passed = new Set<string>();
   const out: string[] = [];
-  let text = `Runde ${round.round} beginnt – ${name(round.order[0])} spielt aus.`;
+  let text = t('Runde {round} beginnt – {name} spielt aus.', { round: round.round, name: name(round.order[0]) });
   let actor: string | null = null;
   for (const move of round.moves.slice(0, step)) {
     if (move.k === 'p') {
       hands[move.by] = removeCards(hands[move.by] ?? [], move.c);
       trick = { cards: move.c, by: move.by };
       actor = move.by;
-      text = `${name(move.by)} legt ${describeCards(move.c)}.`;
+      text = t('{name} legt {cards}.', { name: name(move.by), cards: describeCards(move.c, t) });
       if ((hands[move.by] ?? []).length === 0 && !out.includes(move.by)) {
         out.push(move.by);
-        text += ` – ${name(move.by)} ist raus!`;
+        text += ` ${t('– {name} ist raus!', { name: name(move.by) })}`;
       }
     } else if (move.k === 'x') {
       passed.add(move.by);
       actor = move.by;
-      text = `${name(move.by)} passt.`;
+      text = t('{name} passt.', { name: name(move.by) });
     } else {
       trick = null;
       passed = new Set();
       actor = move.by;
-      text = move.by ? `Stich vorbei – ${name(move.by)} spielt neu aus.` : 'Stich vorbei.';
+      text = move.by ? t('Stich vorbei – {name} spielt neu aus.', { name: name(move.by) }) : t('Stich vorbei.');
     }
   }
   return { hands, trick, passed, out, text, actor };
 }
 
 export function ReplayViewer({ code, players, rounds, history, profiles, decks }: Props) {
+  const t = useT();
   const [roundIndex, setRoundIndex] = useState(0);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(900);
   const round = rounds[roundIndex];
   const byId = useMemo(() => new Map(players.map((p, i) => [p.id, { p, i }])), [players]);
-  const name = (id: string) => byId.get(id)?.p.bot?.name ?? profiles[id]?.username ?? '…';
+  const name = (id: string) => {
+    const bot = byId.get(id)?.p.bot;
+    return (bot ? t(bot.name) : profiles[id]?.username) ?? '…';
+  };
   const avatar = (id: string): AvatarProfile => {
     const p = byId.get(id)?.p;
-    if (p?.bot) return { username: p.bot.name, avatar_url: null, emoji: p.bot.emoji };
+    if (p?.bot) return { username: t(p.bot.name), avatar_url: null, emoji: p.bot.emoji };
     return profiles[id] ?? { username: '…', avatar_url: null };
   };
   const deckOf = (id: string) => resolveDeck(byId.get(id)?.p.deckId, decks);
-  const snap = snapshotAt(round, step, name);
+  const snap = snapshotAt(round, step, name, t);
   const total = round.moves.length;
   const result = history.find((h) => h.round === round.round);
 
   // Auto-play: advance one move per tick and stop at the end of the round.
   useEffect(() => {
     if (!playing) return;
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setStep((s) => {
         if (s >= total) {
           setPlaying(false);
@@ -95,7 +101,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
         return s + 1;
       });
     }, speed);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [playing, speed, total]);
 
   function goRound(i: number) {
@@ -108,13 +114,13 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 pb-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-5xl font-bold"><Icon name="film" className="text-gold-soft" /> Wiederholung</h1>
-          <p className="text-parchment/75">Alle Karten offen – so lief das Spiel {code}.</p>
+          <h1 className="text-5xl font-bold"><Icon name="film" className="text-gold-soft" /> {t('Wiederholung')}</h1>
+          <p className="text-parchment/75">{t('Alle Karten offen – so lief das Spiel {code}.', { code })}</p>
         </div>
-        <Link href={`/spiel/${code}`} className={buttonClass('velvet', 'sm')}>Zum Ergebnis</Link>
+        <Link href={`/spiel/${code}`} className={buttonClass('velvet', 'sm')}>{t('Zum Ergebnis')}</Link>
       </div>
 
-      <nav className="no-scrollbar flex gap-1.5 overflow-x-auto" aria-label="Runde wählen">
+      <nav className="no-scrollbar flex gap-1.5 overflow-x-auto" aria-label={t('Runde wählen')}>
         {rounds.map((r, i) => (
           <button
             key={r.round}
@@ -122,14 +128,14 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
             onClick={() => goRound(i)}
             className={cx('shrink-0 rounded-xl px-3 py-1.5 font-bold', i === roundIndex ? 'bg-gold text-ink' : 'bg-velvet-deep/70 text-parchment/80 hover:bg-white/10')}
           >
-            Runde {r.round}
+            {t('Runde {round}', { round: r.round })}
           </button>
         ))}
       </nav>
 
       {round.event && (
         <p className="rounded-2xl bg-velvet-deep/70 p-2 text-center text-sm ring-2 ring-gold/30">
-          <Icon name={EVENT_ICONS[round.event] ?? 'sparkles'} className="text-gold-soft" /> <b>{EVENT_TEXT[round.event].title}:</b> {EVENT_TEXT[round.event].text}
+          <Icon name={EVENT_ICONS[round.event] ?? 'sparkles'} className="text-gold-soft" /> <b>{t(EVENT_TEXT[round.event].title)}:</b> {t(EVENT_TEXT[round.event].text)}
         </p>
       )}
 
@@ -143,35 +149,35 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
                 ))}
               </motion.div>
             ) : (
-              <motion.p key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-display text-2xl text-parchment/70">Der Tisch ist leer</motion.p>
+              <motion.p key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-display text-2xl text-parchment/70">{t('Der Tisch ist leer')}</motion.p>
             )}
           </AnimatePresence>
         </div>
         <p className="text-center font-bold" aria-live="polite">{snap.text}</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="velvet" size="sm" onClick={() => setStep(0)} aria-label="Zum Anfang"><Icon name="skip-back" className="size-5" /></Button>
-          <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} aria-label="Zug zurück">◀</Button>
-          <Button size="sm" onClick={() => { if (step >= total) setStep(0); setPlaying((p) => !p); }}>{playing ? <><Icon name="pause" /> Pause</> : <><Icon name="play" /> Abspielen</>}</Button>
-          <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.min(total, s + 1))} aria-label="Zug vor">▶</Button>
-          <Button variant="velvet" size="sm" onClick={() => setStep(total)} aria-label="Zum Ende"><Icon name="skip" className="size-5" /></Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep(0)} aria-label={t('Zum Anfang')}><Icon name="skip-back" className="size-5" /></Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} aria-label={t('Zug zurück')}>◀</Button>
+          <Button size="sm" onClick={() => { if (step >= total) setStep(0); setPlaying((p) => !p); }}>{playing ? <><Icon name="pause" /> {t('Pause')}</> : <><Icon name="play" /> {t('Abspielen')}</>}</Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep((s) => Math.min(total, s + 1))} aria-label={t('Zug vor')}>▶</Button>
+          <Button variant="velvet" size="sm" onClick={() => setStep(total)} aria-label={t('Zum Ende')}><Icon name="skip" className="size-5" /></Button>
           <select
             value={speed}
             onChange={(e) => setSpeed(Number(e.target.value))}
-            aria-label="Tempo"
+            aria-label={t('Tempo')}
             className="h-9 rounded-xl bg-velvet-soft px-2 text-sm font-bold text-parchment ring-2 ring-inset ring-white/10"
           >
-            <option value={1500}>Langsam</option>
-            <option value={900}>Normal</option>
-            <option value={400}>Schnell</option>
+            <option value={1500}>{t('Langsam')}</option>
+            <option value={900}>{t('Normal')}</option>
+            <option value={400}>{t('Schnell')}</option>
           </select>
         </div>
         <input
           type="range" min={0} max={total} value={step}
           onChange={(e) => { setStep(Number(e.target.value)); setPlaying(false); }}
-          aria-label="Zug"
+          aria-label={t('Zug')}
           className="w-full max-w-xl accent-[#f4b73a]"
         />
-        <p className="tabular text-sm text-parchment/70">Zug {step} von {total}</p>
+        <p className="tabular text-sm text-parchment/70">{t('Zug {step} von {total}', { step, total })}</p>
       </Card>
 
       <ul className="flex flex-col gap-2">
@@ -186,10 +192,10 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
                   <Avatar profile={avatar(id)} ring={seatColor(byId.get(id)?.i ?? 0)} size="sm" />
                   <span className="min-w-0">
                     <span className="block truncate font-bold">{name(id)}</span>
-                    <span className="block text-xs text-ink-soft"><Icon name={rankIcon(index, round.order.length)} /> {rankTitle(index, round.order.length)} · {hand.length} Karten</span>
+                    <span className="block text-xs text-ink-soft"><Icon name={rankIcon(index, round.order.length)} /> {t(rankTitle(index, round.order.length))} · {hand.length === 1 ? t('1 Karte') : t('{count} Karten', { count: hand.length })}</span>
                   </span>
-                  {snap.passed.has(id) && <span className="ml-auto rounded-full bg-parchment-dark px-2 text-xs font-bold">passt</span>}
-                  {outPlace >= 0 && <span className="ml-auto rounded-full bg-gold px-2 text-xs font-bold">{outPlace + 1}. raus</span>}
+                  {snap.passed.has(id) && <span className="ml-auto rounded-full bg-parchment-dark px-2 text-xs font-bold">{t('passt')}</span>}
+                  {outPlace >= 0 && <span className="ml-auto rounded-full bg-gold px-2 text-xs font-bold">{t('{place}. raus', { place: outPlace + 1 })}</span>}
                 </div>
                 <div className="flex min-w-0 flex-wrap gap-1">
                   {groups.map(([rank, n]) => (
@@ -207,7 +213,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
 
       {result && step >= total && (
         <Card className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold">Ergebnis von Runde {result.round}</h2>
+          <h2 className="text-3xl font-bold">{t('Ergebnis von Runde {round}', { round: result.round })}</h2>
           <ol className="flex flex-col gap-1">
             {result.finish.map((id, i) => (
               <li key={id} className="flex items-center gap-2">

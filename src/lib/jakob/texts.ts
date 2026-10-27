@@ -1,3 +1,4 @@
+import { format, type T } from '@/lib/i18n/core';
 import { JESTER, rankWord } from './cards';
 import type { CourtEvent, LogEntry, MissionId, Settings } from './types';
 
@@ -24,45 +25,91 @@ export const MISSION_TEXT: Record<MissionId, { emoji: string; title: string; tex
   climber: { emoji: '🪜', title: 'Emporkömmling', text: 'Steige in einer Runde um mindestens zwei Ränge auf.' },
 };
 
-/** "3× Neun", "Narr", "2× Sieben + Narr" */
-export function describeCards(cards: readonly number[]): string {
+/** Default translator: German text with placeholders filled in. */
+const de: T = (text, vars) => format(text, vars);
+
+/** "eine Neun", "3× Neun", "einen Narren", "2× Sieben + Narr" */
+export function describeCards(cards: readonly number[], t: T = de): string {
   const naturals = cards.filter((c) => c !== JESTER);
   const jesters = cards.length - naturals.length;
-  if (naturals.length === 0) return jesters === 1 ? 'einen Narren' : `${jesters} Narren`;
-  const base = naturals.length === 1 ? `eine ${rankWord(naturals[0])}` : `${naturals.length}× ${rankWord(naturals[0])}`;
-  return jesters ? `${base} + ${jesters === 1 ? 'Narr' : `${jesters} Narren`}` : base;
+  if (naturals.length === 0) return jesters === 1 ? t('einen Narren') : t('{n} Narren', { n: jesters });
+  const rank = naturals[0];
+  const word = t(rankWord(rank));
+  const base = naturals.length > 1
+    ? t('{n}× {rank}', { n: naturals.length, rank: word })
+    : rank === 8 ? t('eine Acht') : rank === 11 ? t('eine Elf') : t('eine {rank}', { rank: word });
+  if (!jesters) return base;
+  return jesters === 1 ? t('{cards} + Narr', { cards: base }) : t('{cards} + {n} Narren', { cards: base, n: jesters });
 }
 
-export function describeLog(entry: LogEntry, name: (id: string) => string): string | null {
-  const who = entry.by ? name(entry.by) : '';
+/** Second-person lines for the viewer's own moves ("Du legt" is wrong in German and "You plays" in English). */
+function describeOwnLog(entry: LogEntry, t: T, cards: () => string): string | null {
   switch (entry.kind) {
-    case 'play': return `${who} legt ${describeCards(entry.cards ?? [])}`;
-    case 'bomb': return `💣 ${who} zündet eine Bombe: ${describeCards(entry.cards ?? [])}!`;
-    case 'pass': return `${who} passt`;
-    case 'timeout': return `⏳ ${who} war zu langsam`;
-    case 'clear': return entry.by ? `Neuer Stich – ${name(entry.by)} spielt aus` : 'Neuer Stich';
-    case 'out': return `🎉 ${who} hat keine Karten mehr`;
-    case 'snap': return `⚡ Schnapp! ${entry.to ? name(entry.to) : ''} setzt aus`;
-    case 'revolution': return `✊ ${who} ruft die Revolution aus – keine Steuern!`;
-    case 'grandRevolution': return `🔥 Große Revolution von ${who}! Die Ordnung kehrt sich um.`;
+    case 'play': return t('Du legst {cards}', { cards: cards() });
+    case 'bomb': return t('💣 Du zündest eine Bombe: {cards}!', { cards: cards() });
+    case 'pass': return t('Du passt');
+    case 'timeout': return t('⏳ Du warst zu langsam');
+    case 'clear': return t('Neuer Stich – du spielst aus');
+    case 'out': return t('🎉 Du hast keine Karten mehr');
+    case 'revolution': return t('✊ Du rufst die Revolution aus – keine Steuern!');
+    case 'grandRevolution': return t('🔥 Deine Große Revolution! Die Ordnung kehrt sich um.');
+    case 'jesterOut': return t('🤡 Du gingst mit einem Narren raus und landest ganz unten');
+    case 'unbeatable': return t('👑 Unschlagbar! Du gewinnst den Stich sofort');
+    case 'kingFall': return t('👑💥 Königssturz! Du fällst auf den letzten Platz');
+    case 'mercy': return t('🙏 Du bittest um Gnade – keine große Steuer');
+    case 'resume': return t('👋 Du bist zurück');
+    default: return null;
+  }
+}
+
+/**
+ * One log line. Pass `me` (the viewer's id) to get second-person lines for their own moves;
+ * `name` should then return plain names.
+ */
+export function describeLog(entry: LogEntry, name: (id: string) => string, t: T = de, me?: string | null): string | null {
+  const cards = () => describeCards(entry.cards ?? [], t);
+  if (me && entry.kind === 'snap' && entry.to === me) return t('⚡ Schnapp! Du setzt aus');
+  if (me && entry.by === me && entry.kind !== 'snap') {
+    const own = describeOwnLog(entry, t, cards);
+    if (own) return own;
+  }
+  const who = entry.by ? name(entry.by) : '';
+  const other = entry.to ? name(entry.to) : '';
+  switch (entry.kind) {
+    case 'play': return t('{name} legt {cards}', { name: who, cards: cards() });
+    case 'bomb': return t('💣 {name} zündet eine Bombe: {cards}!', { name: who, cards: cards() });
+    case 'pass': return t('{name} passt', { name: who });
+    case 'timeout': return t('⏳ {name} war zu langsam', { name: who });
+    case 'clear': return entry.by ? t('Neuer Stich – {name} spielt aus', { name: who }) : t('Neuer Stich');
+    case 'out': return t('🎉 {name} hat keine Karten mehr', { name: who });
+    case 'snap': return t('⚡ Schnapp! {name} setzt aus', { name: other });
+    case 'revolution': return t('✊ {name} ruft die Revolution aus – keine Steuern!', { name: who });
+    case 'grandRevolution': return t('🔥 Große Revolution von {name}! Die Ordnung kehrt sich um.', { name: who });
     case 'tax': return null;
     case 'event': return null;
-    case 'left': return `🚪 ${who} hat den Tisch verlassen`;
-    case 'jesterOut': return `🤡 ${who} ging mit einem Narren raus und landet ganz unten`;
-    case 'unbeatable': return `👑 Unschlagbar! ${who} gewinnt den Stich sofort`;
-    case 'kingFall': return `👑💥 Königssturz! ${who} fällt auf den letzten Platz`;
-    case 'mission': return `📜 ${who} erfüllt die Mission „${entry.mission ? MISSION_TEXT[entry.mission].title : ''}“ (+3)`;
-    case 'mercy': return `🙏 ${who} bittet um Gnade – keine große Steuer`;
-    case 'abdicate': return `🪑 ${who} dankt ab und tauscht mit ${entry.to ? name(entry.to) : 'einem Bürger'}`;
-    case 'jesterCurse': return `🤡 Narrenfluch: ${who} verliert ${entry.count ?? 1} ${entry.count === 1 ? 'Punkt' : 'Punkte'}`;
-    case 'courtSwap': return '🔄 Hoftausch: Die Bürger reichen eine Karte weiter';
-    case 'pest': return '🐀 Pest: Jeder reicht eine Karte weiter';
-    case 'audit': return `🔍 Steuerprüfung: ${who} hat ${describeCards(entry.cards ?? [])}`;
-    case 'charity': return `🤲 ${who} schenkt ${entry.to ? name(entry.to) : ''} ${describeCards(entry.cards ?? [])}`;
-    case 'autopilot': return `🤖 Ein Bot spielt für ${who}`;
-    case 'fastForward': return '⏩ Nur noch Bots haben Karten – die Runde wurde zu Ende gespielt';
-    case 'resume': return `👋 ${who} ist zurück`;
-    case 'throne': return `🏰 Thronfolge! ${who} war dreimal in Folge Großer Jakob`;
+    case 'left': return t('🚪 {name} hat den Tisch verlassen', { name: who });
+    case 'jesterOut': return t('🤡 {name} ging mit einem Narren raus und landet ganz unten', { name: who });
+    case 'unbeatable': return t('👑 Unschlagbar! {name} gewinnt den Stich sofort', { name: who });
+    case 'kingFall': return t('👑💥 Königssturz! {name} fällt auf den letzten Platz', { name: who });
+    case 'mission': return t('📜 {name} erfüllt die Mission „{mission}“ (+3)', { name: who, mission: entry.mission ? t(MISSION_TEXT[entry.mission].title) : '' });
+    case 'mercy': return t('🙏 {name} bittet um Gnade – keine große Steuer', { name: who });
+    case 'abdicate': return entry.to
+      ? t('🪑 {name} dankt ab und tauscht mit {other}', { name: who, other })
+      : t('🪑 {name} dankt ab und tauscht mit einem Bürger', { name: who });
+    case 'jesterCurse': {
+      const count = entry.count ?? 1;
+      return count === 1
+        ? t('🤡 Narrenfluch: {name} verliert 1 Punkt', { name: who })
+        : t('🤡 Narrenfluch: {name} verliert {count} Punkte', { name: who, count });
+    }
+    case 'courtSwap': return t('🔄 Hoftausch: Die Bürger reichen eine Karte weiter');
+    case 'pest': return t('🐀 Pest: Jeder reicht eine Karte weiter');
+    case 'audit': return t('🔍 Steuerprüfung: {name} hat {cards}', { name: who, cards: cards() });
+    case 'charity': return t('🤲 {name} schenkt {other} {cards}', { name: who, other, cards: cards() });
+    case 'autopilot': return t('🤖 Ein Bot spielt für {name}', { name: who });
+    case 'fastForward': return t('⏩ Nur noch Bots haben Karten – die Runde wurde zu Ende gespielt');
+    case 'resume': return t('👋 {name} ist zurück', { name: who });
+    case 'throne': return t('🏰 Thronfolge! {name} war dreimal in Folge Großer Jakob', { name: who });
   }
 }
 
@@ -97,12 +144,12 @@ export const KNIFFE = [
 /** How the game ends and how big the table can be. */
 export const GAME_MODES = ['throne', 'teams', 'doubleDeck'] as const satisfies (keyof Settings)[];
 
-export function goalLabel(goal: Settings['goal']): string {
-  return goal === null ? 'Aus' : `${goal} P.`;
+export function goalLabel(goal: Settings['goal'], t: T = de): string {
+  return goal === null ? t('Aus') : t('{goal} P.', { goal });
 }
 
-export function turnLabel(seconds: Settings['turnSeconds']): string {
-  return seconds === null ? 'Aus' : `${seconds} s`;
+export function turnLabel(seconds: Settings['turnSeconds'], t: T = de): string {
+  return seconds === null ? t('Aus') : t('{seconds} s', { seconds });
 }
 
 export const TAX_LABELS: Record<Settings['tax'], string> = { none: 'Keine', normal: 'Normal', high: 'Hoch' };

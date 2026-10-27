@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { CardBack } from '@/components/deck/playing-card';
 import { Avatar } from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { rankTitle, waitingOn } from '@/lib/jakob/engine';
 import { TEAM_INFO } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
@@ -32,6 +33,7 @@ function TimerRing({ fraction, color }: { fraction: number; color: string }) {
 
 /** Opponents (and you) in rank order around the top of the table. */
 export function Seats({ timer }: { timer: number | null }) {
+  const t = useT();
   const { state, me, nameOf, avatarOf, deckOf, colorOf, g } = useTable();
   const order = state.order.length ? state.order : state.players.map((p) => p.id);
   const waiting = new Set(waitingOn(state));
@@ -46,7 +48,7 @@ export function Seats({ timer }: { timer: number | null }) {
     ul.scrollTo({ left: li.offsetLeft - (ul.clientWidth - li.clientWidth) / 2, behavior: 'smooth' });
   }, [focus]);
   return (
-    <ul ref={list} className="no-scrollbar relative -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-2 pt-2 sm:gap-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label="Spieler am Tisch">
+    <ul ref={list} className="no-scrollbar relative -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-2 pt-2 sm:gap-2 sm:flex-wrap sm:justify-center sm:overflow-visible" aria-label={t('Spieler am Tisch')}>
       {order.map((id) => {
         const p = state.players.find((x) => x.id === id);
         if (!p) return null;
@@ -82,36 +84,36 @@ export function Seats({ timer }: { timer: number | null }) {
                 <span className={cx('absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full ring-2 ring-velvet-deep', g.online.has(id) ? 'bg-vert' : 'bg-ink-soft')} />
               )}
               {p.autopilot && (
-                <span className="absolute -bottom-1 -left-2 rounded-full bg-velvet-soft px-1 text-xs ring-2 ring-velvet-deep" title="Ein Bot spielt gerade für diese Person"><Icon name="bot" className="size-4" /></span>
+                <span className="absolute -bottom-1 -left-2 rounded-full bg-velvet-soft px-1 text-xs ring-2 ring-velvet-deep" title={t('Ein Bot spielt gerade für diese Person')}><Icon name="bot" className="size-4" /></span>
               )}
               {index >= 0 && state.phase && state.phase !== 'draw' && (
-                <span className="absolute -left-2 -top-2 text-lg drop-shadow" title={rankTitle(index, present.length)} aria-hidden>
+                <span className="absolute -left-2 -top-2 text-lg drop-shadow" title={t(rankTitle(index, present.length))} aria-hidden>
                   <Icon name={rankIcon(index, present.length)} className="size-[1.1em]" />
                 </span>
               )}
             </span>
             <span className={cx('w-full truncate text-xs font-bold leading-tight sm:text-sm', isTurn && 'text-gold-soft')}>
-              {state.teams && state.teams[id] !== undefined && <span aria-label={TEAM_INFO[state.teams[id]].name}><Icon name={TEAM_ICONS[state.teams[id]]} /> </span>}
+              {state.teams && state.teams[id] !== undefined && <span aria-label={t(TEAM_INFO[state.teams[id]].name)}><Icon name={TEAM_ICONS[state.teams[id]]} /> </span>}
               {nameOf(id, true)}
             </span>
             <span className="hidden w-full truncate text-[0.7rem] leading-tight text-parchment/70 sm:block">
-              {index >= 0 && state.phase !== 'draw' ? rankTitle(index, present.length) : p.bot ? 'Bot' : 'Höfling'}
+              {index >= 0 && state.phase !== 'draw' ? t(rankTitle(index, present.length)) : p.bot ? t('Bot') : t('Höfling')}
             </span>
             <span className="flex h-6 items-center gap-1 rounded-full bg-black/30 px-2 sm:h-7">
               {p.left ? (
-                <span className="text-xs font-bold">ist gegangen</span>
+                <span className="text-xs font-bold">{t('ist gegangen')}</span>
               ) : state.phase === 'draw' ? (
-                state.draws[id] !== undefined ? <span className="text-xs font-bold text-gold-soft">zog eine {state.draws[id] === 13 ? 'Narr' : state.draws[id]}</span> : <span className="text-xs">zieht …</span>
+                state.draws[id] !== undefined ? <span className="text-xs font-bold text-gold-soft">{t('zog eine {card}', { card: state.draws[id] === 13 ? t('Narr') : state.draws[id] })}</span> : <span className="text-xs">{t('zieht …')}</span>
               ) : passed ? (
-                <span className="text-xs font-bold text-parchment/75">passt</span>
+                <span className="text-xs font-bold text-parchment/75">{t('passt')}</span>
               ) : out ? (
                 <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#2b1a12]">
-                  {state.shamed.includes(id) ? <><Icon name="jester" /> raus</> : `${finishedAt + 1}. raus`}
+                  {state.shamed.includes(id) ? <><Icon name="jester" /> {t('raus')}</> : t('{place}. raus', { place: finishedAt + 1 })}
                 </span>
               ) : (
                 <>
                   <CardBack design={deck.design} size="xs" className="!w-3.5" />
-                  <span className="tabular whitespace-nowrap text-xs font-bold sm:text-sm" aria-label={`${count} Karten`}>{count}<span className="hidden sm:inline"> {count === 1 ? 'Karte' : 'Karten'}</span></span>
+                  <span className="tabular whitespace-nowrap text-xs font-bold sm:text-sm" aria-label={count === 1 ? t('1 Karte') : t('{count} Karten', { count })}><span className="sm:hidden">{count}</span><span className="hidden sm:inline">{count === 1 ? t('1 Karte') : t('{count} Karten', { count })}</span></span>
                 </>
               )}
             </span>
@@ -126,14 +128,14 @@ export function Seats({ timer }: { timer: number | null }) {
                     'bg-velvet-soft text-parchment',
                   )}
                 >
-                  überlegt …
+                  {t('überlegt …')}
                 </motion.span>
               )}
             </AnimatePresence>
             {(state.phase === 'play' || state.phase === 'roundEnd') && (
-              <span className="tabular absolute right-1.5 top-1 text-[0.7rem] font-bold text-gold-soft" title="Punkte">{state.points[id] ?? 0}</span>
+              <span className="tabular absolute right-1.5 top-1 text-[0.7rem] font-bold text-gold-soft" title={t('Punkte')}>{state.points[id] ?? 0}</span>
             )}
-            {p.id === me && <span className="sr-only">Das bist du</span>}
+            {p.id === me && <span className="sr-only">{t('Das bist du')}</span>}
           </li>
         );
       })}

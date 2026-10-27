@@ -4,14 +4,16 @@ import { InviteToTableButton } from '@/components/social/invite-to-table-button'
 import { useOnlineUsers } from '@/components/app-shell/online-presence';
 import { Avatar } from '@/components/ui/avatar';
 import type { ProfileLite } from '@/server/social-service';
+import { useT } from '@/lib/i18n/client';
 
 export function FriendsOnline({ friends }: { friends: ProfileLite[] }) {
+  const t = useT();
   const online = useOnlineUsers();
   const here = friends.filter((f) => online.has(f.id));
   if (friends.length === 0) {
-    return <p className="text-parchment/70">Noch keine Freunde. <Link href="/freunde" className="font-bold text-gold-soft hover:underline">Freunde finden</Link></p>;
+    return <p className="text-parchment/70">{t('Noch keine Freunde.')} <Link href="/freunde" className="font-bold text-gold-soft hover:underline">{t('Freunde finden')}</Link></p>;
   }
-  if (here.length === 0) return <p className="text-parchment/70">Gerade ist keiner deiner Freunde online.</p>;
+  if (here.length === 0) return <p className="text-parchment/70">{t('Gerade ist keiner deiner Freunde online.')}</p>;
   return (
     <ul className="flex flex-wrap gap-3">
       {here.map((f) => (

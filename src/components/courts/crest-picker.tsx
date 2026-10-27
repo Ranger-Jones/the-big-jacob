@@ -2,11 +2,13 @@
 import { CardArt } from '@/components/deck/art';
 import { CREST_IDS } from './crest';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 
 
 export function CrestPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const t = useT();
   return (
-    <div role="radiogroup" aria-label="Wappen" className="grid max-h-56 grid-cols-6 gap-1.5 overflow-y-auto rounded-2xl bg-parchment-dark/50 p-2 sm:grid-cols-8">
+    <div role="radiogroup" aria-label={t('Wappen')} className="grid max-h-56 grid-cols-6 gap-1.5 overflow-y-auto rounded-2xl bg-parchment-dark/50 p-2 sm:grid-cols-8">
       {CREST_IDS.map((id) => (
         <button
           key={id} type="button" role="radio" aria-checked={value === id} aria-label={id}

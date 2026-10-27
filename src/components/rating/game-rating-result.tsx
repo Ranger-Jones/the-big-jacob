@@ -2,6 +2,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { fireConfetti } from '@/lib/confetti';
+import { useT } from '@/lib/i18n/client';
 import { levelFromXp, levelProgress, levelTitle, tierFor } from '@/lib/jakob/rating';
 import { playSound } from '@/lib/sound';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
@@ -10,6 +11,7 @@ interface Booking { rated: boolean; rating_before: number; rating_after: number;
 
 /** Elo change and experience earned in this game, with a level-up moment. */
 export function GameRatingResult({ gameId, me }: { gameId: string; me: string }) {
+  const t = useT();
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const reduce = useReducedMotion();
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -56,26 +58,26 @@ export function GameRatingResult({ gameId, me }: { gameId: string; me: string })
         <div className="flex items-center gap-3 rounded-2xl bg-velvet-deep/70 p-4 ring-2 ring-white/10">
           <span className="text-4xl" aria-hidden>{tierAfter.emoji}</span>
           <span className="min-w-0">
-            <span className="block text-xs text-parchment/70">Elo-Wertung</span>
+            <span className="block text-xs text-parchment/70">{t('Elo-Wertung')}</span>
             <span className="block font-display text-3xl font-bold tabular">
               {booking.rating_after}
               <span className={booking.delta >= 0 ? 'ml-2 text-vert brightness-150' : 'ml-2 text-wax brightness-150'}>
                 {booking.delta >= 0 ? `+${booking.delta}` : booking.delta}
               </span>
             </span>
-            <span className="block text-sm text-parchment/80">{promoted ? `Aufgestiegen: ${tierAfter.name}!` : tierAfter.name}</span>
+            <span className="block text-sm text-parchment/80">{promoted ? t('Aufgestiegen: {tier}!', { tier: t(tierAfter.name) }) : t(tierAfter.name)}</span>
           </span>
         </div>
       )}
       <div className="flex flex-col justify-center gap-1.5 rounded-2xl bg-velvet-deep/70 p-4 ring-2 ring-white/10">
         <span className="flex items-baseline justify-between gap-2">
           <span className="font-display text-2xl font-bold">
-            {levelUp ? `Level ${after.level}!` : `Level ${after.level}`}
-            <span className="ml-2 font-sans text-sm font-normal text-parchment/70">{levelTitle(after.level)}</span>
+            {levelUp ? t('Level {level}!', { level: after.level }) : t('Level {level}', { level: after.level })}
+            <span className="ml-2 font-sans text-sm font-normal text-parchment/70">{t(levelTitle(after.level))}</span>
           </span>
           <span className="font-bold text-gold-soft">+{booking.xp} XP</span>
         </span>
-        <span className="relative h-3 overflow-hidden rounded-full bg-white/10" aria-label={`${after.current} von ${after.needed} XP bis Level ${after.level + 1}`}>
+        <span className="relative h-3 overflow-hidden rounded-full bg-white/10" aria-label={t('{current} von {needed} XP bis Level {level}', { current: after.current, needed: after.needed, level: after.level + 1 })}>
           <motion.span
             className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-gold-deep via-gold to-gold-soft"
             initial={{ width: `${(levelUp ? 0 : before.fraction) * 100}%` }}
@@ -83,7 +85,7 @@ export function GameRatingResult({ gameId, me }: { gameId: string; me: string })
             transition={{ duration: reduce ? 0 : 1.2, ease: 'easeOut', delay: 0.3 }}
           />
         </span>
-        <span className="text-xs text-parchment/70">{after.current} / {after.needed} XP bis Level {after.level + 1}</span>
+        <span className="text-xs text-parchment/70">{t('{current} / {needed} XP bis Level {level}', { current: after.current, needed: after.needed, level: after.level + 1 })}</span>
       </div>
     </div>
   );

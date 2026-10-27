@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion/re
 import { useEffect, useState } from 'react';
 import { PlayingCard } from '@/components/deck/playing-card';
 import { CrownMark } from '@/components/ui/logo';
+import { useT } from '@/lib/i18n/client';
 import { describeCards, describeLog, EVENT_TEXT } from '@/lib/jakob/texts';
 import { useTable } from './table-context';
 import { BURST_KINDS, TableBurst, type BurstKind } from './table-burst';
@@ -22,6 +23,7 @@ const FELT_GRAIN =
  * All rows have fixed heights so the table never grows or shrinks during play.
  */
 export function TrickArea() {
+  const t = useT();
   const { state, me, nameOf, deckOf, felt } = useTable();
   const reduce = useReducedMotion();
   const trick = state.trick;
@@ -30,7 +32,7 @@ export function TrickArea() {
     .filter((e) => e.kind !== 'tax' && e.kind !== 'event')
     .slice(-3)
     .reverse()
-    .map((e) => ({ seq: e.seq, kind: e.kind, text: describeLog(e, (id) => nameOf(id, true)) }))
+    .map((e) => ({ seq: e.seq, kind: e.kind, text: describeLog(e, (id) => nameOf(id), t, me) }))
     .filter((e) => e.text);
 
   // Special plays get a burst over the table – only ones that happen while we watch.
@@ -38,9 +40,9 @@ export function TrickArea() {
   const burst = (state.log.slice(-3).reverse().find((e) => BURST_KINDS.includes(e.kind) && e.seq > mountedAt) ?? null) as
     (LogEntry & { kind: BurstKind }) | null;
   const burstSubtitle = !burst ? null
-    : burst.kind === 'snap' ? `${nameOf(burst.to ?? '', true)} setzt aus`
-      : burst.kind === 'bomb' ? `${nameOf(burst.by ?? '', true)} ${burst.by === me ? 'sprengst' : 'sprengt'} den Stich`
-        : `${nameOf(burst.by ?? '', true)} ${burst.by === me ? 'gewinnst' : 'gewinnt'} den Stich`;
+    : burst.kind === 'snap' ? (burst.to === me ? t('Du setzt aus') : t('{name} setzt aus', { name: nameOf(burst.to ?? '') }))
+      : burst.kind === 'bomb' ? (burst.by === me ? t('Du sprengst den Stich') : t('{name} sprengt den Stich', { name: nameOf(burst.by ?? '') }))
+        : burst.by === me ? t('Du gewinnst den Stich') : t('{name} gewinnt den Stich', { name: nameOf(burst.by ?? '') });
   const [rim, animateRim] = useAnimate();
   const burstKey = burst ? `${burst.kind}-${burst.seq}` : null;
   useEffect(() => {
@@ -69,9 +71,9 @@ export function TrickArea() {
       {state.event && (
         <span
           className="absolute left-1/2 top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-velvet-deep px-3 py-1 text-xs font-bold text-gold-soft ring-2 ring-gold/50 shadow-[0_3px_0_rgb(0_0_0/0.4)]"
-          title={EVENT_TEXT[state.event].text}
+          title={t(EVENT_TEXT[state.event].text)}
         >
-          <Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} /> {EVENT_TEXT[state.event].title}
+          <Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} /> {t(EVENT_TEXT[state.event].title)}
         </span>
       )}
 
@@ -131,7 +133,7 @@ export function TrickArea() {
                     exit={{ opacity: 0 }}
                     className="max-w-xs text-center font-display text-2xl text-parchment/70"
                   >
-                    {state.phase === 'play' && state.turn ? `${nameOf(state.turn, true)} ${state.turn === me ? 'spielst' : 'spielt'} aus` : 'Der Tisch ist leer'}
+                    {state.phase === 'play' && state.turn ? (state.turn === me ? t('Du spielst aus') : t('{name} spielt aus', { name: nameOf(state.turn) })) : t('Der Tisch ist leer')}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -140,8 +142,8 @@ export function TrickArea() {
             <p className="relative h-5 max-w-full truncate text-center text-xs font-bold text-parchment/90 sm:h-6 sm:text-sm">
               {trick ? (
                 <>
-                  {nameOf(trick.by, true)}: {describeCards(trick.cards)}
-                  <span className="text-parchment/60"> · schlage mit {trick.count} {trick.count === 1 ? 'Karte' : 'Karten'}</span>
+                  {nameOf(trick.by, true)}: {describeCards(trick.cards, t)}
+                  <span className="text-parchment/60"> · {trick.count === 1 ? t('schlage mit 1 Karte') : t('schlage mit {count} Karten', { count: trick.count })}</span>
                 </>
               ) : ' '}
             </p>

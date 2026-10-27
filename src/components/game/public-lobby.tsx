@@ -1,5 +1,6 @@
 'use client';
 import { useNow } from '@/hooks/use-now';
+import { useT } from '@/lib/i18n/client';
 import { PUBLIC_FILL_THRESHOLD, PUBLIC_FILL_TO, PUBLIC_MAX_HUMANS, PUBLIC_WAIT_SECONDS } from '@/lib/jakob/types';
 import { useTable } from './table-context';
 
@@ -11,6 +12,7 @@ function clock(ms: number) {
 /** Countdown and fill-up rule of the open online lobby. */
 export function PublicLobbyBanner() {
   const { g, state } = useTable();
+  const t = useT();
   const now = useNow(g.clockOffset, true, 500);
   const humans = state.players.filter((p) => !p.bot).length;
   const startAt = state.autoStartAt ? Date.parse(state.autoStartAt) : now;
@@ -30,14 +32,14 @@ export function PublicLobbyBanner() {
       </span>
       <span className="min-w-0" aria-live="polite">
         <span className="block font-display text-2xl font-bold text-gold-soft">
-          {humans} von {PUBLIC_MAX_HUMANS} Spielern da
+          {t('{n} von {max} Spielern da', { n: humans, max: PUBLIC_MAX_HUMANS })}
         </span>
         <span className="block text-sm text-parchment/80">
           {left <= 0
-            ? 'Die Karten werden gemischt …'
+            ? t('Die Karten werden gemischt …')
             : willFill
-              ? `Kommen bis dahin nicht mehr als ${PUBLIC_FILL_THRESHOLD}, füllen Bots auf ${PUBLIC_FILL_TO} Plätze auf.`
-              : 'Genug Mitspieler – es geht ohne Bots los, sobald die Zeit um ist oder der Tisch voll ist.'}
+              ? t('Kommen bis dahin nicht mehr als {n}, füllen Bots auf {seats} Plätze auf.', { n: PUBLIC_FILL_THRESHOLD, seats: PUBLIC_FILL_TO })
+              : t('Genug Mitspieler – es geht ohne Bots los, sobald die Zeit um ist oder der Tisch voll ist.')}
         </span>
       </span>
     </div>
@@ -46,14 +48,15 @@ export function PublicLobbyBanner() {
 
 /** Fixed rules of the open lobby, shown instead of the host's settings. */
 export function PublicRules() {
+  const t = useT();
   return (
     <ul className="flex flex-col gap-1.5 text-sm">
-      <li>⚖️ <b>Gewertet:</b> Elo und Erfahrung für alle Plätze.</li>
-      <li>🔁 <b>5 Runden</b>, ⏳ <b>30 Sekunden</b> Zugzeit.</li>
-      <li>💰 Normale Steuern, ✊ Revolution an, 🧠 Kartengedächtnis an.</li>
-      <li>🤖 Bots: <b>Einfach</b> und <b>Gerissen</b> füllen leere Plätze, wenn wenige da sind.</li>
-      <li>🚪 Wer mitten im Spiel geht, landet auf dem letzten Platz – auch in der Wertung.</li>
-      <li>🛡️ Niemand kann hier rausgeworfen werden.</li>
+      <li>⚖️ <b>{t('Gewertet:')}</b> {t('Elo und Erfahrung für alle Plätze.')}</li>
+      <li>🔁 <b>{t('5 Runden')}</b>, ⏳ <b>{t('30 Sekunden')}</b> {t('Zugzeit.')}</li>
+      <li>💰 {t('Normale Steuern,')} ✊ {t('Revolution an,')} 🧠 {t('Kartengedächtnis an.')}</li>
+      <li>🤖 {t('Bots:')} <b>{t('Einfach')}</b> {t('und')} <b>{t('Gerissen')}</b> {t('füllen leere Plätze, wenn wenige da sind.')}</li>
+      <li>🚪 {t('Wer mitten im Spiel geht, landet auf dem letzten Platz – auch in der Wertung.')}</li>
+      <li>🛡️ {t('Niemand kann hier rausgeworfen werden.')}</li>
     </ul>
   );
 }

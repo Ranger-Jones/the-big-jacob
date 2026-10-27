@@ -4,8 +4,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getDefaultDeckId, listDecks, listDecksOf, listGallery, publicDeckIds, type GallerySort } from '@/server/deck-service';
 import { listFriends } from '@/server/social-service';
+import { getT } from '@/lib/i18n/server';
 
-export const metadata: Metadata = { title: 'Decks' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Decks') };
+}
 
 export default async function DecksPage({ searchParams }: { searchParams: Promise<{ galerie?: string }> }) {
   const user = await requireUser();

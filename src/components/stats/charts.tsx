@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useIntlLocale, useT } from '@/lib/i18n/client';
 
 /** Single-series mark colour, validated (dataviz checks, dark mode) against the velvet panel surface. */
 const MARK = '#c0842a';
@@ -47,9 +48,10 @@ function Tooltip({ x, y, children }: { x: number; y: number; children: ReactNode
 }
 
 function TableToggle({ head, rows }: { head: string[]; rows: (string | number)[][] }) {
+  const t = useT();
   return (
     <details className="mt-1 text-sm">
-      <summary className="w-fit cursor-pointer text-ink-soft hover:text-ink">Als Tabelle</summary>
+      <summary className="w-fit cursor-pointer text-ink-soft hover:text-ink">{t('Als Tabelle')}</summary>
       <table className="mt-2 w-full text-left">
         <thead className="text-ink-soft"><tr>{head.map((h) => <th key={h} className="py-1 pr-3 font-bold">{h}</th>)}</tr></thead>
         <tbody>{rows.map((r, i) => <tr key={i} className="border-t border-line/60">{r.map((c, j) => <td key={j} className="tabular py-1 pr-3">{c}</td>)}</tr>)}</tbody>
@@ -60,7 +62,7 @@ function TableToggle({ head, rows }: { head: string[]; rows: (string | number)[]
 
 /** Unit text with an {n} placeholder, e.g. ['{n} Spiel', '{n} Spiele'] (functions can't cross to the client). */
 export type Unit = [one: string, many: string];
-const fmt = ([one, many]: Unit, n: number) => (n === 1 ? one : many).replace('{n}', n.toLocaleString('de-DE'));
+const fmt = ([one, many]: Unit, n: number, locale: string) => (n === 1 ? one : many).replace('{n}', n.toLocaleString(locale));
 
 export interface Column { label: string; short: string; value: number }
 
@@ -69,6 +71,7 @@ export interface Column { label: string; short: string; value: number }
  * otherwise only the largest column is labelled.
  */
 export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data: Column[]; unit: Unit; labelAll?: boolean; tableHead: [string, string] }) {
+  const locale = useIntlLocale();
   const box = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
   const width = useWidth(box, 280);
@@ -84,7 +87,7 @@ export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data:
   return (
     <div>
       <div ref={box} className="relative" onPointerLeave={() => setHover(null)}>
-        <svg width={width} height={top + plot + 22} className="block" role="img" aria-label={data.map((d) => `${d.label}: ${fmt(unit, d.value)}`).join(', ')}>
+        <svg width={width} height={top + plot + 22} className="block" role="img" aria-label={data.map((d) => `${d.label}: ${fmt(unit, d.value, locale)}`).join(', ')}>
           {ticks(0, max).map((v) => (
             <line key={v} x1={0} x2={width} y1={y(v)} y2={y(v)} stroke={GRID} strokeWidth={1} />
           ))}
@@ -107,7 +110,7 @@ export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data:
                 <text x={cx} y={top + plot + 15} textAnchor="middle" className="fill-ink-soft text-[11px]">{d.short}</text>
                 <rect
                   x={i * slot} y={0} width={slot} height={top + plot + 22} fill="transparent" tabIndex={0}
-                  aria-label={`${d.label}: ${fmt(unit, d.value)}`}
+                  aria-label={`${d.label}: ${fmt(unit, d.value, locale)}`}
                   onPointerEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
                   className="outline-none focus-visible:stroke-gold-deep focus-visible:[stroke-width:2]"
                 />
@@ -118,7 +121,7 @@ export function ColumnChart({ data, unit, labelAll = false, tableHead }: { data:
         </svg>
         {hover !== null && (
           <Tooltip {...tipPos(hover)}>
-            <b className="tabular">{fmt(unit, data[hover].value)}</b> <span className="text-[#b8a7c8]">{data[hover].label}</span>
+            <b className="tabular">{fmt(unit, data[hover].value, locale)}</b> <span className="text-[#b8a7c8]">{data[hover].label}</span>
           </Tooltip>
         )}
       </div>
@@ -131,6 +134,8 @@ export interface LinePoint { label: string; value: number; detail: string }
 
 /** One line with a 10% wash, a crosshair that snaps to the nearest game and an end label. */
 export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: Unit; tableHead: [string, string, string] }) {
+  const t = useT();
+  const locale = useIntlLocale();
   const box = useRef<HTMLDivElement>(null);
   const gradient = useId();
   const [hover, setHover] = useState<number | null>(null);
@@ -159,7 +164,7 @@ export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: 
     <div>
       <div
         ref={box} className="relative touch-pan-y outline-none focus-visible:ring-2 focus-visible:ring-gold-deep" tabIndex={0}
-        aria-label="Formkurve, mit Pfeiltasten durch die Spiele"
+        aria-label={t('Formkurve, mit Pfeiltasten durch die Spiele')}
         onPointerMove={(e) => pick(e.clientX)} onPointerDown={(e) => pick(e.clientX)} onPointerLeave={() => setHover(null)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') setHover((h) => Math.min(last, (h ?? -1) + 1));
@@ -167,7 +172,7 @@ export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: 
         }}
         onBlur={() => setHover(null)}
       >
-        <svg width={width} height={top + plot + 10} className="block" role="img" aria-label={`Punkte der letzten ${data.length} Spiele`}>
+        <svg width={width} height={top + plot + 10} className="block" role="img" aria-label={t('Punkte der letzten {n} Spiele', { n: data.length })}>
           <defs>
             <linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stopColor={MARK} stopOpacity="0.14" />
@@ -192,7 +197,7 @@ export function LineChart({ data, unit, tableHead }: { data: LinePoint[]; unit: 
         </svg>
         {hover !== null && (
           <Tooltip x={x(hover)} y={y(data[hover].value)}>
-            <b className="tabular">{fmt(unit, data[hover].value)}</b> <span className="text-[#b8a7c8]">{data[hover].detail}</span>
+            <b className="tabular">{fmt(unit, data[hover].value, locale)}</b> <span className="text-[#b8a7c8]">{data[hover].detail}</span>
           </Tooltip>
         )}
       </div>

@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { cx } from '@/lib/cx';
 import { inviteFriendToTableAction } from '@/server/game-actions';
+import { useT } from '@/lib/i18n/client';
 
 /** Invites a friend into my open lobby (or a new table) and takes me there. */
 export function InviteToTableButton({ friendId, username, compact, className }: {
   friendId: string; username: string; compact?: boolean; className?: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -19,11 +21,11 @@ export function InviteToTableButton({ friendId, username, compact, className }: 
     const res = await inviteFriendToTableAction(friendId);
     if (!res.ok) {
       setBusy(false);
-      return toast.error(res.error);
+      return toast.error(t(res.error));
     }
     toast.success(res.data.alreadyThere
-      ? `${username} sitzt schon an deinem Tisch`
-      : res.data.created ? `Neuer Tisch eröffnet – ${username} ist eingeladen` : `${username} ist an deinen Tisch eingeladen`);
+      ? t('{name} sitzt schon an deinem Tisch', { name: username })
+      : res.data.created ? t('Neuer Tisch eröffnet – {name} ist eingeladen', { name: username }) : t('{name} ist an deinen Tisch eingeladen', { name: username }));
     router.push(`/spiel/${res.data.code}`);
   }
 
@@ -33,11 +35,11 @@ export function InviteToTableButton({ friendId, username, compact, className }: 
       variant={compact ? 'velvet' : 'primary'}
       onClick={invite}
       disabled={busy}
-      aria-label={`${username} an den Tisch einladen`}
+      aria-label={t('{name} an den Tisch einladen', { name: username })}
       className={cx(compact && 'px-2', className)}
     >
       <Icon name="cards" className="size-5" />
-      {!compact && <span>{busy ? 'Lädt ein …' : 'An den Tisch einladen'}</span>}
+      {!compact && <span>{busy ? t('Lädt ein …') : t('An den Tisch einladen')}</span>}
     </Button>
   );
 }

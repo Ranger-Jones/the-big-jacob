@@ -4,9 +4,11 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { useT } from '@/lib/i18n/client';
 
 /** Icon-only on phones, icon + label from sm upwards. */
 export function NavLink({ href, icon, children, badge = 0 }: { href: string; icon: IconName; children: ReactNode; badge?: number }) {
+  const t = useT();
   const path = usePathname();
   const active = path === href || path.startsWith(`${href}/`);
   return (
@@ -23,7 +25,7 @@ export function NavLink({ href, icon, children, badge = 0 }: { href: string; ico
       {badge > 0 && (
         <span
           className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 animate-[wiggle_0.6s_ease-in-out_2] items-center justify-center rounded-full bg-wax px-1 text-xs font-bold text-parchment ring-2 ring-velvet shadow"
-          aria-label={`${badge} neue`}
+          aria-label={t('{count} neue', { count: badge })}
         >
           {badge > 9 ? '9+' : badge}
         </span>

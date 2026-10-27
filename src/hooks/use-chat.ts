@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useT } from '@/lib/i18n/client';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { sendChatAction } from '@/server/chat-actions';
 
@@ -8,6 +9,7 @@ export interface ChatMessage { id: string; user_id: string; body: string; create
 
 /** Chat of one game: last 100 messages plus live inserts. */
 export function useChat(gameId: string, me: string, enabled: boolean, onIncoming?: (m: ChatMessage) => void) {
+  const t = useT();
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const incoming = useRef(onIncoming);
@@ -41,9 +43,9 @@ export function useChat(gameId: string, me: string, enabled: boolean, onIncoming
 
   const send = useCallback(async (body: string) => {
     const res = await sendChatAction(gameId, body);
-    if (!res.ok) toast.error(res.error);
+    if (!res.ok) toast.error(t(res.error));
     return res.ok;
-  }, [gameId]);
+  }, [gameId, t]);
 
   return { messages, send };
 }

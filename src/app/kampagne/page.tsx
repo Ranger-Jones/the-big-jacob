@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
+import { getT } from '@/lib/i18n/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { CampaignMap } from './campaign-map';
 
-export const metadata: Metadata = { title: 'Kampagne' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Kampagne') };
+}
 
 export default async function CampaignPage() {
   const user = await requireUser();

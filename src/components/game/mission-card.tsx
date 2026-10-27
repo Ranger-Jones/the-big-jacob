@@ -2,6 +2,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { Icon, MISSION_ICONS } from '@/components/ui/icons';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { MISSION_TEXT } from '@/lib/jakob/texts';
 import type { MissionId } from '@/lib/jakob/types';
 
@@ -10,6 +11,7 @@ import type { MissionId } from '@/lib/jakob/types';
  * used for the automatic reveal at the start of the game.
  */
 export function MissionCard({ mission, flip }: { mission: { id: MissionId; done: boolean }; flip: boolean }) {
+  const t = useT();
   const reduce = useReducedMotion();
   const animate = flip && !reduce;
   const text = MISSION_TEXT[mission.id];
@@ -25,14 +27,14 @@ export function MissionCard({ mission, flip }: { mission: { id: MissionId; done:
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[1.4rem] border-4 border-gold-deep bg-[radial-gradient(ellipse_at_50%_20%,#fff6dd,#efdfbb)] p-5 text-center text-[#2b1a12] shadow-[0_10px_24px_rgb(0_0_0/0.45)] [backface-visibility:hidden]"
         >
-          <span className="text-xs font-bold tracking-wide text-[#6b5442]">Geheime Mission</span>
+          <span className="text-xs font-bold tracking-wide text-[#6b5442]">{t('Geheime Mission')}</span>
           <span className="flex size-20 items-center justify-center rounded-full bg-[#2a1745] text-[#ffd77a] ring-4 ring-[#b07a12]/60">
             <Icon name={MISSION_ICONS[mission.id] ?? 'target'} className="size-11" />
           </span>
-          <span className="font-display text-3xl font-bold leading-tight text-[#2b1a12]">{text.title}</span>
-          <span className="text-base leading-snug text-[#3d2a1c]">{text.text}</span>
+          <span className="font-display text-3xl font-bold leading-tight text-[#2b1a12]">{t(text.title)}</span>
+          <span className="text-base leading-snug text-[#3d2a1c]">{t(text.text)}</span>
           <span className={cx('mt-1 rounded-full px-3 py-1 text-sm font-bold', mission.done ? 'bg-[#2f9e62]/15 text-[#1f6b41]' : 'bg-[#f4b73a]/40 text-[#2b1a12]')}>
-            {mission.done ? <><Icon name="check-circle" /> Erfüllt – +3 Punkte!</> : '+3 Bonuspunkte'}
+            {mission.done ? <><Icon name="check-circle" /> {t('Erfüllt – +3 Punkte!')}</> : t('+3 Bonuspunkte')}
           </span>
         </div>
         {/* Back: sealed letter */}

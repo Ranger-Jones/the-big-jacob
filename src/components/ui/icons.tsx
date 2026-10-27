@@ -1,5 +1,6 @@
 import type { ReactNode, SVGProps } from 'react';
 import { cx } from '@/lib/cx';
+import { MedalFrame } from './medal-frame';
 
 /**
  * "Hofstaat" icon set: drawn on a 24-unit grid with round 1.75 strokes in the current text colour,
@@ -525,8 +526,8 @@ const MEDAL_COLORS = ['#f4b73a', '#c9cdd8', '#c98a52'];
 export function Medal({ place, className }: { place: number; className?: string }) {
   if (place < 1 || place > 3) return <span className={cx('tabular', className)}>{place}</span>;
   return (
-    <span className={cx('inline-flex', className)} style={{ color: MEDAL_COLORS[place - 1] }} title={`${place}. Platz`}>
+    <MedalFrame place={place} color={MEDAL_COLORS[place - 1]} className={cx('inline-flex', className)}>
       <Icon name="medal" className="size-[1.3em]" strokeWidth={2} />
-    </span>
+    </MedalFrame>
   );
 }

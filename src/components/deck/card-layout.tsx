@@ -2,6 +2,8 @@
 import type { CSSProperties, PointerEvent, ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import type { CardDesign, CardLayout, DeckDesign, Sticker } from '@/lib/decks';
+import { useT } from '@/lib/i18n/client';
+import type { T } from '@/lib/i18n/core';
 import { JESTER } from '@/lib/jakob/cards';
 import { CardArt, FullCardArt, hasArt } from './art';
 
@@ -27,8 +29,8 @@ const FONT_FAMILY: Record<DeckDesign['font'], string> = {
   verspielt: 'var(--font-fredoka), system-ui, sans-serif',
 };
 
-export function numberLabel(rank: number, big = false): string {
-  if (rank === JESTER) return big ? 'Narr' : 'N';
+export function numberLabel(rank: number, big = false, t: T = (s) => s): string {
+  if (rank === JESTER) return big ? t('Narr') : t('N');
   return String(rank);
 }
 
@@ -131,6 +133,7 @@ function Picture({ design, card, rank, layout, hooks }: { design: DeckDesign; ca
 }
 
 function NumberMark({ design, rank, layout, hooks }: { design: DeckDesign; rank: number; layout: CardLayout; hooks?: EditorHooks }) {
+  const t = useT();
   const n = layout.number;
   if (n.style === 'aus') return null;
   const color = n.color ?? design.accent;
@@ -143,7 +146,7 @@ function NumberMark({ design, rank, layout, hooks }: { design: DeckDesign; rank:
   };
   const ia = interactive(hooks, 'number');
   if (n.style === 'gross') {
-    const label = numberLabel(rank, true);
+    const label = numberLabel(rank, true, t);
     return (
       <span
         {...ia}
@@ -159,16 +162,17 @@ function NumberMark({ design, rank, layout, hooks }: { design: DeckDesign; rank:
   return (
     <>
       <span {...ia} className={cx('absolute font-bold leading-none', ia.className)} style={{ ...place(n.x, n.y), ...corner }}>
-        {numberLabel(rank)}
+        {numberLabel(rank, false, t)}
       </span>
       <span aria-hidden className="pointer-events-none absolute font-bold leading-none" style={{ ...place(100 - n.x, 100 - n.y, 180), ...corner }}>
-        {numberLabel(rank)}
+        {numberLabel(rank, false, t)}
       </span>
     </>
   );
 }
 
 function NameMark({ design, card, layout, hooks }: { design: DeckDesign; card: CardDesign; layout: CardLayout; hooks?: EditorHooks }) {
+  const t = useT();
   const n = layout.name;
   if (n.style === 'aus') return null;
   const ia = interactive(hooks, 'name');
@@ -188,7 +192,7 @@ function NameMark({ design, card, layout, hooks }: { design: DeckDesign; card: C
           : { color: design.ink, textShadow: `0 0 1cqw ${design.paper}, 0 0 1cqw ${design.paper}` }),
       }}
     >
-      {card.name}
+      {t(card.name)}
     </span>
   );
 }

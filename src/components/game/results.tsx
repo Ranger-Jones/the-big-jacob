@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { CrownMark } from '@/components/ui/logo';
 import { fireConfetti } from '@/lib/confetti';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { placements, teamPoints } from '@/lib/jakob/engine';
 import { MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
 import { EMPTY_STATS } from '@/lib/jakob/types';
@@ -29,17 +30,18 @@ const PODIUM = [
 
 /** End of a campaign stage or the daily challenge. */
 function SoloOutcome({ won }: { won: boolean }) {
+  const t = useT();
   const { state, g, me } = useTable();
   const [pending, setPending] = useState(false);
   const code = g.game!.code;
   if (state.mode === 'daily') {
     return (
       <Card className="flex flex-col items-center gap-3 text-center">
-        <h2 className="text-3xl font-bold">Dein Tagesergebnis: {state.points[me] ?? 0} Punkte</h2>
-        <p className="text-ink-soft">Schau nach, wie du im Vergleich zu deinen Freunden abschneidest.</p>
+        <h2 className="text-3xl font-bold">{t('Dein Tagesergebnis: {points} Punkte', { points: state.points[me] ?? 0 })}</h2>
+        <p className="text-ink-soft">{t('Schau nach, wie du im Vergleich zu deinen Freunden abschneidest.')}</p>
         <div className="flex flex-wrap justify-center gap-2">
-          <Link href="/herausforderung" className={buttonClass('primary', 'lg')}>Zur Tagesrangliste</Link>
-          <Link href={`/spiel/${code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> Wiederholung</Link>
+          <Link href="/herausforderung" className={buttonClass('primary', 'lg')}>{t('Zur Tagesrangliste')}</Link>
+          <Link href={`/spiel/${code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> {t('Wiederholung')}</Link>
         </div>
       </Card>
     );
@@ -51,20 +53,20 @@ function SoloOutcome({ won }: { won: boolean }) {
     setPending(true);
     const res = await startCampaignAction(target);
     setPending(false);
-    if (res?.error) toast.error(res.error);
+    if (res?.error) toast.error(t(res.error));
   }
   return (
     <Card className="flex flex-col items-center gap-3 text-center">
-      <h2 className="text-4xl font-bold">{won ? <><Icon name={stage ? STAGE_ICONS[stage.level] ?? 'trophy' : 'trophy'} className="text-gold-soft" /> {stage?.place ?? 'Station'} gemeistert!</> : 'Diesmal nicht …'}</h2>
+      <h2 className="text-4xl font-bold">{won ? <><Icon name={stage ? STAGE_ICONS[stage.level] ?? 'trophy' : 'trophy'} className="text-gold-soft" /> {t('{place} gemeistert!', { place: stage ? t(stage.place) : t('Station') })}</> : t('Diesmal nicht …')}</h2>
       <p className="text-ink-soft">
         {won
-          ? nextStage ? `Neuer Titel: ${stage?.title}. Als Nächstes wartet: ${nextStage.place}.` : 'Du hast die ganze Kampagne gewonnen. Lang lebe der Große Jakob!'
-          : 'Nur ein Sieg bringt dich weiter. Neue Karten, neues Glück!'}
+          ? nextStage ? t('Neuer Titel: {title}. Als Nächstes wartet: {place}.', { title: stage ? t(stage.title) : '', place: t(nextStage.place) }) : t('Du hast die ganze Kampagne gewonnen. Lang lebe der Große Jakob!')
+          : t('Nur ein Sieg bringt dich weiter. Neue Karten, neues Glück!')}
       </p>
       <div className="flex flex-wrap justify-center gap-2">
-        {won && nextStage && <Button size="lg" onClick={() => play(nextStage.level)} disabled={pending}>Weiter: {nextStage.place}</Button>}
-        {!won && <Button size="lg" onClick={() => play(level)} disabled={pending}>Nochmal versuchen</Button>}
-        <Link href="/kampagne" className={buttonClass('secondary', 'lg')}>Zur Kampagne</Link>
+        {won && nextStage && <Button size="lg" onClick={() => play(nextStage.level)} disabled={pending}>{t('Weiter: {place}', { place: t(nextStage.place) })}</Button>}
+        {!won && <Button size="lg" onClick={() => play(level)} disabled={pending}>{t('Nochmal versuchen')}</Button>}
+        <Link href="/kampagne" className={buttonClass('secondary', 'lg')}>{t('Zur Kampagne')}</Link>
       </div>
     </Card>
   );
@@ -72,7 +74,9 @@ function SoloOutcome({ won }: { won: boolean }) {
 
 export function Results() {
   const router = useRouter();
+  const t = useT();
   const { g, state, me, nameOf, avatarOf, colorOf } = useTable();
+  const who = (id: string) => nameOf(id, true);
   const game = g.game!;
   const [busy, setBusy] = useState(false);
   const places = placements(state);
@@ -93,7 +97,7 @@ export function Results() {
     const res = await rematchAction(game.id);
     setBusy(false);
     if (res.ok) router.push(`/spiel/${res.data.code}`);
-    else toast.error(res.error);
+    else toast.error(t(res.error));
   }
 
   const stat = (id: string) => state.stats[id] ?? EMPTY_STATS;
@@ -114,13 +118,13 @@ export function Results() {
         <CrownMark className="mx-auto size-14" />
         <h1 className="gold-text text-6xl font-bold">
           {state.teams
-            ? `${winningTeam === null ? 'Unentschieden!' : `${TEAM_INFO[winningTeam].name} gewinnt!`}`
-            : iWon ? 'Lang lebe Jakob – also du!' : `${nameOf(ranked[0]?.id ?? '')} regiert!`}
+            ? winningTeam === null ? t('Unentschieden!') : t('{team} gewinnt!', { team: t(TEAM_INFO[winningTeam].name) })
+            : iWon ? t('Lang lebe Jakob – also du!') : t('{name} regiert!', { name: nameOf(ranked[0]?.id ?? '') })}
         </h1>
         <p className="mt-1 text-parchment/80">
           {state.throneWinner
-            ? `Thronfolge: ${nameOf(state.throneWinner, true)} ${state.throneWinner === me ? 'warst' : 'war'} dreimal in Folge Großer Jakob.`
-            : `Nach ${state.history.length} ${state.history.length === 1 ? 'Runde' : 'Runden'} steht der Hof fest.`}
+            ? state.throneWinner === me ? t('Thronfolge: Du warst dreimal in Folge Großer Jakob.') : t('Thronfolge: {name} war dreimal in Folge Großer Jakob.', { name: nameOf(state.throneWinner) })
+            : state.history.length === 1 ? t('Nach 1 Runde steht der Hof fest.') : t('Nach {count} Runden steht der Hof fest.', { count: state.history.length })}
         </p>
       </div>
 
@@ -137,8 +141,8 @@ export function Results() {
               className="flex w-24 flex-col items-center gap-1 sm:w-32"
             >
               <Avatar profile={avatarOf(p.id)} ring={colorOf(p.id)} size={slot.place === 1 ? 'lg' : 'md'} />
-              <span className="w-full truncate text-center font-bold">{nameOf(p.id, true)}</span>
-              <span className="tabular font-display text-2xl text-gold-soft">{state.points[p.id] ?? 0} P.</span>
+              <span className="w-full truncate text-center font-bold">{who(p.id)}</span>
+              <span className="tabular font-display text-2xl text-gold-soft">{t('{points} P.', { points: state.points[p.id] ?? 0 })}</span>
               <span className={cx('flex w-full items-start justify-center rounded-t-xl pt-2 text-3xl shadow-[inset_0_-6px_0_rgb(0_0_0/0.2)]', slot.height)} style={{ backgroundColor: slot.color }}>
                 <Medal place={slot.place} className="text-[1.6rem]" />
               </span>
@@ -153,10 +157,10 @@ export function Results() {
         <table className="w-full min-w-[30rem] text-left">
           <thead>
             <tr className="text-sm text-ink-soft">
-              <th scope="col" className="px-4 py-3 font-bold">Platz</th>
-              <th scope="col" className="py-3 font-bold">Spieler</th>
+              <th scope="col" className="px-4 py-3 font-bold">{t('Platz')}</th>
+              <th scope="col" className="py-3 font-bold">{t('Spieler')}</th>
               {state.history.map((r) => <th key={r.round} scope="col" className="py-3 text-center font-bold">R{r.round}</th>)}
-              <th scope="col" className="px-4 py-3 text-right font-bold">Punkte</th>
+              <th scope="col" className="px-4 py-3 text-right font-bold">{t('Punkte')}</th>
             </tr>
           </thead>
           <tbody>
@@ -166,13 +170,13 @@ export function Results() {
                 <td className="py-2.5">
                   <span className="flex items-center gap-2 font-bold">
                     <Avatar profile={avatarOf(p.id)} ring={colorOf(p.id)} size="xs" />
-                    <span className="truncate">{nameOf(p.id, true)}</span>
+                    <span className="truncate">{who(p.id)}</span>
                   </span>
                 </td>
                 {state.history.map((r) => {
                   const pos = r.finish.indexOf(p.id);
                   return (
-                    <td key={r.round} className="tabular py-2.5 text-center text-sm" title={pos >= 0 ? `${pos + 1}. Platz` : 'nicht dabei'}>
+                    <td key={r.round} className="tabular py-2.5 text-center text-sm" title={pos >= 0 ? t('{place}. Platz', { place: pos + 1 }) : t('nicht dabei')}>
                       {pos === 0 ? <Icon name="crown" className="text-gold-soft" /> : pos >= 0 ? `+${r.points[p.id] ?? 0}` : '·'}
                     </td>
                   );
@@ -186,11 +190,11 @@ export function Results() {
 
       {state.teams && (
         <div className="grid grid-cols-2 gap-3">
-          {([0, 1] as const).map((t) => (
-            <div key={t} className={cx('rounded-2xl p-4 text-center text-parchment ring-4', winningTeam === t ? 'ring-gold' : 'ring-transparent')} style={{ backgroundColor: TEAM_INFO[t].color }}>
-              <span className="block font-bold"><Icon name={TEAM_ICONS[t]} /> {TEAM_INFO[t].name}</span>
-              <span className="tabular block font-display text-5xl font-bold">{totals[t]}</span>
-              <span className="block text-sm">{state.players.filter((p) => state.teams?.[p.id] === t).map((p) => nameOf(p.id, true)).join(', ')}</span>
+          {([0, 1] as const).map((team) => (
+            <div key={team} className={cx('rounded-2xl p-4 text-center text-parchment ring-4', winningTeam === team ? 'ring-gold' : 'ring-transparent')} style={{ backgroundColor: TEAM_INFO[team].color }}>
+              <span className="block font-bold"><Icon name={TEAM_ICONS[team]} /> {t(TEAM_INFO[team].name)}</span>
+              <span className="tabular block font-display text-5xl font-bold">{totals[team]}</span>
+              <span className="block text-sm">{state.players.filter((p) => state.teams?.[p.id] === team).map((p) => who(p.id)).join(', ')}</span>
             </div>
           ))}
         </div>
@@ -198,7 +202,7 @@ export function Results() {
 
       {state.missionsRevealed && (
         <Card className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold">Die geheimen Missionen</h2>
+          <h2 className="text-3xl font-bold">{t('Die geheimen Missionen')}</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {state.players.filter((p) => state.missionsRevealed?.[p.id]).map((p) => {
               const m = state.missionsRevealed![p.id];
@@ -206,8 +210,8 @@ export function Results() {
                 <li key={p.id} className={cx('flex items-center gap-3 rounded-xl p-2', m.done ? 'bg-vert/15' : 'bg-parchment-dark/60')}>
                   <Icon name={MISSION_ICONS[m.id] ?? 'target'} className="size-7 text-gold-soft" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-bold">{nameOf(p.id, true)}: {MISSION_TEXT[m.id].title}</span>
-                    <span className="block text-sm text-ink-soft">{MISSION_TEXT[m.id].text}</span>
+                    <span className="block truncate font-bold">{who(p.id)}: {t(MISSION_TEXT[m.id].title)}</span>
+                    <span className="block text-sm text-ink-soft">{t(MISSION_TEXT[m.id].text)}</span>
                   </span>
                   <span className="font-bold">{m.done ? <><Icon name="check-circle" /> +3</> : <Icon name="close" />}</span>
                 </li>
@@ -223,8 +227,8 @@ export function Results() {
             <li key={h.label} className="flex items-center gap-3 rounded-2xl bg-velvet-deep/70 p-3 ring-2 ring-white/10">
               <Icon name={h.icon} className="size-8 text-gold-soft" />
               <span className="min-w-0">
-                <span className="block text-xs text-parchment/70">{h.label}</span>
-                <span className="block truncate font-bold">{nameOf(h.id, true)} · {h.value}</span>
+                <span className="block text-xs text-parchment/70">{t(h.label)}</span>
+                <span className="block truncate font-bold">{who(h.id)} · {h.value}</span>
               </span>
             </li>
           ))}
@@ -235,14 +239,14 @@ export function Results() {
         <div className="flex flex-wrap justify-center gap-3">
           {state.mode === 'public' && (
             <form action={playOnlineAction}>
-              <Button type="submit" size="lg"><Icon name="castle" /> Neue Online-Runde</Button>
+              <Button type="submit" size="lg"><Icon name="castle" /> {t('Neue Online-Runde')}</Button>
             </form>
           )}
           <Button size="lg" variant={state.mode === 'public' ? 'velvet' : 'primary'} onClick={rematch} disabled={busy}>
-            {game.rematchGameId ? 'Zur Revanche' : state.mode === 'public' ? 'Revanche (privat)' : 'Revanche'}
+            {game.rematchGameId ? t('Zur Revanche') : state.mode === 'public' ? t('Revanche (privat)') : t('Revanche')}
           </Button>
-          <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> Wiederholung</Link>
-          <Link href="/" className={buttonClass('velvet', 'lg')}>Zur Startseite</Link>
+          <Link href={`/spiel/${game.code}/wiederholung`} className={buttonClass('secondary', 'lg')}><Icon name="film" /> {t('Wiederholung')}</Link>
+          <Link href="/" className={buttonClass('velvet', 'lg')}>{t('Zur Startseite')}</Link>
         </div>
       ) : (
         <SoloOutcome won={iWon} />

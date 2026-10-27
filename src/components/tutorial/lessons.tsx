@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import type { DeckEntry } from '@/lib/decks';
 import { legalPlays } from '@/lib/jakob/rules';
 import { checkLesson, LESSON_CTX, LESSONS, lessonTrick, type Verdict } from '@/lib/tutorial';
 
 /** Seven short, interactive lessons; each one is checked by the real rules. */
 export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void }) {
+  const t = useT();
   const [index, setIndex] = useState(0);
   const [selection, setSelection] = useState<Selection>({});
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -39,14 +41,14 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
 
   return (
     <div className="flex flex-col gap-4">
-      <ol className="flex flex-wrap gap-1.5" aria-label="Lektionen">
+      <ol className="flex flex-wrap gap-1.5" aria-label={t('Lektionen')}>
         {LESSONS.map((l, i) => (
           <li key={l.id}>
             <button
               type="button" onClick={() => go(i)} aria-current={i === index ? 'step' : undefined}
               className={cx('flex size-9 items-center justify-center rounded-full font-bold transition-colors',
                 i === index ? 'bg-gold text-[#2b1a12]' : i < index ? 'bg-gold/30 text-gold-soft' : 'bg-white/10 text-parchment/70 hover:bg-white/20')}
-              aria-label={`Lektion ${i + 1}: ${l.title}`}
+              aria-label={t('Lektion {n}: {title}', { n: i + 1, title: t(l.title) })}
             >
               {i + 1}
             </button>
@@ -58,10 +60,10 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
         <motion.div key={lesson.id} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }}>
           <Card className="flex flex-col gap-4">
             <div>
-              <h2 className="text-4xl font-bold">{lesson.title}</h2>
-              <p className="mt-1 max-w-prose text-ink-soft">{lesson.text}</p>
+              <h2 className="text-4xl font-bold">{t(lesson.title)}</h2>
+              <p className="mt-1 max-w-prose text-ink-soft">{t(lesson.text)}</p>
             </div>
-            <p className="rounded-2xl bg-gold/15 px-4 py-3 font-bold text-gold-soft ring-1 ring-gold/40">{lesson.task}</p>
+            <p className="rounded-2xl bg-gold/15 px-4 py-3 font-bold text-gold-soft ring-1 ring-gold/40">{t(lesson.task)}</p>
 
             {lesson.kind !== 'tax' && lesson.kind !== 'quiz' && (
               <div className="flex min-h-36 items-center justify-center rounded-3xl bg-[radial-gradient(ellipse_at_center,#2f6b45,#173b27)] p-4 ring-4 ring-[#6b4423] shadow-inner">
@@ -69,7 +71,7 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
                   <motion.div key={tableCards.join()} initial={{ y: laid.length ? 60 : 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex -space-x-6">
                     {tableCards.map((c, i) => <PlayingCard key={i} rank={c} deck={deck} size="sm" style={{ rotate: `${(i - (tableCards.length - 1) / 2) * 6}deg` }} />)}
                   </motion.div>
-                ) : <p className="font-display text-2xl text-parchment/80">Der Tisch ist leer, du eröffnest.</p>}
+                ) : <p className="font-display text-2xl text-parchment/80">{t('Der Tisch ist leer, du eröffnest.')}</p>}
               </div>
             )}
 
@@ -77,7 +79,7 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
               <div className="flex flex-col gap-2">
                 <Hand cards={lesson.hand} deck={deck} selection={{}} onChange={() => undefined} mode="view" />
                 {lesson.quiz!.map((o, i) => (
-                  <Button key={o.label} variant="velvet" className="justify-start text-left" disabled={verdict?.ok} onClick={() => answer({ option: i })}>{o.label}</Button>
+                  <Button key={o.label} variant="velvet" className="justify-start text-left" disabled={verdict?.ok} onClick={() => answer({ option: i })}>{t(o.label)}</Button>
                 ))}
               </div>
             ) : (
@@ -90,9 +92,9 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
                 />
                 <div className="flex flex-wrap gap-2">
                   {lesson.kind === 'tax'
-                    ? <Button onClick={() => answer({ cards: selectedCards(selection) })} disabled={verdict?.ok}>Zurückgeben</Button>
-                    : <Button onClick={() => answer({ cards: selectedCards(selection) })} disabled={verdict?.ok}>Legen</Button>}
-                  {lesson.kind !== 'tax' && <Button variant="velvet" onClick={() => answer({ pass: true })} disabled={verdict?.ok}>Passen</Button>}
+                    ? <Button onClick={() => answer({ cards: selectedCards(selection) })} disabled={verdict?.ok}>{t('Zurückgeben')}</Button>
+                    : <Button onClick={() => answer({ cards: selectedCards(selection) })} disabled={verdict?.ok}>{t('Legen')}</Button>}
+                  {lesson.kind !== 'tax' && <Button variant="velvet" onClick={() => answer({ pass: true })} disabled={verdict?.ok}>{t('Passen')}</Button>}
                 </div>
               </>
             )}
@@ -103,16 +105,16 @@ export function Lessons({ deck, onDone }: { deck: DeckEntry; onDone: () => void 
                   key={verdict.message} initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   className={cx('rounded-2xl px-4 py-3 font-bold', verdict.ok ? 'bg-vert/25 text-[#9be3b8] ring-1 ring-vert/60' : 'bg-wax/20 text-[#ffb3b8] ring-1 ring-wax/60')}
                 >
-                  {verdict.ok && <Icon name="check-circle" className="mr-1.5 inline size-5 align-[-0.2em]" />}{verdict.message}
+                  {verdict.ok && <Icon name="check-circle" className="mr-1.5 inline size-5 align-[-0.2em]" />}{t(verdict.message)}
                 </motion.p>
               )}
             </div>
 
             <div className="flex justify-between gap-2">
-              <Button variant="ghost" onClick={() => go(index - 1)} disabled={index === 0}>Zurück</Button>
+              <Button variant="ghost" onClick={() => go(index - 1)} disabled={index === 0}>{t('Zurück')}</Button>
               {verdict?.ok && (last
-                ? <Button size="lg" onClick={onDone}>Übungsspiel starten</Button>
-                : <Button onClick={() => go(index + 1)}>Nächste Lektion</Button>)}
+                ? <Button size="lg" onClick={onDone}>{t('Übungsspiel starten')}</Button>
+                : <Button onClick={() => go(index + 1)}>{t('Nächste Lektion')}</Button>)}
             </div>
           </Card>
         </motion.div>

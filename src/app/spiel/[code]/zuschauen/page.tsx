@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { getT } from '@/lib/i18n/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { getDecksByIds } from '@/server/deck-service';
@@ -9,7 +10,10 @@ import { addSpectator, canSpectate } from '@/server/spectate-service';
 import { JoinError } from '../join-error';
 import { SpectatorClient } from './spectator-client';
 
-export const metadata: Metadata = { title: 'Zuschauen' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Zuschauen') };
+}
 
 export default async function SpectatePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -20,7 +24,7 @@ export default async function SpectatePage({ params }: { params: Promise<{ code:
   if (game.state.players.some((p) => p.id === user.id)) redirect(`/spiel/${game.code}`);
   if (game.state.status === 'finished') redirect(`/spiel/${game.code}/wiederholung`);
   const allowed = await canSpectate(admin, user.id, game);
-  if (!allowed.ok) return <JoinError message={allowed.error} />;
+  if (!allowed.ok) return <JoinError message={(await getT())(allowed.error)} />;
   await addSpectator(admin, user.id, game.id);
   const humanIds = game.state.players.filter((p) => !p.bot).map((p) => p.id);
   const [{ data: profiles }, decks, quickEmojis] = await Promise.all([

@@ -1,15 +1,17 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
+import { useIntlLocale, useT } from '@/lib/i18n/client';
 import { QUICK_PHRASES } from '@/lib/emojis';
 import type { ChatMessage } from '@/hooks/use-chat';
 import { CHAT_MAX } from '@/server/chat-limits';
 import { useTable } from './table-context';
 
-const time = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
-
 export function ChatPanel({ messages, onSend, className, readOnly }: { messages: ChatMessage[]; onSend: (body: string) => Promise<boolean>; className?: string; readOnly?: boolean }) {
+  const t = useT();
+  const locale = useIntlLocale();
+  const time = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' }), [locale]);
   const { me, nameOf, avatarOf, colorOf } = useTable();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -30,7 +32,7 @@ export function ChatPanel({ messages, onSend, className, readOnly }: { messages:
   return (
     <div className={cx('flex min-h-0 flex-col gap-2', className)}>
       <ol ref={list} className="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto pr-1" aria-live="polite">
-        {messages.length === 0 && <li className="py-6 text-center text-sm text-ink-soft">Noch still am Hof. Sag was!</li>}
+        {messages.length === 0 && <li className="py-6 text-center text-sm text-ink-soft">{t('Noch still am Hof. Sag was!')}</li>}
         {messages.map((m) => {
           const mine = m.user_id === me;
           return (
@@ -45,11 +47,11 @@ export function ChatPanel({ messages, onSend, className, readOnly }: { messages:
           );
         })}
       </ol>
-      {readOnly ? <p className="text-center text-xs text-ink-soft">Zuschauer lesen nur mit.</p> : (<>
+      {readOnly ? <p className="text-center text-xs text-ink-soft">{t('Zuschauer lesen nur mit.')}</p> : (<>
       <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
         {QUICK_PHRASES.map((p) => (
-          <button key={p} type="button" onClick={() => send(p)} className="shrink-0 rounded-full bg-parchment-dark px-3 py-1 text-xs font-bold text-ink-soft ring-1 ring-line hover:bg-white/10">
-            {p}
+          <button key={p} type="button" onClick={() => send(t(p))} className="shrink-0 rounded-full bg-parchment-dark px-3 py-1 text-xs font-bold text-ink-soft ring-1 ring-line hover:bg-white/10">
+            {t(p)}
           </button>
         ))}
       </div>
@@ -64,12 +66,12 @@ export function ChatPanel({ messages, onSend, className, readOnly }: { messages:
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={CHAT_MAX}
-          placeholder="Nachricht an den Tisch"
-          aria-label="Nachricht"
+          placeholder={t('Nachricht an den Tisch')}
+          aria-label={t('Nachricht')}
           className="h-11 min-w-0 flex-1 rounded-xl bg-white/5 px-3 text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
         />
         <button type="submit" disabled={!text.trim() || sending} className="h-11 rounded-xl bg-wine px-4 font-bold text-parchment disabled:opacity-50">
-          Senden
+          {t('Senden')}
         </button>
       </form>
       </>)}

@@ -12,7 +12,7 @@ export const PHOTO_FIT_LABELS: Record<PhotoFit, string> = { medaillon: 'Im Medai
 
 export const FONT_LABELS: Record<DeckFont, string> = { gotisch: 'Gotisch', klassisch: 'Klassisch', verspielt: 'Verspielt' };
 export const PATTERN_LABELS: Record<BackPattern, string> = {
-  rauten: 'Rauten', streifen: 'Streifen', punkte: 'Punkte', wellen: 'Wellen', sterne: 'Sterne', schach: 'Schach',
+  rauten: 'Rauten', streifen: 'Streifen', punkte: 'Tupfen', wellen: 'Wellen', sterne: 'Sterne', schach: 'Schach',
 };
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);

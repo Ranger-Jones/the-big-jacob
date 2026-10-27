@@ -1,7 +1,10 @@
+'use client';
 /* eslint-disable @next/next/no-img-element */
 import type { CSSProperties, ReactNode } from 'react';
 import { JESTER } from '@/lib/jakob/cards';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
+import type { T } from '@/lib/i18n/core';
 import { cardDesign, type BackPattern, type DeckDesign, type DeckEntry, type DeckFont } from '@/lib/decks';
 import { CardArt, FullCardArt, hasArt } from './art';
 import { LayoutFace } from './card-layout';
@@ -29,8 +32,9 @@ export const FONT_CLASS: Record<DeckFont, string> = {
   gotisch: 'font-display', klassisch: 'font-classic', verspielt: 'font-playful',
 };
 
-export function cornerLabel(rank: number) {
-  return rank === JESTER ? 'N' : String(rank);
+/** Corner index; `t` translates the jester's letter ("N" for Narr). */
+export function cornerLabel(rank: number, t: T = (s) => s) {
+  return rank === JESTER ? t('N') : String(rank);
 }
 
 interface FaceProps {
@@ -48,8 +52,11 @@ interface FaceProps {
 
 /** The face of a card in a given deck design. */
 export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked, className, style, onClick, label }: FaceProps) {
+  const t = useT();
   const d = deck.design;
   const card = cardDesign(deck, rank);
+  // Preset card names are in the dictionary; names typed by players stay as they are.
+  const name = t(card.name);
   // "Ganze Karte": photos and drawn art fill the whole face; the number becomes part of the art.
   const fullPhoto = !!card.image && d.photoFit === 'vollbild';
   const fullDrawing = !card.image && hasArt(card.art) && d.photoFit === 'vollbild';
@@ -90,12 +97,12 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
       )}
       {!fullDrawing && (
         <span className={cx('absolute left-[9%] top-[5%] font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
-          {cornerLabel(rank)}
+          {cornerLabel(rank, t)}
         </span>
       )}
       {size !== 'xs' && !fullDrawing && (
         <span className={cx('absolute bottom-[5%] right-[9%] rotate-180 font-bold leading-none', CORNER[size], FONT_CLASS[d.font])} style={cornerStyle}>
-          {cornerLabel(rank)}
+          {cornerLabel(rank, t)}
         </span>
       )}
       {!fullArt && hasArt(card.art) && !card.image && (
@@ -111,7 +118,7 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
         </span>
       )}
       <span
-        className={cx('absolute inset-x-[4%] truncate px-[7%] py-[1.5%] text-center font-bold leading-tight', fullArt ? 'bottom-[7%]' : 'bottom-[12.5%]', card.name.length > (d.font === 'klassisch' ? 8 : 12) ? NAME_LONG[size] : NAME[size], FONT_CLASS[d.font])}
+        className={cx('absolute inset-x-[4%] truncate px-[7%] py-[1.5%] text-center font-bold leading-tight', fullArt ? 'bottom-[7%]' : 'bottom-[12.5%]', name.length > (d.font === 'klassisch' ? 8 : 12) ? NAME_LONG[size] : NAME[size], FONT_CLASS[d.font])}
         style={{
           backgroundColor: d.frame,
           color: d.paper,
@@ -120,7 +127,7 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
           boxShadow: `inset 0 -2px 0 rgb(0 0 0 / 0.25)`,
         }}
       >
-        {card.name}
+        {name}
       </span>
       {holo}
     </>
@@ -137,13 +144,13 @@ export function PlayingCard({ rank, deck, size = 'md', selected, dimmed, marked,
   const surface: CSSProperties = { backgroundColor: card.layout?.background ?? d.paper, color: d.ink, border: `3px solid ${d.frame}`, ...style };
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cx(classes, 'cursor-pointer')} style={surface} aria-pressed={selected} aria-label={label ?? `${card.name} (${cornerLabel(rank)})`}>
+      <button type="button" onClick={onClick} className={cx(classes, 'cursor-pointer')} style={surface} aria-pressed={selected} aria-label={label ?? `${name} (${cornerLabel(rank, t)})`}>
         {content}
       </button>
     );
   }
   return (
-    <span className={classes} style={surface} role="img" aria-label={label ?? `${card.name} (${cornerLabel(rank)})`}>
+    <span className={classes} style={surface} role="img" aria-label={label ?? `${name} (${cornerLabel(rank, t)})`}>
       {content}
     </span>
   );
@@ -170,6 +177,7 @@ function patternFor(pattern: BackPattern, a: string, b: string, id: string) {
 export function CardBack({ design, size = 'md', className, style, onClick, label }: {
   design: DeckDesign; size?: CardSize; className?: string; style?: CSSProperties; onClick?: () => void; label?: string;
 }) {
+  const t = useT();
   const id = `back-${design.back.pattern}-${design.back.a.slice(1)}-${design.back.b.slice(1)}`;
   const inner = design.back.image ? (
     <>
@@ -198,7 +206,7 @@ export function CardBack({ design, size = 'md', className, style, onClick, label
   const classes = cx('relative block aspect-[5/7] shrink-0 overflow-hidden rounded-[10%] shadow-[0_3px_0_rgb(0_0_0/0.35)]', WIDTH[size], className);
   const surface: CSSProperties = { border: `3px solid ${design.frame}`, backgroundColor: design.back.a, ...style };
   if (onClick) {
-    return <button type="button" onClick={onClick} className={cx(classes, 'cursor-pointer transition-transform hover:-translate-y-1')} style={surface} aria-label={label ?? 'Karte ziehen'}>{inner}</button>;
+    return <button type="button" onClick={onClick} className={cx(classes, 'cursor-pointer transition-transform hover:-translate-y-1')} style={surface} aria-label={label ?? t('Karte ziehen')}>{inner}</button>;
   }
   return <span className={classes} style={surface} aria-hidden>{inner}</span>;
 }

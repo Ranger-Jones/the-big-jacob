@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useT } from '@/lib/i18n/client';
 import type { DeckEntry } from '@/lib/decks';
 import { parseDesign, presetById } from '@/lib/decks';
 import { isAllowedEmoji } from '@/lib/emojis';
@@ -33,6 +34,7 @@ interface Options {
 }
 
 export function useGame({ initial, initialHand, initialProfiles, initialDecks, me, serverNow }: Options) {
+  const t = useT();
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const [game, setGame] = useState<GameView | null>(initial);
   const [hand, setHand] = useState<HandState>({ ...initialHand, version: initial.version });
@@ -221,18 +223,18 @@ export function useGame({ initial, initialHand, initialProfiles, initialDecks, m
       }
       // Outdated view (e.g. a missed realtime update): refetch quietly so the next click works.
       await refetch();
-      if (res.error !== STALE && !opts.silent) toast.error(res.error);
+      if (res.error !== STALE && !opts.silent) toast.error(t(res.error));
       return false;
     } catch (err) {
       // A new deployment went live while this tab was open: reload to get the matching version.
       if (isStaleBuildError(err) && reloadOnce()) return false;
       await refetch();
-      if (!opts.silent) toast.error('Keine Verbindung zum Hof. Bitte nochmal versuchen.');
+      if (!opts.silent) toast.error(t('Keine Verbindung zum Hof. Bitte nochmal versuchen.'));
       return false;
     } finally {
       if (!opts.silent) setBusy(false);
     }
-  }, [applyHand, optimistic, refetch]);
+  }, [applyHand, optimistic, refetch, t]);
 
   const sendEmoji = useCallback((emoji: string) => {
     if (Date.now() - lastEmoji.current < 700) return;

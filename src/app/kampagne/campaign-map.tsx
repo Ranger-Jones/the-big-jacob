@@ -5,11 +5,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { CAMPAIGN, campaignTitle } from '@/lib/campaign';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { startCampaignAction } from '@/server/solo-actions';
 import { Icon, STAGE_ICONS } from '@/components/ui/icons';
 
 /** "Vom Bauern zum König": a winding path of eight stages. */
 export function CampaignMap({ level }: { level: number }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [chosen, setChosen] = useState<number | null>(null);
   const next = Math.min(level + 1, CAMPAIGN.length);
@@ -18,19 +20,19 @@ export function CampaignMap({ level }: { level: number }) {
     setChosen(stage);
     start(async () => {
       const res = await startCampaignAction(stage);
-      if (res?.error) toast.error(res.error);
+      if (res?.error) toast.error(t(res.error));
     });
   }
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 pb-16">
       <div>
-        <h1 className="gold-text text-6xl font-bold">Vom Bauern zum König</h1>
+        <h1 className="gold-text text-6xl font-bold">{t('Vom Bauern zum König')}</h1>
         <p className="mt-1 text-parchment/80">
-          Acht Stationen gegen immer gerissenere Bots. Gewinne eine Station, um die nächste freizuschalten.
+          {t('Acht Stationen gegen immer gerissenere Bots. Gewinne eine Station, um die nächste freizuschalten.')}
         </p>
         <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-velvet-deep/70 px-4 py-1.5 font-bold ring-2 ring-gold/40">
-          Dein Titel: <span className="text-gold-soft">{campaignTitle(level)}</span> · {level}/{CAMPAIGN.length}
+          {t('Dein Titel:')} <span className="text-gold-soft">{t(campaignTitle(level))}</span> · {level}/{CAMPAIGN.length}
         </p>
       </div>
 
@@ -59,13 +61,13 @@ export function CampaignMap({ level }: { level: number }) {
                 {done && <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-vert text-sm text-parchment ring-2 ring-parchment"><Icon name="check" className="size-4" strokeWidth={2.5} /></span>}
               </span>
               <div className={cx('parchment flex-1 rounded-[1.4rem] p-4 ring-2', current ? 'ring-gold shadow-[0_6px_0_var(--color-gold-deep)]' : 'ring-line shadow-[0_6px_0_rgb(0_0_0/0.35)]', !open && 'opacity-60')}>
-                <p className="text-sm font-bold text-ink-soft">Station {stage.level} · {stage.twist}</p>
-                <h2 className="text-3xl font-bold">{stage.place}</h2>
-                <p className="text-sm">{open ? stage.story : 'Gewinne die vorige Station, um weiterzukommen.'}</p>
-                <p className="mt-1 text-xs text-ink-soft">{stage.bots.length} Gegner · Titel: {stage.title}</p>
+                <p className="text-sm font-bold text-ink-soft">{t('Station {n}', { n: stage.level })} · {t(stage.twist)}</p>
+                <h2 className="text-3xl font-bold">{t(stage.place)}</h2>
+                <p className="text-sm">{open ? t(stage.story) : t('Gewinne die vorige Station, um weiterzukommen.')}</p>
+                <p className="mt-1 text-xs text-ink-soft">{t('{n} Gegner · Titel: {title}', { n: stage.bots.length, title: t(stage.title) })}</p>
                 {open && (
                   <Button size="sm" className="mt-3" onClick={() => play(stage.level)} disabled={pending}>
-                    {pending && chosen === stage.level ? 'Tisch wird gedeckt …' : done ? 'Nochmal spielen' : 'Herausfordern'}
+                    {pending && chosen === stage.level ? t('Tisch wird gedeckt …') : done ? t('Nochmal spielen') : t('Herausfordern')}
                   </Button>
                 )}
               </div>
@@ -74,7 +76,7 @@ export function CampaignMap({ level }: { level: number }) {
         })}
       </ol>
       {level >= CAMPAIGN.length && (
-        <p className="rounded-2xl bg-gold/20 p-4 text-center font-display text-3xl text-gold-soft ring-2 ring-gold"><Icon name="crown" /> Du hast die Kampagne gemeistert – lang lebe der Große Jakob!</p>
+        <p className="rounded-2xl bg-gold/20 p-4 text-center font-display text-3xl text-gold-soft ring-2 ring-gold"><Icon name="crown" /> {t('Du hast die Kampagne gemeistert – lang lebe der Große Jakob!')}</p>
       )}
     </main>
   );

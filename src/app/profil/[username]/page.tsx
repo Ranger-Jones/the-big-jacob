@@ -12,6 +12,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { signOut } from '@/server/auth-actions';
 import { monthTitle } from '@/lib/months';
+import { intlLocale } from '@/lib/i18n/core';
+import { getLocale, getT } from '@/lib/i18n/server';
 import { badgesFor, getDetailedStats, getHistory, getMonthlyChampions, getRivalries, getStatsByUsername } from '@/server/profile-service';
 import { DetailedStatsSection } from '@/components/stats/detailed-stats';
 import { AvatarUpload } from './avatar-upload';
@@ -22,16 +24,18 @@ import { FriendshipControls } from './friendship-controls';
 import { getFriendshipWith } from '@/server/social-service';
 import { BADGE_ICONS, Icon, Medal } from '@/components/ui/icons';
 
-const dateFmt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
-
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
-  return { title: parseUsernameParam((await params).username) ?? 'Profil' };
+  const t = await getT();
+  return { title: parseUsernameParam((await params).username) ?? t('Profil') };
 }
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const username = parseUsernameParam((await params).username);
   const me = await requireUser();
   if (!username) notFound();
+  const locale = await getLocale();
+  const t = await getT();
+  const dateFmt = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
   const admin = createAdminClient();
   const stats = await getStatsByUsername(admin, username);
   if (!stats) notFound();
@@ -41,7 +45,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     getRatingSummary(admin, stats.user_id),
   ]);
   const friendship = isMe ? null : await getFriendshipWith(admin, me.id, stats.user_id);
-  const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month));
+  const titles = champions.filter((c) => c.champion.user_id === stats.user_id).map((c) => monthTitle(c.month, t));
   const badges = badgesFor(stats);
 
   return (
@@ -51,12 +55,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
           <h1 className="break-all text-6xl font-bold">{stats.username}</h1>
           <p className="text-parchment/75">
-            {stats.crowns > 0 ? `${stats.crowns}× Großer Jakob gewesen` : 'Noch nie auf dem Thron gesessen'}
-            {stats.servant > 0 && ` · ${stats.servant}× Großer Knecht`}
+            {stats.crowns > 0 ? t('{count}× Großer Jakob gewesen', { count: stats.crowns }) : t('Noch nie auf dem Thron gesessen')}
+            {stats.servant > 0 && ` · ${t('{count}× Großer Knecht', { count: stats.servant })}`}
           </p>
           {titles.length > 0 && (
             <ul className="flex flex-wrap gap-1.5">
-              {titles.map((t) => <li key={t} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60"><Icon name="crown" /> {t}</li>)}
+              {titles.map((title) => <li key={title} className="rounded-full bg-gold/25 px-3 py-0.5 text-sm font-bold text-gold-soft ring-1 ring-gold/60"><Icon name="crown" /> {title}</li>)}
             </ul>
           )}
           {friendship && <FriendshipControls key={`${friendship.status}-${friendship.friendshipId}`} username={stats.username} friendId={stats.user_id} initial={friendship} />}
@@ -64,7 +68,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
             <div className="flex flex-wrap items-center gap-2">
               <RenameForm current={stats.username} />
               <form action={signOut}>
-                <button type="submit" className="rounded-xl px-3 py-2 text-sm font-bold text-parchment/70 hover:bg-white/10 hover:text-parchment">Abmelden</button>
+                <button type="submit" className="rounded-xl px-3 py-2 text-sm font-bold text-parchment/70 hover:bg-white/10 hover:text-parchment">{t('Abmelden')}</button>
               </form>
             </div>
           )}
@@ -80,20 +84,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       {isMe && <Card><AppSettings /></Card>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-4xl font-bold">Abzeichen</h2>
+        <h2 className="text-4xl font-bold">{t('Abzeichen')}</h2>
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
           {badges.map((b) => (
             <li
               key={b.id}
-              title={b.hint}
+              title={t(b.hint)}
               className={cx(
                 'flex flex-col items-center gap-1 rounded-2xl p-3 text-center ring-2',
                 b.earned ? 'bg-gold/20 ring-gold/60' : 'bg-velvet-deep/50 ring-white/10 opacity-55 grayscale',
               )}
             >
               <Icon name={BADGE_ICONS[b.id] ?? 'star'} className="size-10 text-gold-soft" />
-              <span className="font-bold leading-tight">{b.title}</span>
-              <span className="text-xs leading-tight text-parchment/70">{b.hint}</span>
+              <span className="font-bold leading-tight">{t(b.title)}</span>
+              <span className="text-xs leading-tight text-parchment/70">{t(b.hint)}</span>
             </li>
           ))}
         </ul>
@@ -101,7 +105,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
       {rivals.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-4xl font-bold">Rivalitäten</h2>
+          <h2 className="text-4xl font-bold">{t('Rivalitäten')}</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {rivals.map((r) => {
               const lead = r.wins - r.losses;
@@ -111,7 +115,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
                     <Avatar profile={r.profile} size="sm" />
                     <span className="min-w-0 flex-1">
                       <Link href={`/profil/${r.profile.username}`} className="block truncate font-bold hover:underline">{r.profile.username}</Link>
-                      <span className="block text-xs text-ink-soft">{r.games} {r.games === 1 ? 'Spiel' : 'Spiele'} zusammen</span>
+                      <span className="block text-xs text-ink-soft">{r.games === 1 ? t('1 Spiel zusammen') : t('{count} Spiele zusammen', { count: r.games })}</span>
                     </span>
                     <span className={cx('tabular rounded-xl px-3 py-1 font-display text-2xl font-bold', lead > 0 ? 'bg-vert/20 text-vert' : lead < 0 ? 'bg-wax/15 text-wax' : 'bg-parchment-dark')}>
                       {r.wins} : {r.losses}
@@ -121,14 +125,14 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               );
             })}
           </ul>
-          <p className="-mt-1 text-xs text-parchment/60">Gezählt wird, wer im gemeinsamen Spiel vor dem anderen landete.</p>
+          <p className="-mt-1 text-xs text-parchment/60">{t('Gezählt wird, wer im gemeinsamen Spiel vor dem anderen landete.')}</p>
         </section>
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-4xl font-bold">Letzte Spiele</h2>
+        <h2 className="text-4xl font-bold">{t('Letzte Spiele')}</h2>
         {history.length === 0 ? (
-          <Card><p className="text-ink-soft">{isMe ? 'Noch keine Spiele. Eröffne einen Tisch auf der Startseite.' : 'Noch keine beendeten Spiele.'}</p></Card>
+          <Card><p className="text-ink-soft">{isMe ? t('Noch keine Spiele. Eröffne einen Tisch auf der Startseite.') : t('Noch keine beendeten Spiele.')}</p></Card>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {history.map((g) => {
@@ -139,7 +143,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               return (
                 <li key={g.gameId}>
                   <Card className="flex flex-col gap-2 p-4">
-                    <p className="text-sm font-bold text-ink-soft">{dateFmt.format(new Date(g.finishedAt))} · {g.rounds} {g.rounds === 1 ? 'Runde' : 'Runden'}</p>
+                    <p className="text-sm font-bold text-ink-soft">{dateFmt.format(new Date(g.finishedAt))} · {g.rounds === 1 ? t('1 Runde') : t('{count} Runden', { count: g.rounds })}</p>
                     <ol className="flex flex-col gap-1">
                       {rows.map((p) => (
                         <li key={p.key} className={cx('flex items-center gap-2 rounded-xl px-2 py-1', p.self && 'bg-gold/25', p.left && 'opacity-50')}>

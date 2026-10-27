@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { CrownMark } from '@/components/ui/logo';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import { JESTER } from '@/lib/jakob/cards';
 import { getSettings, rankTitle, teamPoints } from '@/lib/jakob/engine';
 import { describeCards, EVENT_TEXT, MISSION_TEXT, TEAM_INFO } from '@/lib/jakob/texts';
@@ -47,6 +48,7 @@ function ReadyList({ ids }: { ids: string[] }) {
 
 /** Rank ladder: who holds which title this round. */
 export function RankLadder({ order, showDraws }: { order: string[]; showDraws?: boolean }) {
+  const t = useT();
   const { state, nameOf, avatarOf, colorOf } = useTable();
   return (
     <ol className="flex flex-col gap-1.5">
@@ -63,10 +65,10 @@ export function RankLadder({ order, showDraws }: { order: string[]; showDraws?: 
           <Avatar profile={avatarOf(id)} ring={colorOf(id)} size="sm" />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold leading-tight">{nameOf(id, true)}</span>
-            <span className="block text-sm leading-tight text-ink-soft">{rankTitle(i, order.length)}</span>
+            <span className="block text-sm leading-tight text-ink-soft">{t(rankTitle(i, order.length))}</span>
           </span>
           {showDraws && state.draws[id] !== undefined && (
-            <span className="text-sm font-bold text-ink-soft">zog {state.draws[id] === JESTER ? 'Narr' : state.draws[id]}</span>
+            <span className="text-sm font-bold text-ink-soft">{t('zog {card}', { card: state.draws[id] === JESTER ? t('Narr') : state.draws[id] })}</span>
           )}
         </motion.li>
       ))}
@@ -75,6 +77,7 @@ export function RankLadder({ order, showDraws }: { order: string[]; showDraws?: 
 }
 
 export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
+  const t = useT();
   const { state, me, g, deckOf } = useTable();
   const drawn = state.draws[me];
   const deck = deckOf(me);
@@ -82,10 +85,10 @@ export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
   return (
     <Panel>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-4xl font-bold">Wer wird Großer Jakob?</h2>
+        <h2 className="text-4xl font-bold">{t('Wer wird Großer Jakob?')}</h2>
         <Countdown seconds={secondsLeft} />
       </div>
-      <p className="text-ink-soft">Jeder zieht eine Karte. Die kleinste Zahl besteigt den Thron, die größte schrubbt die Böden.</p>
+      <p className="text-ink-soft">{t('Jeder zieht eine Karte. Die kleinste Zahl besteigt den Thron, die größte schrubbt die Böden.')}</p>
       <div className="flex min-h-[8rem] items-center justify-center">
         <AnimatePresence mode="wait">
           {drawn === undefined ? (
@@ -98,7 +101,7 @@ export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
                   className="-ml-6 first:ml-0"
                   style={{ rotate: `${(i - 3) * 6}deg`, translate: `0 ${Math.abs(i - 3) * 4}px` }}
                   onClick={() => g.dispatch({ type: 'draw' })}
-                  label="Diese Karte ziehen"
+                  label={t('Diese Karte ziehen')}
                 />
               ))}
             </motion.div>
@@ -110,7 +113,7 @@ export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
         </AnimatePresence>
       </div>
       <p className="text-center font-bold text-ink-soft">
-        {drawn === undefined ? 'Tipp auf eine Karte.' : `Gezogen: ${drawn === JESTER ? 'ein Narr (zählt als 13)' : drawn}. Warte auf die anderen …`}
+        {drawn === undefined ? t('Tipp auf eine Karte.') : t('Gezogen: {card}. Warte auf die anderen …', { card: drawn === JESTER ? t('ein Narr (zählt als 13)') : drawn })}
         {' '}({Object.keys(state.draws).length}/{present.length})
       </p>
     </Panel>
@@ -118,6 +121,7 @@ export function DrawPhase({ secondsLeft }: { secondsLeft: number | null }) {
 }
 
 export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: number | null; handHasBothJesters: boolean }) {
+  const t = useT();
   const { state, me, g, nameOf, deckOf } = useTable();
   const settings = getSettings(state);
   const present = state.order.filter((id) => !state.players.find((p) => p.id === id)?.left);
@@ -126,7 +130,7 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
   return (
     <Panel>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-4xl font-bold">Hofzeremonie · Runde {state.round}</h2>
+        <h2 className="text-4xl font-bold">{t('Hofzeremonie · Runde {round}', { round: state.round })}</h2>
         <Countdown seconds={secondsLeft} />
       </div>
 
@@ -138,10 +142,10 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
             transition={{ type: 'spring', stiffness: 260, damping: 14 }}
             className="rounded-2xl bg-wax p-4 text-center text-parchment shadow-[0_5px_0_#7f1a22]"
           >
-            <p className="font-display text-4xl font-bold"><Icon name={rev.grand ? 'flame' : 'fist'} /> {rev.grand ? 'Große Revolution!' : 'Revolution!'}</p>
+            <p className="font-display text-4xl font-bold"><Icon name={rev.grand ? 'flame' : 'fist'} /> {rev.grand ? t('Große Revolution!') : t('Revolution!')}</p>
             <p className="font-bold">
-              {nameOf(rev.by, true)} {rev.by === me ? 'hast' : 'hat'} beide Narren.{' '}
-              {rev.grand ? 'Die Rangfolge dreht sich komplett um – und Steuern gibt es keine.' : 'Diese Runde zahlt niemand Steuern.'}
+              {rev.by === me ? t('Du hast beide Narren.') : t('{name} hat beide Narren.', { name: nameOf(rev.by) })}{' '}
+              {rev.grand ? t('Die Rangfolge dreht sich komplett um – und Steuern gibt es keine.') : t('Diese Runde zahlt niemand Steuern.')}
             </p>
           </motion.div>
         )}
@@ -151,8 +155,8 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
         <div className="flex items-center gap-3 rounded-2xl bg-velvet p-3 text-parchment">
           <Icon name={EVENT_ICONS[state.event] ?? 'sparkles'} className="size-10 text-gold-soft" />
           <span>
-            <span className="block font-display text-2xl font-bold text-gold-soft">Hofgeflüster: {EVENT_TEXT[state.event].title}</span>
-            <span className="block text-sm">{EVENT_TEXT[state.event].text}</span>
+            <span className="block font-display text-2xl font-bold text-gold-soft">{t('Hofgeflüster: {title}', { title: t(EVENT_TEXT[state.event].title) })}</span>
+            <span className="block text-sm">{t(EVENT_TEXT[state.event].text)}</span>
           </span>
         </div>
       )}
@@ -160,14 +164,14 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
       {state.audit && (
         <div className="flex items-center gap-3 rounded-2xl bg-parchment-dark/70 p-3">
           <PlayingCard rank={state.audit.card} deck={deckOf(state.audit.by)} size="sm" />
-          <p className="text-sm"><b><Icon name="search" /> Steuerprüfung:</b> {nameOf(state.audit.by, true)} {state.audit.by === me ? 'musst' : 'muss'} diese Karte allen zeigen.</p>
+          <p className="text-sm"><b><Icon name="search" /> {t('Steuerprüfung:')}</b> {state.audit.by === me ? t('Du musst diese Karte allen zeigen.') : t('{name} muss diese Karte allen zeigen.', { name: nameOf(state.audit.by) })}</p>
         </div>
       )}
 
       {state.mercyRound && (
-        <p className="rounded-2xl bg-azure/15 p-3 font-bold"><Icon name="dove" /> {nameOf(present.at(-1) ?? '', true)} hat um Gnade gebeten – die große Steuer entfällt.</p>
+        <p className="rounded-2xl bg-azure/15 p-3 font-bold"><Icon name="dove" /> {present.at(-1) === me ? t('Du hast um Gnade gebeten – die große Steuer entfällt.') : t('{name} hat um Gnade gebeten – die große Steuer entfällt.', { name: nameOf(present.at(-1) ?? '') })}</p>
       )}
-      {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold"><Icon name="throne" /> Der Große Jakob hat abgedankt.</p>}
+      {state.abdicated && <p className="rounded-2xl bg-gold/20 p-3 font-bold"><Icon name="throne" /> {t('Der Große Jakob hat abgedankt.')}</p>}
 
       <RankLadder order={present} showDraws={state.round === 1} />
 
@@ -175,45 +179,45 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
         <p className={cx('flex items-start gap-2 rounded-2xl px-3 py-2 text-sm', g.hand.mission.done ? 'bg-vert/15' : 'bg-gold/20')}>
           <Icon name={g.hand.mission.done ? 'check-circle' : 'target'} className="mt-0.5 size-5 shrink-0 text-gold-deep" />
           <span>
-            <b>Deine Mission: {MISSION_TEXT[g.hand.mission.id].title}</b> – {MISSION_TEXT[g.hand.mission.id].text}
-            {g.hand.mission.done && <b className="text-vert"> Erfüllt!</b>}
+            <b>{t('Deine Mission: {title}', { title: t(MISSION_TEXT[g.hand.mission.id].title) })}</b> – {t(MISSION_TEXT[g.hand.mission.id].text)}
+            {g.hand.mission.done && <b className="text-vert"> {t('Erfüllt!')}</b>}
           </span>
         </p>
       )}
 
       {settings.mercy && !rev && !state.mercyRound && present.at(-1) === me && !state.mercyUsed.includes(me) && (
         <div className="rounded-2xl border-2 border-dashed border-azure p-3">
-          <p className="mb-2 font-bold">Gnadenrecht: Einmal pro Spiel kannst du die große Steuer verweigern.</p>
-          <Button variant="secondary" onClick={() => g.dispatch({ type: 'mercy' })} disabled={g.busy}><Icon name="dove" /> Um Gnade bitten</Button>
+          <p className="mb-2 font-bold">{t('Gnadenrecht: Einmal pro Spiel kannst du die große Steuer verweigern.')}</p>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'mercy' })} disabled={g.busy}><Icon name="dove" /> {t('Um Gnade bitten')}</Button>
         </div>
       )}
 
       {settings.abdicate && !rev && !state.abdicated && present[0] === me && present.length >= 3 && (
         <div className="rounded-2xl border-2 border-dashed border-gold-deep p-3">
-          <p className="mb-2 font-bold">Abdankung: Du tauschst den Platz mit einem Bürger. Klug bei schwacher Hand – besonders, wenn der Königssturz droht.</p>
-          <Button variant="secondary" onClick={() => g.dispatch({ type: 'abdicate' })} disabled={g.busy}><Icon name="throne" /> Abdanken</Button>
+          <p className="mb-2 font-bold">{t('Abdankung: Du tauschst den Platz mit einem Bürger. Klug bei schwacher Hand – besonders, wenn der Königssturz droht.')}</p>
+          <Button variant="secondary" onClick={() => g.dispatch({ type: 'abdicate' })} disabled={g.busy}><Icon name="throne" /> {t('Abdanken')}</Button>
         </div>
       )}
 
       {settings.revolution && !rev && handHasBothJesters && (
         <div className="rounded-2xl border-2 border-dashed border-wax p-3">
-          <p className="mb-2 font-bold text-wax">Du hast beide Narren! Willst du die Revolution ausrufen?</p>
+          <p className="mb-2 font-bold text-wax">{t('Du hast beide Narren! Willst du die Revolution ausrufen?')}</p>
           <p className="mb-3 text-sm text-ink-soft">
             {present.at(-1) === me
-              ? 'Als Großer Knecht wäre es eine Große Revolution: Du wirst sofort Großer Jakob und niemand zahlt Steuern.'
-              : 'Dann zahlt diese Runde niemand Steuern.'}
+              ? t('Als Großer Knecht wäre es eine Große Revolution: Du wirst sofort Großer Jakob und niemand zahlt Steuern.')
+              : t('Dann zahlt diese Runde niemand Steuern.')}
           </p>
           <Button variant="danger" onClick={() => g.dispatch({ type: 'revolution' })} disabled={g.busy}>
-            <Icon name={present.at(-1) === me ? 'flame' : 'fist'} /> {present.at(-1) === me ? 'Große Revolution!' : 'Revolution ausrufen'}
+            <Icon name={present.at(-1) === me ? 'flame' : 'fist'} /> {present.at(-1) === me ? t('Große Revolution!') : t('Revolution ausrufen')}
           </Button>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>
-          {ready ? <>Bereit <Icon name="check" strokeWidth={2.5} /></> : 'Bereit'}
+          {ready ? <>{t('Bereit')} <Icon name="check" strokeWidth={2.5} /></> : t('Bereit')}
         </Button>
-        <p className="text-sm text-ink-soft">Schau dir deine Karten an. Es geht los, sobald alle bereit sind.</p>
+        <p className="text-sm text-ink-soft">{t('Schau dir deine Karten an. Es geht los, sobald alle bereit sind.')}</p>
       </div>
       <ReadyList ids={present} />
     </Panel>
@@ -221,45 +225,53 @@ export function CourtPhase({ secondsLeft, handHasBothJesters }: { secondsLeft: n
 }
 
 export function TaxPhase({ secondsLeft }: { secondsLeft: number | null }) {
+  const t = useT();
   const { state, me, g, nameOf, deckOf } = useTable();
-  const mine = state.tax.find((t) => t.to === me);
-  const paying = state.tax.find((t) => t.from === me);
+  const mine = state.tax.find((x) => x.to === me);
+  const paying = state.tax.find((x) => x.from === me);
   const deck = deckOf(me);
   return (
     <Panel className="max-w-xl">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-4xl font-bold">Steuern!</h2>
+        <h2 className="text-4xl font-bold">{t('Steuern!')}</h2>
         <Countdown seconds={secondsLeft} />
       </div>
       <ul className="flex flex-col gap-1 text-sm">
-        {state.tax.map((t) => (
-          <li key={t.to} className="flex items-center gap-2">
-            <Icon name={t.done ? 'check-circle' : 'hourglass'} className="size-5" />
-            <span><b>{nameOf(t.from, true)}</b> {t.from === me ? 'zahlst' : 'zahlt'} {t.count} {t.count === 1 ? 'Karte' : 'Karten'} an <b>{nameOf(t.to, true)}</b>{t.done ? ' – erledigt' : ''}</span>
+        {state.tax.map((tx) => (
+          <li key={tx.to} className="flex items-center gap-2">
+            <Icon name={tx.done ? 'check-circle' : 'hourglass'} className="size-5" />
+            <span>
+              <b>{nameOf(tx.from, true)}</b>{' '}
+              {tx.from === me
+                ? (tx.count === 1 ? t('zahlst 1 Karte an') : t('zahlst {count} Karten an', { count: tx.count }))
+                : (tx.count === 1 ? t('zahlt 1 Karte an') : t('zahlt {count} Karten an', { count: tx.count }))}{' '}
+              <b>{tx.to === me ? t('dich') : nameOf(tx.to)}</b>{tx.done ? ` – ${t('erledigt')}` : ''}
+            </span>
           </li>
         ))}
       </ul>
       {mine && !mine.done && (
         <div className="rounded-2xl bg-gold/25 p-3">
-          <p className="font-bold">Du hast {describeCards(g.hand.received)} bekommen.</p>
+          <p className="font-bold">{t('Du hast {cards} bekommen.', { cards: describeCards(g.hand.received, t) })}</p>
           <div className="my-2 flex gap-1.5">{g.hand.received.map((c, i) => <PlayingCard key={i} rank={c} deck={deckOf(mine.from)} size="sm" />)}</div>
-          <p>Wähle unten <b>{mine.count} {mine.count === 1 ? 'Karte' : 'Karten'}</b>, die du zurückgibst – gern deine schlechtesten.</p>
+          <p>{t('Wähle unten')} <b>{mine.count === 1 ? t('1 Karte') : t('{count} Karten', { count: mine.count })}</b>{t(', die du zurückgibst – gern deine schlechtesten.')}</p>
         </div>
       )}
-      {mine?.done && <p className="font-bold text-ink-soft">Erledigt. Warte auf die anderen …</p>}
+      {mine?.done && <p className="font-bold text-ink-soft">{t('Erledigt. Warte auf die anderen …')}</p>}
       {paying && (
         <div className="rounded-2xl bg-parchment-dark/70 p-3">
-          <p className="font-bold">Du musstest deine besten Karten abgeben:</p>
+          <p className="font-bold">{t('Du musstest deine besten Karten abgeben:')}</p>
           <div className="my-2 flex gap-1.5">{g.hand.gave.map((c, i) => <PlayingCard key={i} rank={c} deck={deck} size="sm" />)}</div>
-          <p className="text-sm text-ink-soft">{paying.done ? 'Du hast dafür Karten zurückbekommen.' : `${nameOf(paying.to)} sucht gerade aus, was du zurückbekommst …`}</p>
+          <p className="text-sm text-ink-soft">{paying.done ? t('Du hast dafür Karten zurückbekommen.') : t('{name} sucht gerade aus, was du zurückbekommst …', { name: nameOf(paying.to) })}</p>
         </div>
       )}
-      {!mine && !paying && <p className="text-ink-soft">Die Steuern werden eingetrieben. Du bist diesmal fein raus.</p>}
+      {!mine && !paying && <p className="text-ink-soft">{t('Die Steuern werden eingetrieben. Du bist diesmal fein raus.')}</p>}
     </Panel>
   );
 }
 
 export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
+  const t = useT();
   const { state, me, g, nameOf, avatarOf, colorOf } = useTable();
   const last = state.history.at(-1);
   if (!last) return null;
@@ -268,7 +280,7 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
   return (
     <Panel>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-4xl font-bold">Runde {last.round} ist vorbei</h2>
+        <h2 className="text-4xl font-bold">{t('Runde {round} ist vorbei', { round: last.round })}</h2>
         <Countdown seconds={secondsLeft} />
       </div>
       <ol className="flex flex-col gap-1.5">
@@ -297,11 +309,11 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-bold leading-tight">{nameOf(id, true)}</span>
-              <span className="block text-sm leading-tight text-ink-soft">wird {rankTitle(i, last.finish.length)}</span>
+              <span className="block text-sm leading-tight text-ink-soft">{t('wird {title}', { title: t(rankTitle(i, last.finish.length)) })}</span>
             </span>
             <span className="tabular text-right font-display text-2xl font-bold">
               +{last.points[id] ?? 0}
-              <span className="block text-xs font-sans text-ink-soft">{state.points[id] ?? 0} gesamt</span>
+              <span className="block text-xs font-sans text-ink-soft">{t('{points} gesamt', { points: state.points[id] ?? 0 })}</span>
             </span>
           </motion.li>
         ))}
@@ -309,12 +321,12 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
       {state.teams && <TeamScore />}
       <p className="text-sm text-ink-soft">
         {getSettings(state).goal !== null
-          ? `Gespielt wird bis ${getSettings(state).goal} Punkte.`
-          : `Noch ${getSettings(state).rounds - last.round} ${getSettings(state).rounds - last.round === 1 ? 'Runde' : 'Runden'}.`}
-        {' '}Gleich wird neu gemischt und gegeben.
+          ? t('Gespielt wird bis {goal} Punkte.', { goal: getSettings(state).goal ?? '' })
+          : getSettings(state).rounds - last.round === 1 ? t('Noch 1 Runde.') : t('Noch {count} Runden.', { count: getSettings(state).rounds - last.round })}
+        {' '}{t('Gleich wird neu gemischt und gegeben.')}
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>{ready ? <>Bereit <Icon name="check" strokeWidth={2.5} /></> : 'Nächste Runde'}</Button>
+        <Button size="lg" onClick={() => g.dispatch({ type: 'ready' })} disabled={ready || g.busy}>{ready ? <>{t('Bereit')} <Icon name="check" strokeWidth={2.5} /></> : t('Nächste Runde')}</Button>
       </div>
       <ReadyList ids={present} />
     </Panel>
@@ -324,14 +336,15 @@ export function RoundEndPhase({ secondsLeft }: { secondsLeft: number | null }) {
 
 /** Team totals (Adel gegen Volk). */
 export function TeamScore() {
+  const t = useT();
   const { state } = useTable();
   const totals = teamPoints(state);
   return (
     <div className="grid grid-cols-2 gap-2">
-      {([0, 1] as const).map((t) => (
-        <div key={t} className="rounded-2xl p-3 text-center text-parchment" style={{ backgroundColor: TEAM_INFO[t].color }}>
-          <span className="block text-sm font-bold"><Icon name={TEAM_ICONS[t]} /> {TEAM_INFO[t].name}</span>
-          <span className="tabular block font-display text-3xl font-bold">{totals[t]}</span>
+      {([0, 1] as const).map((team) => (
+        <div key={team} className="rounded-2xl p-3 text-center text-parchment" style={{ backgroundColor: TEAM_INFO[team].color }}>
+          <span className="block text-sm font-bold"><Icon name={TEAM_ICONS[team]} /> {t(TEAM_INFO[team].name)}</span>
+          <span className="tabular block font-display text-3xl font-bold">{totals[team]}</span>
         </div>
       ))}
     </div>

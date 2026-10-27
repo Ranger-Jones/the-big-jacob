@@ -1,4 +1,6 @@
+'use client';
 import { cx } from '@/lib/cx';
+import { useIntlLocale, useT } from '@/lib/i18n/client';
 import type { PlayerStats } from '@/server/profile-service';
 
 const TILES = [
@@ -11,25 +13,27 @@ const TILES = [
 ] as const;
 
 export function StatsGrid({ stats, compact = false }: { stats: PlayerStats; compact?: boolean }) {
+  const t = useT();
+  const intl = useIntlLocale();
   const values: Record<(typeof TILES)[number]['key'], string> = {
     games: String(stats.games_played),
     wins: String(stats.wins),
     rate: stats.games_played ? `${Math.round((stats.wins / stats.games_played) * 100)} %` : '–',
     crowns: String(stats.crowns),
     revolutions: String(stats.revolutions + stats.grand_revolutions),
-    place: stats.games_played ? stats.avg_place.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '–',
+    place: stats.games_played ? stats.avg_place.toLocaleString(intl, { maximumFractionDigits: 1 }) : '–',
   };
   return (
     <dl className={cx('grid gap-2.5', compact ? 'grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3')}>
-      {TILES.map((t) => (
+      {TILES.map((tile) => (
         <div
-          key={t.key}
+          key={tile.key}
           className="flex min-w-0 flex-col-reverse rounded-[1.1rem] bg-velvet-deep/50 px-3 py-2.5 text-parchment ring-1 ring-gold/20"
-          style={{ boxShadow: `inset 0 -3px 0 ${t.color}` }}
+          style={{ boxShadow: `inset 0 -3px 0 ${tile.color}` }}
         >
-          <dt className="truncate text-sm font-bold text-parchment/65">{t.label}</dt>
-          <dd data-testid={`stat-${t.key}`} className={cx('tabular whitespace-nowrap font-display font-bold text-gold-soft', compact ? 'text-2xl sm:text-3xl' : 'text-4xl')}>
-            {values[t.key]}
+          <dt className="truncate text-sm font-bold text-parchment/65">{t(tile.label)}</dt>
+          <dd data-testid={`stat-${tile.key}`} className={cx('tabular whitespace-nowrap font-display font-bold text-gold-soft', compact ? 'text-2xl sm:text-3xl' : 'text-4xl')}>
+            {values[tile.key]}
           </dd>
         </div>
       ))}

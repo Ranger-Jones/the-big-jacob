@@ -14,6 +14,7 @@ import { JESTER } from '@/lib/jakob/cards';
 import { hasArt } from './art';
 import { defaultLayout, elementHandles, LayoutFace, type ElementKey, type GestureMode } from './card-layout';
 import { Icon } from '@/components/ui/icons';
+import { useT } from '@/lib/i18n/client';
 
 export type HistoryMode = 'push' | 'coalesce' | 'none';
 export type DesignChange = (fn: (d: DeckDesign) => DeckDesign, opts?: { history?: HistoryMode; key?: string }) => void;
@@ -54,11 +55,12 @@ function Slider({ label, value, min, max, step = 1, onChange, unit = '' }: {
 }
 
 function ColorRow({ label, value, onChange, onReset }: { label: string; value: string; onChange: (v: string) => void; onReset?: () => void }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between gap-2 py-1">
       <span className="text-sm font-bold">{label}</span>
       <span className="flex items-center gap-1">
-        {onReset && <button type="button" onClick={onReset} className="rounded-lg px-2 py-1 text-xs font-bold text-ink-soft hover:bg-parchment-dark">Standard</button>}
+        {onReset && <button type="button" onClick={onReset} className="rounded-lg px-2 py-1 text-xs font-bold text-ink-soft hover:bg-parchment-dark">{t('Standard')}</button>}
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="size-9 cursor-pointer rounded-lg border-2 border-line bg-transparent" aria-label={label} />
       </span>
     </div>
@@ -70,6 +72,7 @@ const newStickerId = () => `${Date.now().toString(36).slice(-6)}${(stickerCounte
 
 /** Interactive large card with drag/scale/rotate handles and an inspector for the selected element. */
 export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo, uploading, onUploadPhoto, onPickArt }: StudioProps) {
+  const t = useT();
   const card = design.cards[rank - 1];
   const layout = card.layout ?? defaultLayout(design, card);
   const custom = !!card.layout;
@@ -326,9 +329,9 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
   /** Bottom to top, the same order the card draws its layers. */
   const elementOrder: ElementKey[] = ['picture', ...layout.stickers.map((s) => `sticker:${s.id}` as ElementKey), 'name', 'number'];
   const elementLabel = (key: ElementKey): ReactNode => {
-    if (key === 'picture') return <><Icon name="image" /> Bild{layout.picture.visible ? '' : ' (aus)'}</>;
-    if (key === 'number') return <><Icon name="hash" /> Zahl{layout.number.style === 'aus' ? ' (aus)' : ''}</>;
-    if (key === 'name') return <><Icon name="tag" /> Name{layout.name.style === 'aus' ? ' (aus)' : ''}</>;
+    if (key === 'picture') return <><Icon name="image" /> {layout.picture.visible ? t('Bild') : t('Bild (aus)')}</>;
+    if (key === 'number') return <><Icon name="hash" /> {layout.number.style === 'aus' ? t('Zahl (aus)') : t('Zahl')}</>;
+    if (key === 'name') return <><Icon name="tag" /> {layout.name.style === 'aus' ? t('Name (aus)') : t('Name')}</>;
     const st = stickerOf(key);
     if (!st) return '';
     return st.kind === 'emoji' ? st.value : <><Icon name="pencil" /> {st.value.slice(0, 10)}</>;
@@ -354,14 +357,14 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
         {scale && (
           <span
             onPointerDown={(e) => hooks.onPointerDown(e, selected, 'scale')}
-            title={fill ? 'Zoomen' : 'Größe ändern'}
+            title={fill ? t('Zoomen') : t('Größe ändern')}
             className="pointer-events-auto absolute -bottom-3 -right-3 size-7 cursor-nwse-resize touch-none rounded-full border-2 border-white bg-azure shadow-lg"
           />
         )}
         {rotate && (
           <span
             onPointerDown={(e) => hooks.onPointerDown(e, selected, 'rotate')}
-            title="Drehen"
+            title={t('Drehen')}
             className="pointer-events-auto absolute -top-9 left-1/2 flex size-7 -translate-x-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-white bg-gold text-sm shadow-lg"
           >
             <Icon name="rotate" className="size-4 text-[#2b1a12]" strokeWidth={2.2} />
@@ -381,28 +384,28 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
     const set = edit('picture');
     inspector = (
       <>
-        <h3 className="text-2xl font-bold">Bild</h3>
+        <h3 className="text-2xl font-bold">{t('Bild')}</h3>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={onUploadPhoto} disabled={uploading}>{uploading ? 'Lädt …' : <><Icon name="camera" /> {hasPhoto ? 'Foto ändern' : 'Foto'}</>}</Button>
-          <Button size="sm" variant="secondary" onClick={onPickArt}><Icon name="palette" /> Grafik</Button>
+          <Button size="sm" variant="secondary" onClick={onUploadPhoto} disabled={uploading}>{uploading ? t('Lädt …') : <><Icon name="camera" /> {hasPhoto ? t('Foto ändern') : t('Foto')}</>}</Button>
+          <Button size="sm" variant="secondary" onClick={onPickArt}><Icon name="palette" /> {t('Grafik')}</Button>
         </div>
-        <Switch label="Ganze Karte füllen" hint="Das Bild bedeckt die komplette Vorderseite." checked={p.fill} onChange={(fill) => setLayout((l) => ({ ...l, picture: { ...l.picture, fill } }), { history: 'push' })} />
+        <Switch label={t('Ganze Karte füllen')} hint={t('Das Bild bedeckt die komplette Vorderseite.')} checked={p.fill} onChange={(fill) => setLayout((l) => ({ ...l, picture: { ...l.picture, fill } }), { history: 'push' })} />
         {!p.fill && (
           <>
-            <Segmented label="Form" value={p.shape} options={PICTURE_SHAPES.map((s) => ({ value: s, label: PICTURE_SHAPE_LABELS[s] }))} onChange={(shape) => setLayout((l) => ({ ...l, picture: { ...l.picture, shape } }), { history: 'push' })} />
-            <Slider label="Größe" value={p.size} min={10} max={160} unit=" %" onChange={(size) => set((l) => ({ ...l, picture: { ...l.picture, size } }))} />
-            <Slider label="Drehung" value={p.rotate} min={-180} max={180} unit="°" onChange={(rotate) => set((l) => ({ ...l, picture: { ...l.picture, rotate } }))} />
+            <Segmented label={t('Form')} value={p.shape} options={PICTURE_SHAPES.map((s) => ({ value: s, label: t(PICTURE_SHAPE_LABELS[s]) }))} onChange={(shape) => setLayout((l) => ({ ...l, picture: { ...l.picture, shape } }), { history: 'push' })} />
+            <Slider label={t('Größe')} value={p.size} min={10} max={160} unit=" %" onChange={(size) => set((l) => ({ ...l, picture: { ...l.picture, size } }))} />
+            <Slider label={t('Drehung')} value={p.rotate} min={-180} max={180} unit="°" onChange={(rotate) => set((l) => ({ ...l, picture: { ...l.picture, rotate } }))} />
           </>
         )}
         {(hasPhoto || p.fill) && (
           <>
-            <Slider label="Zoom" value={p.zoom * 100} min={100} max={500} unit=" %" onChange={(z) => set((l) => ({ ...l, picture: { ...l.picture, zoom: z / 100 } }))} />
-            <Slider label="Ausschnitt waagerecht" value={p.panX} min={-100} max={100} onChange={(panX) => set((l) => ({ ...l, picture: { ...l.picture, panX } }))} />
-            <Slider label="Ausschnitt senkrecht" value={p.panY} min={-100} max={100} onChange={(panY) => set((l) => ({ ...l, picture: { ...l.picture, panY } }))} />
-            {!p.fill && !drawn && <Switch label="Ausschnitt mit dem Finger verschieben" hint="Ziehen verschiebt dann das Foto im Rahmen statt den Rahmen." checked={panMode} onChange={setPanMode} />}
+            <Slider label={t('Zoom')} value={p.zoom * 100} min={100} max={500} unit=" %" onChange={(z) => set((l) => ({ ...l, picture: { ...l.picture, zoom: z / 100 } }))} />
+            <Slider label={t('Ausschnitt waagerecht')} value={p.panX} min={-100} max={100} onChange={(panX) => set((l) => ({ ...l, picture: { ...l.picture, panX } }))} />
+            <Slider label={t('Ausschnitt senkrecht')} value={p.panY} min={-100} max={100} onChange={(panY) => set((l) => ({ ...l, picture: { ...l.picture, panY } }))} />
+            {!p.fill && !drawn && <Switch label={t('Ausschnitt mit dem Finger verschieben')} hint={t('Ziehen verschiebt dann das Foto im Rahmen statt den Rahmen.')} checked={panMode} onChange={setPanMode} />}
           </>
         )}
-        <Switch label="Bild anzeigen" checked={p.visible} onChange={(visible) => setLayout((l) => ({ ...l, picture: { ...l.picture, visible } }), { history: 'push' })} />
+        <Switch label={t('Bild anzeigen')} checked={p.visible} onChange={(visible) => setLayout((l) => ({ ...l, picture: { ...l.picture, visible } }), { history: 'push' })} />
       </>
     );
   } else if (selected === 'number') {
@@ -410,19 +413,19 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
     const set = edit('number');
     inspector = (
       <>
-        <h3 className="text-2xl font-bold">Zahl</h3>
-        <Segmented label="Darstellung" value={n.style} options={NUMBER_STYLES.map((s) => ({ value: s, label: NUMBER_STYLE_LABELS[s] }))}
+        <h3 className="text-2xl font-bold">{t('Zahl')}</h3>
+        <Segmented label={t('Darstellung')} value={n.style} options={NUMBER_STYLES.map((s) => ({ value: s, label: t(NUMBER_STYLE_LABELS[s]) }))}
           onChange={(style) => setLayout((l) => ({
             ...l, number: style === 'gross' ? { ...l.number, style, x: 50, y: 22, size: 40 } : style === 'ecken' ? { ...l.number, style, x: 13, y: 9, size: 19 } : { ...l.number, style },
           }), { history: 'push' })} />
         {n.style !== 'aus' && (
           <>
-            <Slider label="Größe" value={n.size} min={6} max={80} unit=" %" onChange={(size) => set((l) => ({ ...l, number: { ...l.number, size } }))} />
-            <ColorRow label="Farbe" value={n.color ?? design.accent} onChange={(color) => set((l) => ({ ...l, number: { ...l.number, color } }))}
+            <Slider label={t('Größe')} value={n.size} min={6} max={80} unit=" %" onChange={(size) => set((l) => ({ ...l, number: { ...l.number, size } }))} />
+            <ColorRow label={t('Farbe')} value={n.color ?? design.accent} onChange={(color) => set((l) => ({ ...l, number: { ...l.number, color } }))}
               onReset={n.color ? () => setLayout((l) => ({ ...l, number: { ...l.number, color: null } }), { history: 'push' }) : undefined} />
           </>
         )}
-        {n.style === 'ecken' && <p className="text-sm text-ink-soft">Die Zahl unten rechts spiegelt die obere automatisch.</p>}
+        {n.style === 'ecken' && <p className="text-sm text-ink-soft">{t('Die Zahl unten rechts spiegelt die obere automatisch.')}</p>}
       </>
     );
   } else if (selected === 'name') {
@@ -430,20 +433,20 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
     const set = edit('name');
     inspector = (
       <>
-        <h3 className="text-2xl font-bold">Name</h3>
+        <h3 className="text-2xl font-bold">{t('Name')}</h3>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-bold">Text</span>
+          <span className="text-sm font-bold">{t('Text')}</span>
           <input
             value={card.name} maxLength={24}
             onChange={(e) => change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, name: e.target.value } : c)) }), { history: 'coalesce', key: `${rank}-nametext` })}
             className="h-10 rounded-xl bg-white/5 px-3 font-bold text-ink ring-1 ring-inset ring-line outline-none focus:ring-gold-deep"
           />
         </label>
-        <Segmented label="Stil" value={n.style} options={NAME_STYLES.map((s) => ({ value: s, label: NAME_STYLE_LABELS[s] }))} onChange={(style) => setLayout((l) => ({ ...l, name: { ...l.name, style } }), { history: 'push' })} />
+        <Segmented label={t('Stil')} value={n.style} options={NAME_STYLES.map((s) => ({ value: s, label: t(NAME_STYLE_LABELS[s]) }))} onChange={(style) => setLayout((l) => ({ ...l, name: { ...l.name, style } }), { history: 'push' })} />
         {n.style !== 'aus' && (
           <>
-            <Slider label="Schriftgröße" value={n.size} min={3} max={20} step={0.5} unit=" %" onChange={(size) => set((l) => ({ ...l, name: { ...l.name, size } }))} />
-            <Slider label="Breite" value={n.width} min={20} max={100} unit=" %" onChange={(width) => set((l) => ({ ...l, name: { ...l.name, width } }))} />
+            <Slider label={t('Schriftgröße')} value={n.size} min={3} max={20} step={0.5} unit=" %" onChange={(size) => set((l) => ({ ...l, name: { ...l.name, size } }))} />
+            <Slider label={t('Breite')} value={n.width} min={20} max={100} unit=" %" onChange={(width) => set((l) => ({ ...l, name: { ...l.name, width } }))} />
           </>
         )}
       </>
@@ -452,9 +455,9 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
     const key = `sticker:${sticker.id}` as ElementKey;
     inspector = (
       <>
-        <h3 className="text-2xl font-bold">{sticker.kind === 'emoji' ? 'Sticker' : 'Text'}</h3>
+        <h3 className="text-2xl font-bold">{sticker.kind === 'emoji' ? t('Sticker') : t('Text')}</h3>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-bold">{sticker.kind === 'emoji' ? 'Emoji' : 'Text'}</span>
+          <span className="text-sm font-bold">{sticker.kind === 'emoji' ? t('Emoji') : t('Text')}</span>
           <input
             value={sticker.value} maxLength={24}
             onChange={(e) => e.target.value.trim() && updateSticker(sticker.id, { value: e.target.value })}
@@ -468,37 +471,37 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
             ))}
           </div>
         )}
-        <Slider label="Größe" value={sticker.size} min={3} max={90} unit=" %" onChange={(size) => updateSticker(sticker.id, { size })} />
-        <Slider label="Drehung" value={sticker.rotate} min={-180} max={180} unit="°" onChange={(rotate) => updateSticker(sticker.id, { rotate })} />
-        {sticker.kind === 'text' && <ColorRow label="Farbe" value={sticker.color} onChange={(color) => updateSticker(sticker.id, { color })} />}
+        <Slider label={t('Größe')} value={sticker.size} min={3} max={90} unit=" %" onChange={(size) => updateSticker(sticker.id, { size })} />
+        <Slider label={t('Drehung')} value={sticker.rotate} min={-180} max={180} unit="°" onChange={(rotate) => updateSticker(sticker.id, { rotate })} />
+        {sticker.kind === 'text' && <ColorRow label={t('Farbe')} value={sticker.color} onChange={(color) => updateSticker(sticker.id, { color })} />}
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => reorderSticker(key, 1)}>Nach vorne</Button>
-          <Button size="sm" variant="secondary" onClick={() => reorderSticker(key, -1)}>Nach hinten</Button>
+          <Button size="sm" variant="secondary" onClick={() => reorderSticker(key, 1)}>{t('Nach vorne')}</Button>
+          <Button size="sm" variant="secondary" onClick={() => reorderSticker(key, -1)}>{t('Nach hinten')}</Button>
           <Button size="sm" variant="secondary" onClick={() => {
             const copy = { ...sticker, id: newStickerId(), x: sticker.x + 4, y: sticker.y + 4 };
             setLayout((l) => ({ ...l, stickers: [...l.stickers, copy] }), { history: 'push' });
             setSelected(`sticker:${copy.id}`);
-          }} disabled={layout.stickers.length >= 12}>Duplizieren</Button>
-          <Button size="sm" variant="danger" onClick={() => removeSticker(key)}>Löschen</Button>
+          }} disabled={layout.stickers.length >= 12}>{t('Duplizieren')}</Button>
+          <Button size="sm" variant="danger" onClick={() => removeSticker(key)}>{t('Löschen')}</Button>
         </div>
       </>
     );
   } else {
     inspector = (
       <>
-        <h3 className="text-2xl font-bold">Karte {rank === JESTER ? 'Narr' : rank}</h3>
+        <h3 className="text-2xl font-bold">{t('Karte {rank}', { rank: rank === JESTER ? t('Narr') : rank })}</h3>
         <p className="text-sm text-ink-soft">
-          Tippe ein Element auf der Karte oder oben bei „Ebenen“ an. Ziehen verschiebt, der blaue Punkt skaliert, der goldene dreht.
-          Mit zwei Fingern kannst du zoomen und drehen, mit Tab zwischen den Elementen wechseln.
+          {t('Tippe ein Element auf der Karte oder oben bei „Ebenen“ an. Ziehen verschiebt, der blaue Punkt skaliert, der goldene dreht.')}{' '}
+          {t('Mit zwei Fingern kannst du zoomen und drehen, mit Tab zwischen den Elementen wechseln.')}
         </p>
-        <ColorRow label="Hintergrund" value={layout.background ?? design.paper}
+        <ColorRow label={t('Hintergrund')} value={layout.background ?? design.paper}
           onChange={(background) => edit('background')((l) => ({ ...l, background }))}
           onReset={layout.background ? () => setLayout((l) => ({ ...l, background: null }), { history: 'push' }) : undefined} />
-        <Switch label="Zierrahmen" hint="Goldene Innenlinie mit Eck-Rauten." checked={layout.frame} onChange={(frame) => setLayout((l) => ({ ...l, frame }), { history: 'push' })} />
+        <Switch label={t('Zierrahmen')} hint={t('Goldene Innenlinie mit Eck-Rauten.')} checked={layout.frame} onChange={(frame) => setLayout((l) => ({ ...l, frame }), { history: 'push' })} />
         <div className="flex flex-wrap gap-2 pt-1">
-          <Button size="sm" variant="secondary" onClick={() => setSelected('picture')}>Bild</Button>
-          <Button size="sm" variant="secondary" onClick={() => setSelected('number')}>Zahl</Button>
-          <Button size="sm" variant="secondary" onClick={() => setSelected('name')}>Name</Button>
+          <Button size="sm" variant="secondary" onClick={() => setSelected('picture')}>{t('Bild')}</Button>
+          <Button size="sm" variant="secondary" onClick={() => setSelected('number')}>{t('Zahl')}</Button>
+          <Button size="sm" variant="secondary" onClick={() => setSelected('name')}>{t('Name')}</Button>
         </div>
       </>
     );
@@ -507,18 +510,18 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="velvet" onClick={undo} disabled={!canUndo} aria-label="Rückgängig"><Icon name="undo" className="size-5" /></Button>
-        <Button size="sm" variant="velvet" onClick={redo} disabled={!canRedo} aria-label="Wiederholen"><Icon name="redo" className="size-5" /></Button>
+        <Button size="sm" variant="velvet" onClick={undo} disabled={!canUndo} aria-label={t('Rückgängig')}><Icon name="undo" className="size-5" /></Button>
+        <Button size="sm" variant="velvet" onClick={redo} disabled={!canRedo} aria-label={t('Wiederholen')}><Icon name="redo" className="size-5" /></Button>
         <span className="mx-1 h-6 w-px bg-white/20" aria-hidden />
-        <Button size="sm" variant="velvet" onClick={() => addSticker('emoji')} disabled={layout.stickers.length >= 12}><Icon name="star" /> Sticker</Button>
-        <Button size="sm" variant="velvet" onClick={() => addSticker('text')} disabled={layout.stickers.length >= 12}><Icon name="pencil" /> Text</Button>
+        <Button size="sm" variant="velvet" onClick={() => addSticker('emoji')} disabled={layout.stickers.length >= 12}><Icon name="star" /> {t('Sticker')}</Button>
+        <Button size="sm" variant="velvet" onClick={() => addSticker('text')} disabled={layout.stickers.length >= 12}><Icon name="pencil" /> {t('Text')}</Button>
         <span className="mx-1 h-6 w-px bg-white/20" aria-hidden />
-        <Button size="sm" variant="velvet" onClick={() => setCopyOpen(true)}>Auf alle Karten</Button>
-        {custom && <Button size="sm" variant="ghost" onClick={() => { change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, layout: null } : c)) }), { history: 'push' }); setSelected(null); }}>Standard-Layout</Button>}
+        <Button size="sm" variant="velvet" onClick={() => setCopyOpen(true)}>{t('Auf alle Karten')}</Button>
+        {custom && <Button size="sm" variant="ghost" onClick={() => { change((d) => ({ ...d, cards: d.cards.map((c, i) => (i === rank - 1 ? { ...c, layout: null } : c)) }), { history: 'push' }); setSelected(null); }}>{t('Standard-Layout')}</Button>}
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5" role="toolbar" aria-label="Ebenen">
-        <span className="mr-1 text-sm font-bold text-parchment/70">Ebenen:</span>
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5" role="toolbar" aria-label={t('Ebenen')}>
+        <span className="mr-1 text-sm font-bold text-parchment/70">{t('Ebenen:')}</span>
         {[...elementOrder].reverse().map((key) => (
           <button
             key={key}
@@ -533,7 +536,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
             {elementLabel(key)}
           </button>
         ))}
-        {selected && <button type="button" onClick={() => setSelected(null)} className="min-h-9 rounded-xl px-2 text-sm font-bold text-parchment/70 hover:text-parchment">Auswahl aufheben</button>}
+        {selected && <button type="button" onClick={() => setSelected(null)} className="min-h-9 rounded-xl px-2 text-sm font-bold text-parchment/70 hover:text-parchment">{t('Auswahl aufheben')}</button>}
       </div>
 
       <div className="grid min-w-0 gap-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
@@ -541,7 +544,7 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
           ref={canvas}
           tabIndex={0}
           role="application"
-          aria-label="Kartenleinwand – Elemente antippen, ziehen, skalieren und drehen"
+          aria-label={t('Kartenleinwand – Elemente antippen, ziehen, skalieren und drehen')}
           onKeyDown={onKeyDown}
           onPointerDownCapture={onPointerDownCapture}
           onPointerDown={() => setSelected(null)}
@@ -562,12 +565,12 @@ export function CardStudio({ design, rank, change, undo, redo, canUndo, canRedo,
         <div className="parchment flex min-w-0 flex-col gap-2 rounded-2xl p-4 ring-1 ring-line">{inspector}</div>
       </div>
 
-      <Modal open={copyOpen} onClose={() => setCopyOpen(false)} title="Layout auf alle Karten übertragen?">
-        <p className="text-ink-soft">Position und Stil von Bild, Zahl und Name dieser Karte gelten dann für alle 13 Karten. Bilder, Namen und Grafiken der Karten bleiben erhalten.</p>
-        <Switch label="Sticker mitkopieren" checked={copyStickers} onChange={setCopyStickers} />
+      <Modal open={copyOpen} onClose={() => setCopyOpen(false)} title={t('Layout auf alle Karten übertragen?')}>
+        <p className="text-ink-soft">{t('Position und Stil von Bild, Zahl und Name dieser Karte gelten dann für alle 13 Karten. Bilder, Namen und Grafiken der Karten bleiben erhalten.')}</p>
+        <Switch label={t('Sticker mitkopieren')} checked={copyStickers} onChange={setCopyStickers} />
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setCopyOpen(false)}>Abbrechen</Button>
-          <Button onClick={copyToAll}>Übertragen</Button>
+          <Button variant="ghost" onClick={() => setCopyOpen(false)}>{t('Abbrechen')}</Button>
+          <Button onClick={copyToAll}>{t('Übertragen')}</Button>
         </div>
       </Modal>
     </div>

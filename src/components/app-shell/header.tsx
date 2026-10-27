@@ -38,11 +38,15 @@ export async function Header() {
             <LevelPip xp={user.xp ?? 0} className="absolute -bottom-1.5 -right-1.5" />
           </Link>
         </nav>
-      ) : unlocked && (
+      ) : (
         <nav className="flex items-center gap-1">
           <LanguageSwitch />
-          <NavLink href="/regeln" icon="scroll">{t('Regeln')}</NavLink>
-          <NavLink href="/login" icon="key">{t('Einloggen')}</NavLink>
+          {unlocked && (
+            <>
+              <NavLink href="/regeln" icon="scroll">{t('Regeln')}</NavLink>
+              <NavLink href="/login" icon="key">{t('Einloggen')}</NavLink>
+            </>
+          )}
         </nav>
       )}
     </header>

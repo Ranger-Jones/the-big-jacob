@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getT } from '@/lib/i18n/server';
 import { privateHand } from '@/lib/jakob/engine';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
@@ -10,7 +11,10 @@ import { listFriends } from '@/server/social-service';
 import { GameClient } from './game-client';
 import { JoinError } from './join-error';
 
-export const metadata: Metadata = { title: 'Am Tisch' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Am Tisch') };
+}
 
 export default async function GamePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -21,7 +25,8 @@ export default async function GamePage({ params }: { params: Promise<{ code: str
   if (!game.state.players.some((p) => p.id === user.id)) {
     const joined = await joinGame(admin, user.id, code);
     if (!joined.ok) {
-      return <JoinError message={joined.error} spectateHref={game.state.status === 'playing' ? `/spiel/${game.code}/zuschauen` : undefined} />;
+      const t = await getT();
+      return <JoinError message={t(joined.error)} spectateHref={game.state.status === 'playing' ? `/spiel/${game.code}/zuschauen` : undefined} />;
     }
     game = await loadGameByCode(admin, code);
     if (!game) notFound();

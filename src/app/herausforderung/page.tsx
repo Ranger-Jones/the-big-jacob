@@ -3,18 +3,24 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { cx } from '@/lib/cx';
 import { berlinDay, berlinYesterday } from '@/lib/daily';
+import { intlLocale } from '@/lib/i18n/core';
+import { getLocale, getT } from '@/lib/i18n/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
 import { DailyStart } from './daily-start';
 import { Icon, Medal } from '@/components/ui/icons';
 
-export const metadata: Metadata = { title: 'Tägliche Herausforderung' };
-const dayFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Tägliche Herausforderung') };
+}
 
 type Row = { user_id: string; points: number; place: number; profiles: { username: string; avatar_url: string | null; avatar_frame: string | null } | null };
 
 export default async function DailyPage() {
   const user = await requireUser();
+  const t = await getT();
+  const dayFmt = new Intl.DateTimeFormat(intlLocale(await getLocale()), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
   const admin = createAdminClient();
   const today = berlinDay();
   const yesterday = berlinYesterday();
@@ -30,21 +36,21 @@ export default async function DailyPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 pb-14">
       <div>
-        <h1 className="gold-text text-6xl font-bold">Tägliche Herausforderung</h1>
-        <p className="mt-1 text-parchment/80">{dayFmt.format(new Date())}: Alle bekommen dieselben Karten. Drei Runden gegen drei gerissene Bots – ein Versuch pro Tag.</p>
+        <h1 className="gold-text text-6xl font-bold">{t('Tägliche Herausforderung')}</h1>
+        <p className="mt-1 text-parchment/80">{dayFmt.format(new Date())}: {t('Alle bekommen dieselben Karten. Drei Runden gegen drei gerissene Bots – ein Versuch pro Tag.')}</p>
       </div>
 
       <Card className="flex flex-col gap-3">
         {mine ? (
           <>
-            <h2 className="text-3xl font-bold">Dein Ergebnis heute</h2>
-            <p className="text-xl"><b>{mine.points} Punkte</b> · {mine.place}. Platz am Tisch</p>
-            <p className="text-sm text-ink-soft">Morgen wartet eine neue Hand.</p>
+            <h2 className="text-3xl font-bold">{t('Dein Ergebnis heute')}</h2>
+            <p className="text-xl"><b>{t('{n} Punkte', { n: mine.points })}</b> · {t('{place}. Platz am Tisch', { place: mine.place })}</p>
+            <p className="text-sm text-ink-soft">{t('Morgen wartet eine neue Hand.')}</p>
           </>
         ) : (
           <>
-            <h2 className="text-3xl font-bold">Bereit für heute?</h2>
-            <p className="text-ink-soft">Gezählt werden deine Punkte nach drei Runden. Verlässt du den Tisch, zählt der Versuch nicht.</p>
+            <h2 className="text-3xl font-bold">{t('Bereit für heute?')}</h2>
+            <p className="text-ink-soft">{t('Gezählt werden deine Punkte nach drei Runden. Verlässt du den Tisch, zählt der Versuch nicht.')}</p>
             <DailyStart />
           </>
         )}
@@ -52,14 +58,14 @@ export default async function DailyPage() {
 
       {champion?.profiles && (
         <p className="rounded-2xl bg-velvet-deep/70 p-3 text-center ring-2 ring-gold/40">
-          <Icon name="crown" className="text-gold-soft" /> Gestern gewann <b>{champion.profiles.username}</b> mit {champion.points} Punkten.
+          <Icon name="crown" className="text-gold-soft" /> {t('Gestern gewann')} <b>{champion.profiles.username}</b> {t('mit {n} Punkten.', { n: champion.points })}
         </p>
       )}
 
       <Card className="flex flex-col gap-2 p-0">
-        <h2 className="px-5 pt-4 text-3xl font-bold">Rangliste heute</h2>
+        <h2 className="px-5 pt-4 text-3xl font-bold">{t('Rangliste heute')}</h2>
         {list.length === 0 ? (
-          <p className="px-5 pb-5 text-ink-soft">Noch niemand hat heute gespielt. Hol dir Platz 1!</p>
+          <p className="px-5 pb-5 text-ink-soft">{t('Noch niemand hat heute gespielt. Hol dir Platz 1!')}</p>
         ) : (
           <ol className="flex flex-col">
             {list.map((r, i) => (

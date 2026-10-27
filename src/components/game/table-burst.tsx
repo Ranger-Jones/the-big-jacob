@@ -1,5 +1,6 @@
 'use client';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useT } from '@/lib/i18n/client';
 import type { LogEntry } from '@/lib/jakob/types';
 import { Icon } from '@/components/ui/icons';
 
@@ -69,6 +70,7 @@ function Rays() {
  */
 export function TableBurst({ entry, subtitle }: { entry: (LogEntry & { kind: BurstKind }) | null; subtitle: string | null }) {
   const reduce = useReducedMotion();
+  const t = useT();
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-[50%/42%]" aria-live="assertive">
       <AnimatePresence>
@@ -102,7 +104,7 @@ export function TableBurst({ entry, subtitle }: { entry: (LogEntry & { kind: Bur
               transition={{ type: 'spring', stiffness: 520, damping: 16 }}
             >
               <Icon name={entry.kind === 'snap' ? 'bolt' : entry.kind === 'bomb' ? 'bomb' : 'crown'} className="mr-2 size-[0.85em] align-[-0.08em]" strokeWidth={2.2} />
-              {STAMP[entry.kind].text}
+              {t(STAMP[entry.kind].text)}
             </motion.span>
             {subtitle && (
               <motion.span

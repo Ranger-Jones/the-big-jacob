@@ -1,3 +1,5 @@
+import { format, type T } from './i18n/core';
+
 /** Month helpers (Berlin calendar) for the monthly league. */
 export const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
@@ -25,13 +27,14 @@ export function sameMonth(a: MonthKey, b: MonthKey): boolean {
   return a.year === b.year && a.month === b.month;
 }
 
-export function monthLabel(key: MonthKey): string {
-  return `${MONTHS[key.month - 1]} ${key.year}`;
+export function monthLabel(key: MonthKey, t: T = format): string {
+  return `${t(MONTHS[key.month - 1])} ${key.year}`;
 }
 
 /** "König des Oktobers" */
-export function monthTitle(key: MonthKey): string {
+export function monthTitle(key: MonthKey, t: T = format): string {
   const name = MONTHS[key.month - 1];
   const genitive = /[sxzß]$/.test(name) ? name : `${name}s`;
-  return `König des ${genitive} ${key.year}`;
+  // One dictionary key per month ("König des Oktobers {year}").
+  return t(`König des ${genitive} {year}`, { year: key.year });
 }

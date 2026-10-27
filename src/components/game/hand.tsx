@@ -2,6 +2,7 @@
 import { motion } from 'motion/react';
 import { PlayingCard } from '@/components/deck/playing-card';
 import { cx } from '@/lib/cx';
+import { useT } from '@/lib/i18n/client';
 import type { DeckEntry } from '@/lib/decks';
 import { countBy, JESTER, rankWord } from '@/lib/jakob/cards';
 import type { Trick } from '@/lib/jakob/types';
@@ -29,6 +30,7 @@ interface Props {
 
 /** Your hand as one stack per rank – compact on phones, quick to select with one tap. */
 export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount = 0, playable, received = [] }: Props) {
+  const t = useT();
   const groups = [...countBy(cards)].sort((a, b) => a[0] - b[0]);
   const receivedSet = new Set(received);
   const total = Object.values(selection).reduce((a, b) => a + b, 0);
@@ -55,11 +57,11 @@ export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount =
   }
 
   return (
-    <ul className="no-scrollbar -mx-4 flex gap-x-1.5 overflow-x-auto px-4 pb-1 pt-3 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-3 sm:overflow-visible sm:px-0 sm:pt-0" aria-label="Deine Karten">
+    <ul className="no-scrollbar -mx-4 flex gap-x-1.5 overflow-x-auto px-4 pb-1 pt-3 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-3 sm:overflow-visible sm:px-0 sm:pt-0" aria-label={t('Deine Karten')}>
       {groups.map(([rank, count], i) => {
         const sel = selection[rank] ?? 0;
         const dim = mode === 'play' && playable ? !playable.has(rank) : false;
-        const name = rank === JESTER ? 'Narr' : rankWord(rank);
+        const name = rank === JESTER ? t('Narr') : t(rankWord(rank));
         return (
           <motion.li
             key={rank}
@@ -81,7 +83,7 @@ export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount =
               dimmed={dim && sel === 0}
               marked={receivedSet.has(rank)}
               onClick={mode === 'view' ? undefined : () => tap(rank, count)}
-              label={`${name}, ${count} Stück${sel ? `, ${sel} ausgewählt` : ''}`}
+              label={sel ? t('{name}, {count} Stück, {sel} ausgewählt', { name, count, sel }) : t('{name}, {count} Stück', { name, count })}
             />
             <span className={cx(
               'pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-2 text-xs font-bold tabular shadow',
@@ -92,7 +94,7 @@ export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount =
           </motion.li>
         );
       })}
-      {groups.length === 0 && <li className="py-6 font-display text-2xl text-parchment/70">Keine Karten mehr – gut gemacht!</li>}
+      {groups.length === 0 && <li className="py-6 font-display text-2xl text-parchment/70">{t('Keine Karten mehr – gut gemacht!')}</li>}
     </ul>
   );
 }
