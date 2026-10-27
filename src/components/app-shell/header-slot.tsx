@@ -62,6 +62,8 @@ export function HeaderSlot({ children }: { children: ReactNode }) {
     <>
       {/* Keeps page content from showing through behind the status bar of the installed app. */}
       <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-40 h-[env(safe-area-inset-top)] bg-velvet-deep" />
+      {/* At the table on phones the header is hidden, but the game's own toolbar must still clear the status bar. */}
+      {atTable && <div aria-hidden className="h-[env(safe-area-inset-top)] sm:hidden" />}
       <div
         className={cx(
           'sticky top-0 z-30 pt-[env(safe-area-inset-top)] transition-[transform,background-color,box-shadow] duration-300 ease-out',

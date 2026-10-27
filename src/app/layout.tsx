@@ -43,6 +43,9 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         ) : content}
         <Toaster
           position="top-center"
+          // Pop-ups start below the iPhone status bar in the installed app.
+          offset={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
+          mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}
           toastOptions={{
             style: {
               fontFamily: 'var(--font-alegreya)', borderRadius: '1rem', background: '#1f1135', color: '#f6ead2',

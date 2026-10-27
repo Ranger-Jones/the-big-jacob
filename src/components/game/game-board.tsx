@@ -108,7 +108,8 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-2 px-4 pb-2 pt-2 sm:gap-3 sm:pb-6 sm:pt-0 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-5">
       <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
+        {/* Game toolbar: on phones it stays pinned right below the status bar while the page scrolls. */}
+        <div className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 flex items-center justify-between gap-2 bg-velvet/80 px-4 py-1.5 backdrop-blur-md sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <p className="min-w-0 truncate font-display text-2xl text-gold-soft">
             {state.mode === 'campaign' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="sword" /> Station {state.modeRef}</span>}
             {state.mode === 'daily' && <span className="mr-2 rounded-lg bg-velvet-soft px-2 font-sans text-sm text-parchment"><Icon name="calendar" /> Tagesaufgabe</span>}
