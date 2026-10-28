@@ -8,4 +8,6 @@ class Config {
   /// Local testing only: signs in with this test account at start (never set for release builds).
   static const devEmail = String.fromEnvironment('DEV_EMAIL');
   static const devPassword = String.fromEnvironment('DEV_PASSWORD');
+  /// Diagnostics: logs every touch with its position and the widgets it hit.
+  static const tapLog = bool.fromEnvironment('TAP_LOG');
 }

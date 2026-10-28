@@ -45,4 +45,32 @@ describe('app api', () => {
     expect(renderArt('constructor', new URLSearchParams())).toBeNull();
     expect(renderArt('h-crown', new URLSearchParams('bg=red'))).toBeNull();
   });
+
+  it('runs courts, the deck gallery and profile edits', async () => {
+    const lord = await ctxFor('cl');
+    const vassal = await ctxFor('cv');
+    const crest = ((await GET.courts(lord())) as { ok: true; data: { crests: string[] } }).data.crests[0];
+    expect((await POST.court(lord([], { op: 'create', name: 'X', crest }))).ok).toBe(false);
+    const created = await POST.court(lord([], { op: 'create', name: 'Wache Nord', crest }));
+    if (!created.ok) throw new Error(created.error);
+    const id = (created.data as { id: string }).id;
+    const detail = await GET.court(lord([id]));
+    const code = detail.ok ? (detail.data as { inviteCode: string }).inviteCode : '';
+    expect((await POST.court(vassal([], { op: 'join', code: code.toLowerCase() }))).ok).toBe(true);
+    expect((await GET.court(vassal([id]))).ok).toBe(true);
+    expect((await POST.court(vassal([], { op: 'kick', id, memberId: lord().user.id }))).ok).toBe(false);
+
+    const mine = await POST.deck(lord([], { op: 'copy', id: 'preset:hofstaat' }));
+    if (!mine.ok) throw new Error(mine.error);
+    const deckId = (mine.data as { id: string }).id;
+    expect((await POST.deck(vassal([], { op: 'public', id: deckId, public: true }))).ok).toBe(false);
+    expect((await POST.deck(lord([], { op: 'public', id: deckId, public: true }))).ok).toBe(true);
+    expect(await POST.deck(vassal([], { op: 'like', id: deckId }))).toEqual({ ok: true, data: { liked: true } });
+    const gallery = await GET.gallery(vassal([], {}, 'sort=neu'));
+    expect(gallery.ok && (gallery.data as { decks: { id: string }[] }).decks.some((d) => d.id === deckId)).toBe(true);
+
+    expect((await POST.profile(lord([], { op: 'rename', username: 'a b' }))).ok).toBe(false);
+    expect((await POST.profile(lord([], { op: 'avatar', url: 'https://evil.example/a.png' }))).ok).toBe(false);
+    expect((await POST.profile(lord([], { op: 'removeAvatar' }))).ok).toBe(true);
+  });
 });

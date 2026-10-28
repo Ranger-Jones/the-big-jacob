@@ -45,6 +45,16 @@ class Api {
     }
   }
 
+  /// Images stored by a local backend point at 127.0.0.1; on a phone in the WLAN they live at the
+  /// Supabase address the app uses.
+  static String media(String url) {
+    final u = Uri.tryParse(url);
+    if (u == null || (u.host != '127.0.0.1' && u.host != 'localhost')) return url;
+    final base = Uri.parse(Config.supabaseUrl);
+    if (base.host == u.host) return url;
+    return u.replace(scheme: base.scheme, host: base.host, port: base.port).toString();
+  }
+
   static String artUrl(String id, {int rank = 1, String bg = '#3d2361', bool full = true, bool numeral = true}) =>
       Uri.parse('${Config.apiBase}/api/app/art/$id').replace(queryParameters: {
         'rank': '$rank',

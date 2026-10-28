@@ -52,7 +52,7 @@ class PlayingCard extends StatelessWidget {
     Widget body;
     if (full && face.image != null) {
       body = Stack(fit: StackFit.expand, children: [
-        Image.network(face.image!, fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: frame)),
+        Image.network(Api.media(face.image!), fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: frame)),
         const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xAA000000)]))),
         Positioned(left: 6 * s, top: 5 * s, child: _CornerBadge(text: numeral(rank), deck: deck, size: 22 * s)),
       ]);
@@ -81,7 +81,7 @@ class PlayingCard extends StatelessWidget {
               decoration: BoxDecoration(shape: BoxShape.circle, color: frame, border: Border.all(color: accent, width: 2.4 * s)),
               clipBehavior: Clip.antiAlias,
               child: face.image != null
-                  ? Image.network(face.image!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox())
+                  ? Image.network(Api.media(face.image!), fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox())
                   : face.art != null
                       ? Padding(padding: EdgeInsets.all(4 * s), child: SvgPicture.network(Api.artUrl(face.art!, full: false)))
                       : Center(child: Text(face.emoji, style: TextStyle(fontSize: 30 * s))),
@@ -181,7 +181,7 @@ class CardBack extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: image != null
-          ? Image.network(image, fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: a))
+          ? Image.network(Api.media(image), fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: a))
           : CustomPaint(
               painter: _PatternPainter(back['pattern'] as String? ?? 'rauten', a, b),
               child: Center(

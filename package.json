@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:lan": "sh scripts/dev-lan.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

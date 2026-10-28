@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../api.dart';
 import '../game/models.dart';
 import '../theme.dart';
 
@@ -185,7 +186,7 @@ class Avatar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: url != null
-          ? Image.network(url!, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => Text(initials, style: T.display(size * .38)))
+          ? Image.network(Api.media(url!), width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => Text(initials, style: T.display(size * .38)))
           : emoji != null
               ? Text(emoji!, style: TextStyle(fontSize: size * .55))
               : Text(initials, style: T.display(size * .38, color: C.ink)),

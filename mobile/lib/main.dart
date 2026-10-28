@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -44,6 +45,7 @@ class _JakobAppState extends State<JakobApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: Config.tapLog ? (context, child) => _TapLog(child: child!) : null,
       title: 'Der Große Jakob',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
@@ -61,4 +63,26 @@ class _JakobAppState extends State<JakobApp> {
             ),
     );
   }
+}
+
+/// Prints where each touch lands and which render objects it hits (enabled with --dart-define=TAP_LOG=true).
+class _TapLog extends StatelessWidget {
+  final Widget child;
+  const _TapLog({required this.child});
+
+  @override
+  Widget build(BuildContext context) => Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (e) {
+          final result = HitTestResult();
+          WidgetsBinding.instance.hitTestInView(result, e.position, View.of(context).viewId);
+          final hits = result.path.map((h) => h.target).whereType<RenderObject>()
+              .map((r) => r.debugCreator?.toString().split('←').first.trim() ?? r.runtimeType.toString())
+              .where((s) => s.contains('GestureDetector') || s.contains('InkWell') || s.contains('Button') || s.contains('PlayingCard') || s.contains('Text'))
+              .take(4)
+              .join(' | ');
+          debugPrint('TAP ${e.position.dx.toStringAsFixed(0)},${e.position.dy.toStringAsFixed(0)} -> $hits');
+        },
+        child: child,
+      );
 }

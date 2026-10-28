@@ -10,14 +10,18 @@ import { privateHand } from '@/lib/jakob/engine';
 import { monthOf, monthTitle } from '@/lib/months';
 import { createAdminClient, type AdminClient } from '@/lib/supabase/admin';
 import { sendChatMessage } from '../chat-service';
-import { getDecksByIds, getDefaultDeckId, listDecks, setDefaultDeck } from '../deck-service';
+import { CREST_IDS } from '@/components/courts/crest';
+import { createCourt, getCourt, joinCourt, leaveCourt, listMyCourts, removeCourtMember, renameCourt } from '../court-service';
+import {
+  copyDeck, getDecksByIds, getDefaultDeckId, listDecks, listGallery, publicDeckIds, setDeckPublic, setDefaultDeck, toggleDeckLike,
+} from '../deck-service';
 import { runGameAction, uuid } from '../game-commands';
 import { createGame, joinGame, loadGameByCode, requestRematch, toView } from '../game-service';
 import { findOrCreatePublicLobby, publicLobbyStats } from '../matchmaking-service';
 import {
   badgesFor, getDetailedStats, getHistory, getKingOfWeek, getLeaderboard, getMonthlyChampions,
   getMonthlyLeaderboard, getQuickEmojis, getRivalries, getStatsByUsername, listActiveGames,
-  isUsernameTaken, USERNAME_RE,
+  isUsernameTaken, removeAvatar, renameUser, setAvatarUrl, USERNAME_RE,
 } from '../profile-service';
 import { sendPush } from '../push-service';
 import { getRatingLeaderboard, getRatingSummary } from '../rating-service';
@@ -33,6 +37,10 @@ export interface Ctx { admin: AdminClient; user: AppUser; params: string[]; body
 type Handler = (ctx: Ctx) => Promise<ServiceResult<unknown>>;
 
 const name = z.string().trim().min(1).max(40);
+const courtInput = z.object({
+  name: z.string().trim().min(2, 'Der Name braucht mindestens 2 Zeichen.').max(40, 'Höchstens 40 Zeichen.'),
+  crest: z.string().refine((id) => CREST_IDS.includes(id), 'Unbekanntes Wappen.'),
+});
 
 async function gameCode(admin: AdminClient, gameId: string) {
   return (await admin.from('games').select('code').eq('id', gameId).single()).data?.code;
@@ -147,6 +155,22 @@ export const GET: Record<string, Handler> = {
     const [mine, defaultId] = await Promise.all([listDecks(admin, user.id), getDefaultDeckId(admin, user.id)]);
     return ok({ presets: PRESETS, mine, defaultId: defaultId ?? PRESETS[0].id });
   },
+
+  async gallery({ admin, user, query }) {
+    const sort = query.get('sort') === 'neu' ? 'neu' : 'beliebt';
+    const [decks, shared] = await Promise.all([listGallery(admin, user.id, sort), publicDeckIds(admin, user.id)]);
+    return ok({ sort, decks: decks.filter((d) => d.ownerId !== user.id), shared });
+  },
+
+  async courts({ admin, user }) {
+    return ok({ courts: await listMyCourts(admin, user.id), crests: CREST_IDS });
+  },
+
+  async court({ admin, user, params }) {
+    if (!uuid.safeParse(params[0]).success) return fail('Hof nicht gefunden.');
+    const court = await getCourt(admin, user.id, params[0]);
+    return court ? ok({ ...court, crests: CREST_IDS }) : fail('Hof nicht gefunden.');
+  },
 };
 
 export const POST: Record<string, Handler> = {
@@ -235,7 +259,49 @@ export const POST: Record<string, Handler> = {
   async deck({ admin, user, body }) {
     const id = body.id === null ? null : String(body.id ?? '');
     if (id !== null && (id.length < 1 || id.length > 64)) return fail('Deck nicht gefunden.');
-    return setDefaultDeck(admin, user.id, id);
+    switch (body.op ?? 'default') {
+      case 'default': return setDefaultDeck(admin, user.id, id);
+      case 'copy': return id ? copyDeck(admin, user.id, id) : fail('Deck nicht gefunden.');
+      case 'like': return uuid.safeParse(id).success ? toggleDeckLike(admin, user.id, id!) : fail('Deck nicht gefunden.');
+      case 'public': return uuid.safeParse(id).success ? setDeckPublic(admin, user.id, id!, body.public === true) : fail('Deck nicht gefunden.');
+      default: return fail('Ungültige Aktion.');
+    }
+  },
+
+  async court({ admin, user, body }) {
+    const id = String(body.id ?? '');
+    const input = courtInput.safeParse({ name: body.name, crest: body.crest });
+    switch (body.op) {
+      case 'create':
+        if (!input.success) return fail(input.error.issues[0].message);
+        return createCourt(admin, user.id, input.data.name, input.data.crest);
+      case 'join': {
+        const code = String(body.code ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return code.length === 8 ? joinCourt(admin, user.id, code) : fail('Der Einladungscode hat 8 Zeichen.');
+      }
+      case 'leave':
+        return uuid.safeParse(id).success ? leaveCourt(admin, user.id, id) : fail('Hof nicht gefunden.');
+      case 'kick': {
+        const member = String(body.memberId ?? '');
+        if (!uuid.safeParse(id).success || !uuid.safeParse(member).success) return fail('Mitglied nicht gefunden.');
+        return removeCourtMember(admin, user.id, id, member);
+      }
+      case 'update':
+        if (!uuid.safeParse(id).success) return fail('Hof nicht gefunden.');
+        if (!input.success) return fail(input.error.issues[0].message);
+        return renameCourt(admin, user.id, id, input.data.name, input.data.crest);
+      default:
+        return fail('Ungültige Aktion.');
+    }
+  },
+
+  async profile({ admin, user, body }) {
+    switch (body.op) {
+      case 'rename': return renameUser(admin, user.id, String(body.username ?? ''));
+      case 'avatar': return typeof body.url === 'string' ? setAvatarUrl(admin, user.id, body.url) : fail('Ungültige Bild-URL.');
+      case 'removeAvatar': return removeAvatar(admin, user.id);
+      default: return fail('Ungültige Aktion.');
+    }
   },
 };
 
