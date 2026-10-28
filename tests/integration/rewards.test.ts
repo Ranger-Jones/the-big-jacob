@@ -16,6 +16,15 @@ describe('dukaten rewards', () => {
     expect(data).toEqual({ played: 3, won: 2 });
   });
 
+  it('counts only one first win when duels finish at the same moment', async () => {
+    const u = await createTestUser('rr');
+    const results = await Promise.all(Array.from({ length: 8 }, () =>
+      admin.rpc('record_bot_duel', { p_user: u.id, p_persona: 'nikita', p_won: true }).then((r) => r.data)));
+    expect(results.filter(Boolean)).toHaveLength(1);
+    const { data } = await admin.from('bot_records').select('played, won').eq('user_id', u.id).eq('persona', 'nikita').single();
+    expect(data).toEqual({ played: 8, won: 8 });
+  });
+
   it('adds dukaten through the server only', async () => {
     const u = await createTestUser('rd');
     await admin.rpc('grant_dukaten', { p_user: u.id, p_amount: 40 });

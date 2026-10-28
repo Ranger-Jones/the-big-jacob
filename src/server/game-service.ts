@@ -136,11 +136,13 @@ async function afterFinish(admin: AdminClient, gameId: string, state: GameState)
   const place = placements(state)[human.id] ?? 99;
   if (state.mode === 'campaign' && place === 1) {
     const level = Number(state.modeRef);
-    const { data } = await admin.from('profiles').select('campaign_level').eq('id', human.id).maybeSingle();
-    if (data && Number.isInteger(level) && data.campaign_level < level) {
-      // The day of the conquest locks the next new station until tomorrow.
-      await admin.from('profiles').update({ campaign_level: level, campaign_won_on: berlinDay() }).eq('id', human.id);
-      await admin.rpc('grant_dukaten', { p_user: human.id, p_amount: CAMPAIGN_STATION_DUKATEN });
+    if (Number.isInteger(level)) {
+      // Conditional in one statement: only the finish that actually raises the level pays the reward
+      // (two games of the same station ending at once cannot both claim it).
+      const { data: raised } = await admin.from('profiles')
+        .update({ campaign_level: level, campaign_won_on: berlinDay() })
+        .eq('id', human.id).lt('campaign_level', level).select('id');
+      if (raised && raised.length > 0) await admin.rpc('grant_dukaten', { p_user: human.id, p_amount: CAMPAIGN_STATION_DUKATEN });
     }
   }
   if (state.mode === 'duel' && state.modeRef && state.history.length > 0) {
