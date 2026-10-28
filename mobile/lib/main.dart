@@ -15,6 +15,10 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent));
   await Supabase.initialize(url: Config.supabaseUrl, publishableKey: Config.supabaseKey);
   final prefs = await SharedPreferences.getInstance();
+  if (Config.devEmail.isNotEmpty && Supabase.instance.client.auth.currentSession == null) {
+    await prefs.setBool('gate_open', true);
+    await Supabase.instance.client.auth.signInWithPassword(email: Config.devEmail, password: Config.devPassword);
+  }
   runApp(JakobApp(gateOpen: prefs.getBool('gate_open') ?? false));
 }
 

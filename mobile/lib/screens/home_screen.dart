@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 18),
           TextField(
             controller: ctrl, autofocus: true, textCapitalization: TextCapitalization.characters, maxLength: 6,
-            textAlign: TextAlign.center, style: T.display(36, color: C.goldSoft).copyWith(letterSpacing: 8),
+            textAlign: TextAlign.center, style: T.body(34, color: C.goldSoft, weight: FontWeight.w800).copyWith(letterSpacing: 8),
             decoration: const InputDecoration(hintText: 'ABC123', counterText: ''),
             onSubmitted: (v) => Navigator.pop(ctx, v),
           ),
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(color: C.night, borderRadius: BorderRadius.circular(12), border: Border.all(color: C.line)),
-                        child: Text(g['code'] as String, style: T.display(20, color: C.goldSoft).copyWith(letterSpacing: 2)),
+                        child: Text(g['code'] as String, style: T.body(18, color: C.goldSoft, weight: FontWeight.w800).copyWith(letterSpacing: 2)),
                       ),
                       const SizedBox(width: 14),
                       Expanded(

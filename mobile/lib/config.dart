@@ -4,4 +4,8 @@ class Config {
   static const apiBase = String.fromEnvironment('API_BASE', defaultValue: 'https://the-big-jacob.vercel.app');
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://xyoccsrhogjlgjnohhft.supabase.co');
   static const supabaseKey = String.fromEnvironment('SUPABASE_KEY', defaultValue: 'sb_publishable_ys4vbLs0eV3te_S9eRzgjQ_Co_vxb9i');
+
+  /// Local testing only: signs in with this test account at start (never set for release builds).
+  static const devEmail = String.fromEnvironment('DEV_EMAIL');
+  static const devPassword = String.fromEnvironment('DEV_PASSWORD');
 }

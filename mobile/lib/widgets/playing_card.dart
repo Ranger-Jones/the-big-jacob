@@ -114,7 +114,11 @@ class PlayingCard extends StatelessWidget {
       ]),
     );
     if (!dimmed) return card;
-    return Opacity(opacity: .42, child: ColorFiltered(colorFilter: const ColorFilter.mode(Color(0x55000000), BlendMode.darken), child: card));
+    // Unplayable cards sink into the shadow instead of turning milky.
+    return Stack(children: [
+      card,
+      Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(color: const Color(0xA6120A1F), borderRadius: BorderRadius.circular(9 * s)))),
+    ]);
   }
 }
 

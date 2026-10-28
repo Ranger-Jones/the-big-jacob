@@ -285,6 +285,8 @@ class GameController extends ChangeNotifier {
       _applyHand(d['hand'] as Map, version);
       _schedule();
       notifyListeners();
+      // New bots or a changed deck need their deck design.
+      if (action['type'] == 'addBot' || action['type'] == 'setDeck') _loadMissing().then((_) => notifyListeners());
       return true;
     }
     await refetch();
