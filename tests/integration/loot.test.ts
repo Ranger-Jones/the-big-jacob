@@ -39,6 +39,17 @@ describe('loot chests', () => {
     expect(counts.legendaer).toBeGreaterThan(0);
   });
 
+  it('caps chests from games per day', async () => {
+    const u = await createTestUser('lc');
+    const grant = (count: number, day: string) =>
+      admin.rpc('grant_loot_chests', { p_user: u.id, p_count: count, p_day: day, p_cap: 10 }).then((r) => r.data);
+    expect(await grant(2, '2026-10-28')).toBe(2);
+    expect(await grant(9, '2026-10-28')).toBe(8);
+    expect(await grant(1, '2026-10-28')).toBe(0);
+    expect(await grant(1, '2026-10-29')).toBe(1);
+    expect((await getLoot(admin, u.id)).chests).toBe(3 + 11);
+  });
+
   it('grants a chest per finished game', async () => {
     const u = await createTestUser('lg');
     const created = await createGame(admin, u.id);

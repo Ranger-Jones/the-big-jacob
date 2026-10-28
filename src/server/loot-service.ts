@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import { berlinDay } from '@/lib/daily';
 import type { GameState } from '@/lib/jakob/engine';
 import { placements } from '@/lib/jakob/engine';
 import { LOOT_BY_ID, LOOT_ITEMS, RARITY_ORDER, RARITY_WEIGHT, type LootItem, type LootKind, type LootRarity } from '@/lib/loot/catalog';
@@ -9,6 +10,8 @@ import { fail, ok, type ServiceResult } from './result';
 export const DUPE_DUKATEN: Record<LootRarity, number> = { normal: 5, selten: 12, episch: 30, legendaer: 80 };
 /** Price of one chest in Dukaten. */
 export const CHEST_PRICE = 60;
+/** Most chests a player can earn from games per (Berlin) day. */
+export const DAILY_GAME_CHESTS = 10;
 const KINDS: LootKind[] = ['rahmen', 'wappen', 'rueckseite', 'filz'];
 
 export type Equipped = Partial<Record<LootKind, string>>;
@@ -95,7 +98,10 @@ export async function equipLoot(admin: AdminClient, userId: string, kind: unknow
 
 /** Every finished game earns a chest, the winner gets a second one. */
 export async function grantGameChests(admin: AdminClient, state: GameState) {
+  // Only games with at least one round played count, and at most DAILY_GAME_CHESTS a day.
+  if (state.history.length === 0) return;
   const places = placements(state);
+  const day = berlinDay();
   await Promise.all(state.players.filter((p) => !p.bot && !p.left).map((p) =>
-    admin.rpc('grant_loot_chests', { p_user: p.id, p_count: places[p.id] === 1 ? 2 : 1 })));
+    admin.rpc('grant_loot_chests', { p_user: p.id, p_count: places[p.id] === 1 ? 2 : 1, p_day: day, p_cap: DAILY_GAME_CHESTS })));
 }

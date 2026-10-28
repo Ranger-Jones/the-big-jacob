@@ -583,14 +583,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"campaign_won_on": string | null,"chests": number,"created_at": string,"default_deck": string | null,"dukaten": number,"id": string,"loot_equipped": NonNullable<Json>,"peak_rating": number,"quick_emojis": (string)[] | null,"rated_games": number,"rating": number,"table_felt": string | null,"username": string,"xp": number
+                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"campaign_won_on": string | null,"chest_day": string | null,"chests": number,"chests_today": number,"created_at": string,"default_deck": string | null,"dukaten": number,"id": string,"loot_equipped": NonNullable<Json>,"peak_rating": number,"quick_emojis": (string)[] | null,"rated_games": number,"rating": number,"table_felt": string | null,"username": string,"xp": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chests"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id": string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username": string,"xp"?: number
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chest_day"?: string | null,"chests"?: number,"chests_today"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id": string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username": string,"xp"?: number
                   }
                   Update: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chests"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id"?: string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username"?: string,"xp"?: number
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chest_day"?: string | null,"chests"?: number,"chests_today"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id"?: string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username"?: string,"xp"?: number
                   }
                   Relationships: [
                     
@@ -703,7 +703,7 @@ isOneToOne: false
 { Args: { "p_expected_version": number,"p_game_id": string,"p_hands": Json,"p_players": Json,"p_secret": Json,"p_state": Json }; Returns: number
                            },
 "grant_loot_chests":
-{ Args: { "p_count": number,"p_user": string }; Returns: undefined
+{ Args: { "p_cap": number,"p_count": number,"p_day": string,"p_user": string }; Returns: number
                            },
 "is_court_member":
 { Args: { "cid": string }; Returns: boolean
