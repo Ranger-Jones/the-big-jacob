@@ -18,26 +18,32 @@ String deckStyleLine(Deck deck) {
   return '$font · $back';
 }
 
+/// A button in the deck sheet; the sheet closes before [onTap] runs.
+typedef DeckSheetAction = ({String label, String icon, bool danger, VoidCallback onTap});
+
 /// Opens the full deck: all 13 faces and the back. Resolves to true when the deck became the default.
+/// The first of [actions] is the sheet's main button (e.g. "Bearbeiten").
 Future<bool?> showDeckSheet(
   BuildContext context, {
   required Deck deck,
   required bool isDefault,
   required bool own,
   required Future<bool> Function() onMakeDefault,
+  List<DeckSheetAction> actions = const [],
 }) =>
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _DeckSheet(deck: deck, isDefault: isDefault, own: own, onMakeDefault: onMakeDefault),
+      builder: (_) => _DeckSheet(deck: deck, isDefault: isDefault, own: own, onMakeDefault: onMakeDefault, actions: actions),
     );
 
 class _DeckSheet extends StatefulWidget {
   final Deck deck;
   final bool isDefault, own;
   final Future<bool> Function() onMakeDefault;
-  const _DeckSheet({required this.deck, required this.isDefault, required this.own, required this.onMakeDefault});
+  final List<DeckSheetAction> actions;
+  const _DeckSheet({required this.deck, required this.isDefault, required this.own, required this.onMakeDefault, this.actions = const []});
 
   @override
   State<_DeckSheet> createState() => _DeckSheetState();
@@ -52,6 +58,11 @@ class _DeckSheetState extends State<_DeckSheet> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (ok) Navigator.pop(context, true);
+  }
+
+  void _run(DeckSheetAction action) {
+    Navigator.pop(context);
+    action.onTap();
   }
 
   @override
@@ -90,6 +101,10 @@ class _DeckSheetState extends State<_DeckSheet> {
               ),
             ]),
             const SizedBox(height: 18),
+            if (widget.actions.isNotEmpty) ...[
+              GoldButton(label: widget.actions.first.label, jicon: widget.actions.first.icon, onPressed: () => _run(widget.actions.first)),
+              const SizedBox(height: 10),
+            ],
             if (widget.isDefault)
               Panel(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -99,8 +114,14 @@ class _DeckSheetState extends State<_DeckSheet> {
                   Expanded(child: Text('Mit diesem Deck kommst du an jeden Tisch.', style: T.body(15, color: C.inkSoft))),
                 ]),
               )
+            else if (widget.actions.isNotEmpty)
+              SoftButton(label: 'Als Standard', jicon: 'star', onPressed: _busy ? null : _makeDefault)
             else
               GoldButton(label: 'Als Standard', icon: Icons.check_rounded, busy: _busy, onPressed: _makeDefault),
+            for (final a in widget.actions.skip(1)) ...[
+              const SizedBox(height: 10),
+              SoftButton(label: a.label, jicon: a.icon, danger: a.danger, onPressed: () => _run(a)),
+            ],
             const SizedBox(height: 8),
             const SectionTitle('Die 13 Karten'),
             Wrap(spacing: gap, runSpacing: gap + 2, children: [

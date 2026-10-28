@@ -191,7 +191,9 @@ class Profile {
 class CardFace {
   final String name, emoji;
   final String? art, image;
-  const CardFace(this.name, this.emoji, this.art, this.image);
+  /// Free layout from the card editor (see widgets/card_layout.dart); null = the deck's standard look.
+  final Map<String, dynamic>? layout;
+  const CardFace(this.name, this.emoji, this.art, this.image, [this.layout]);
 }
 
 /// A deck design (preset or custom) as sent by the server.
@@ -200,21 +202,26 @@ class Deck {
   final String frame, accent, paper, ink, font, photoFit;
   final List<CardFace> cards;
   final Map<String, dynamic> back;
-  const Deck(this.id, this.name, this.frame, this.accent, this.paper, this.ink, this.font, this.photoFit, this.cards, this.back);
+  /// The design JSON as stored, so the editor can change it without dropping fields it does not know.
+  final Map<String, dynamic> design;
+  const Deck(this.id, this.name, this.frame, this.accent, this.paper, this.ink, this.font, this.photoFit, this.cards, this.back,
+      [this.design = const {}]);
 
-  factory Deck.from(Map m) {
-    final d = _map(m['design']);
-    return Deck(
-      m['id'] as String, m['name'] as String? ?? 'Deck',
-      d['frame'] as String? ?? '#6b1e2e', d['accent'] as String? ?? '#f4b73a', d['paper'] as String? ?? '#fbf0d9',
-      d['ink'] as String? ?? '#2b1a12', d['font'] as String? ?? 'gotisch', d['photoFit'] as String? ?? 'medaillon',
-      ((d['cards'] as List?) ?? const []).map((c) {
-        final cm = c as Map;
-        return CardFace(cm['name'] as String? ?? '', cm['emoji'] as String? ?? '', cm['art'] as String?, cm['image'] as String?);
-      }).toList(),
-      _map(d['back']),
-    );
-  }
+  factory Deck.from(Map m) => Deck.fromDesign(m['id'] as String, m['name'] as String? ?? 'Deck', _map(m['design']));
+
+  /// A deck from a raw design map (also the editor's working copy).
+  factory Deck.fromDesign(String id, String name, Map<String, dynamic> d) => Deck(
+        id, name,
+        d['frame'] as String? ?? '#6b1e2e', d['accent'] as String? ?? '#f4b73a', d['paper'] as String? ?? '#fbf0d9',
+        d['ink'] as String? ?? '#2b1a12', d['font'] as String? ?? 'gotisch', d['photoFit'] as String? ?? 'medaillon',
+        ((d['cards'] as List?) ?? const []).map((c) {
+          final cm = c as Map;
+          return CardFace(cm['name'] as String? ?? '', cm['emoji'] as String? ?? '', cm['art'] as String?, cm['image'] as String?,
+              cm['layout'] is Map ? _map(cm['layout']) : null);
+        }).toList(),
+        _map(d['back']),
+        d,
+      );
 
   CardFace face(int rank) =>
       rank >= 1 && rank <= cards.length ? cards[rank - 1] : CardFace(rankNames[rank] ?? '$rank', '🃏', null, null);
