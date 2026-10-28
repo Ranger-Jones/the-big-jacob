@@ -133,13 +133,16 @@ class _TableViewState extends State<TableView> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 18, 16, 34),
                       child: LayoutBuilder(builder: (context, box) {
-                        return FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: SizedBox(
-                            width: box.maxWidth,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 350),
-                              child: KeyedSubtree(key: ValueKey(_revealing ? 'reveal' : '${s.phase}-${s.round}'), child: center),
+                        return FeltArea(
+                          size: box.biggest,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: SizedBox(
+                              width: box.maxWidth,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 350),
+                                child: KeyedSubtree(key: ValueKey(_revealing ? 'reveal' : '${s.phase}-${s.round}'), child: center),
+                              ),
                             ),
                           ),
                         );
@@ -175,7 +178,9 @@ class _TableViewState extends State<TableView> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: SizedBox(
                 height: HandFan.heightFor(MediaQuery.sizeOf(context).width - 20),
-                child: g.spectating ? _SpectatorPanel(g: g) : deck == null || s.phase == 'draw' || _revealing ? null : HandFan(
+                child: g.spectating && s.phase != 'draw' && !_revealing ? _SpectatorPanel(g: g)
+                    : s.phase == 'draw' || _revealing ? DrawResults(g: g, reveal: _revealing)
+                    : deck == null ? null : HandFan(
                   cards: g.hand.cards,
                   deck: deck,
                   selection: _selection,

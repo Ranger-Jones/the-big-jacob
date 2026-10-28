@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../api.dart';
 import '../../game/controller.dart';
+import '../../game/models.dart';
 import '../../game/rules.dart';
 import '../../theme.dart';
 import '../../widgets/playing_card.dart';
@@ -178,21 +179,27 @@ class _DrawPanelState extends State<DrawPanel> {
     // Lowest card wins; ties go to whoever drew first (the order the server decided).
     final winner = widget.reveal && s.order.isNotEmpty ? s.order.first : null;
 
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(widget.reveal ? 'Die Karten liegen offen' : 'Wer wird Großer Jakob?', style: T.display(24)),
-      const SizedBox(height: 4),
-      Text(
-        widget.reveal ? '${g.nameOf(winner ?? '', you: true)} ${winner == g.me ? 'sitzt' : 'sitzt'} ganz oben' : mustPick ? 'Tippe auf eine verdeckte Karte.' : 'Die kleinste Zahl sitzt ganz oben.',
-        style: T.body(14, color: widget.reveal ? C.goldSoft : C.inkSoft, weight: widget.reveal ? FontWeight.w800 : FontWeight.w500),
-      ),
-      const SizedBox(height: 14),
-      if (mustPick) ...[
+    // On the felt: the fan to pick from, then your card (or the winner's) – everybody's cards are shown
+    // large in the empty hand slot below (DrawResults), so nothing has to shrink with many players.
+    final area = FeltArea.of(context) ?? const Size(340, 300);
+    const header = 64.0;
+    final drawn = players.where((p) => draws.containsKey(p.id)).length;
+    final featured = widget.reveal ? winner : g.me;
+    final featuredCard = featured == null ? null : draws[featured];
+    final bigW = ((area.height - header - 90) / 1.4).clamp(48.0, 92.0);
+    Widget body;
+    if (mustPick) {
+      final byHeight = (area.height - header - 40) / 2.45;
+      final fanW = math.min(area.width / 4.4, byHeight).clamp(48.0, 84.0);
+      body = Column(mainAxisSize: MainAxisSize.min, children: [
         SizedBox(
-          height: 108,
+          // Room for the rotated outer cards, so the line below never runs into the fan.
+          height: fanW * 1.4 + fanW * .75,
+          width: area.width,
           child: Stack(alignment: Alignment.bottomCenter, children: [
             for (var i = 0; i < 7; i++)
               Transform.translate(
-                offset: Offset((i - 3) * 30.0, (i - 3).abs() * 5.0),
+                offset: Offset((i - 3) * fanW * .55, (i - 3).abs() * fanW * .09),
                 child: Transform.rotate(
                   angle: (i - 3) * .12,
                   child: GestureDetector(
@@ -206,46 +213,122 @@ class _DrawPanelState extends State<DrawPanel> {
                     child: AnimatedSlide(
                       duration: const Duration(milliseconds: 220),
                       offset: Offset(0, _picked == i ? -.18 : 0),
-                      child: CardBack(deck: myDeck, width: 54, loot: g.profiles[g.me]?.lootBack),
+                      child: CardBack(deck: myDeck, width: fanW, loot: g.profiles[g.me]?.lootBack),
                     ),
                   ),
                 ),
               ).animate(delay: (i * 60).ms).fadeIn(duration: 250.ms).moveY(begin: 24, end: 0, curve: Curves.easeOutBack),
           ]),
         ),
-        const SizedBox(height: 16),
-      ],
-      Wrap(spacing: 10, runSpacing: 12, alignment: WrapAlignment.center, children: [
-        for (final p in players)
+        // The rotated outer cards reach below the stack's box.
+        SizedBox(height: fanW * .3),
+        Text(drawn == 0 ? 'Noch hat niemand gezogen' : '$drawn von ${players.length} haben gezogen', style: T.label(13)),
+      ]);
+    } else {
+      body = Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+        if (featuredCard != null)
           Column(mainAxisSize: MainAxisSize.min, children: [
-            SizedBox(
-              height: 22,
-              child: p.id == winner ? const JIcon('crown', size: 22, color: C.gold).animate().scaleXY(begin: 0, end: 1, curve: Curves.easeOutBack, duration: 450.ms) : null,
-            ),
+            if (widget.reveal) const JIcon('crown', size: 24, color: C.gold).animate().scaleXY(begin: 0, end: 1, curve: Curves.easeOutBack, duration: 450.ms),
             Container(
-              decoration: p.id == winner
-                  ? BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .7), blurRadius: 18)])
+              decoration: widget.reveal
+                  ? BoxDecoration(borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .7), blurRadius: 22)])
                   : null,
-              child: draws[p.id] != null
-                  ? PlayingCard(rank: draws[p.id]!, deck: g.deckOf(p.id) ?? myDeck!, width: 46)
-                      .animate(key: ValueKey('drawn-${p.id}'))
-                      .flipH(begin: -1, end: 0, duration: 450.ms)
-                  : CardBack(deck: g.deckOf(p.id), width: 46, loot: g.profiles[p.id]?.lootBack),
+              child: PlayingCard(rank: featuredCard, deck: g.deckOf(featured!) ?? myDeck!, width: bigW)
+                  .animate(key: ValueKey('big-$featured'))
+                  .flipH(begin: -1, end: 0, duration: 450.ms),
             ),
-            const SizedBox(height: 4),
-            SizedBox(width: 62, child: Text(g.nameOf(p.id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: T.label(12, color: p.id == winner ? C.goldSoft : C.ink))),
           ]),
-      ]),
-      if (widget.reveal) ...[
-        const SizedBox(height: 18),
-        Text('$_left', style: T.display(64, color: C.goldSoft))
-            .animate(key: ValueKey(_left))
-            .scaleXY(begin: 1.8, end: 1, duration: 380.ms, curve: Curves.easeOutBack)
-            .fadeIn(duration: 160.ms),
-        Text('Gleich beginnt die Hofzeremonie', style: T.body(13, color: C.inkSoft)),
-      ],
+        const SizedBox(width: 22),
+        Column(mainAxisSize: MainAxisSize.min, children: [
+          if (widget.reveal) ...[
+            Text('$_left', style: T.display(56, color: C.goldSoft))
+                .animate(key: ValueKey(_left))
+                .scaleXY(begin: 1.8, end: 1, duration: 380.ms, curve: Curves.easeOutBack)
+                .fadeIn(duration: 160.ms),
+            Text('Gleich beginnt\ndie Hofzeremonie', textAlign: TextAlign.center, style: T.body(13, color: C.inkSoft)),
+          ] else ...[
+            Text('$drawn / ${players.length}', style: T.display(40, color: C.goldSoft)),
+            Text('haben gezogen', style: T.body(13, color: C.inkSoft)),
+          ],
+        ]),
+      ]);
+    }
+
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(widget.reveal ? 'Die Karten liegen offen' : 'Wer wird Großer Jakob?', style: T.display(24)),
+      const SizedBox(height: 4),
+      Text(
+        widget.reveal ? '${g.nameOf(winner ?? '', you: true)} sitzt ganz oben' : mustPick ? 'Tippe auf eine verdeckte Karte.' : 'Die kleinste Zahl sitzt ganz oben.',
+        style: T.body(14, color: widget.reveal ? C.goldSoft : C.inkSoft, weight: widget.reveal ? FontWeight.w800 : FontWeight.w500),
+      ),
+      const SizedBox(height: 14),
+      body,
     ]);
   }
+}
+
+/// Everybody's drawn card, shown large in the (still empty) hand slot under the table during the draw.
+class DrawResults extends StatelessWidget {
+  final GameController g;
+  final bool reveal;
+  const DrawResults({super.key, required this.g, this.reveal = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = g.state!;
+    final draws = s.draws;
+    final players = s.players.where((p) => !p.left).toList();
+    final winner = reveal && s.order.isNotEmpty ? s.order.first : null;
+    final myDeck = g.deckOf(g.me);
+    return LayoutBuilder(builder: (context, box) {
+      final n = math.max(1, players.length);
+      final rows = n <= 4 ? 1 : n <= 8 ? 2 : 3;
+      final perRow = (n / rows).ceil();
+      final byWidth = (box.maxWidth - (perRow - 1) * 8) / perRow - 6;
+      final byHeight = (box.maxHeight - rows * 26 - (rows - 1) * 6) / (rows * 1.4);
+      final cardW = math.min(byWidth, byHeight).clamp(30.0, 92.0);
+      Widget seat(Player p) => SizedBox(
+              width: cardW + 6,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  decoration: p.id == winner
+                      ? BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .7), blurRadius: 16)])
+                      : null,
+                  child: draws[p.id] != null
+                      ? PlayingCard(rank: draws[p.id]!, deck: g.deckOf(p.id) ?? myDeck!, width: cardW)
+                          .animate(key: ValueKey('drawn-${p.id}'))
+                          .flipH(begin: -1, end: 0, duration: 450.ms)
+                      : CardBack(deck: g.deckOf(p.id), width: cardW, loot: g.profiles[p.id]?.lootBack),
+                ),
+                const SizedBox(height: 3),
+                Text(g.nameOf(p.id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                    style: T.label(12, color: p.id == winner ? C.goldSoft : C.ink)),
+              ]),
+            );
+      // Even rows (4 + 4 rather than 7 + 1), centred.
+      return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        for (var r = 0; r < rows; r++)
+          Padding(
+            padding: EdgeInsets.only(top: r == 0 ? 0 : 6),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              for (final p in players.skip(r * perRow).take(perRow)) Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: seat(p)),
+            ]),
+          ),
+      ]);
+    });
+  }
+}
+
+/// Size of the felt the table center is drawn on (the center itself sits in a scale-down box,
+/// so panels that want to fill the felt read the real space from here).
+class FeltArea extends InheritedWidget {
+  final Size size;
+  const FeltArea({super.key, required this.size, required super.child});
+
+  static Size? of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<FeltArea>()?.size;
+
+  @override
+  bool updateShouldNotify(FeltArea old) => old.size != size;
 }
 
 /// Court ceremony: the new order, the round's event and the special moves before taxes.
