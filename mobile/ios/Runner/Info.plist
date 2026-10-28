@@ -31,8 +31,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Nimm ein Foto für dein Profilbild auf.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Zum Testen verbindet sich die App mit dem Spielserver auf deinem Mac im WLAN.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Wähle ein Profilbild für den Hof.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

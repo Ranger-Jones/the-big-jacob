@@ -1,17 +1,41 @@
-# der_grosse_jakob
+# Der Große Jakob – App (Flutter)
 
-Der Große Jakob – das Kartenspiel am Hof
+Die App spielt an denselben Tischen wie die Website. Sie liest Spielstand, Hand und Profile direkt aus
+Supabase (Realtime, RLS) und schickt jeden Zug über die Web-API `/api/app/*` (gleiche Regeln wie im Web).
 
-## Getting Started
+## Auf dem Handy gegen das lokale Backend testen
 
-This project is a starting point for a Flutter application.
+Voraussetzungen: Docker Desktop läuft, Handy und Mac sind im selben WLAN, das iPhone ist in Xcode/Flutter
+sichtbar (`flutter devices`).
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+pnpm db:start          # lokales Supabase (Ports 553xx)
+pnpm dev:lan           # Spielserver im WLAN auf Port 3007
+mobile/tool/run_local.sh
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+`run_local.sh` sucht die WLAN-IP des Macs, baut die App mit den lokalen Adressen und startet sie auf dem
+ersten verbundenen iPhone (oder auf dem Gerät, das du als Argument angibst). Beim ersten Start fragt iOS,
+ob die App auf das lokale Netzwerk zugreifen darf → **Erlauben**.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Konten sind die lokalen: In der App registrieren oder ein Testkonto nutzen. Automatisch einloggen:
+
+```bash
+DEV_EMAIL=hofnarr_test@test.local DEV_PASSWORD=narrenkappe-123 mobile/tool/run_local.sh
+```
+
+Diagnose für Berührungen (zeigt jede Berührung mit Position im Log): `--dart-define=TAP_LOG=true`.
+
+## Gegen den Live-Server
+
+Ohne zusätzliche Angaben nutzt die App `https://the-big-jacob.vercel.app` und das Live-Supabase:
+
+```bash
+cd mobile && flutter run --release
+```
+
+## Tests
+
+```bash
+cd mobile && flutter analyze && flutter test
+```

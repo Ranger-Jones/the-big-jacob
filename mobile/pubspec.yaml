@@ -41,6 +41,7 @@ dependencies:
   shared_preferences: ^2.5.6
   flutter_animate: ^4.5.2
   confetti: ^0.8.0
+  image_picker: ^1.2.4
 
 dev_dependencies:
   flutter_test:

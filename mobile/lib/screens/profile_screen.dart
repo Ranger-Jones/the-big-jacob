@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'decks_screen.dart';
+import 'profile/profile_edit.dart';
 import 'profile/profile_widgets.dart';
 
 /// A player's court record: rating, numbers, charts, badges, rivals and recent games.
-/// As the own tab (isMe) it also offers the decks and signing out.
+/// As the own tab (isMe) it also offers the decks, changing portrait and name, and signing out.
 class ProfileScreen extends StatefulWidget {
   final String username;
   final bool isMe;
@@ -22,7 +24,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map? _data;
   String? _error;
   bool _loading = false;
+  bool _avatarBusy = false;
   int _request = 0;
+
+  /// Own profile: the name after a rename (or the server's current name) until the shell catches up.
+  String? _renamed;
+
+  String get _name => _renamed ?? widget.username;
 
   @override
   void initState() {
@@ -34,6 +42,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void didUpdateWidget(ProfileScreen old) {
     super.didUpdateWidget(old);
     if (old.username != widget.username) {
+      final caughtUp = _renamed != null && widget.username.trim() == _renamed;
+      _renamed = null;
+      // The shell now passes the name this screen already shows: nothing to reload.
+      if (caughtUp) return;
       _data = null;
       _error = null;
       _load();
@@ -41,27 +53,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _load() async {
-    final name = widget.username.trim();
-    if (name.isEmpty) return;
+    var name = _name.trim();
+    if (name.isEmpty && !widget.isMe) return;
     // Ignore answers to requests that a newer username superseded.
     final request = ++_request;
     setState(() => _loading = true);
-    final res = await Api.get('profile/${Uri.encodeComponent(name)}');
+    var res = name.isEmpty ? null : await Api.get('profile/${Uri.encodeComponent(name)}');
+    String? current;
+    if (widget.isMe && !_isOwn(res)) {
+      // The shell's name can be stale (renamed elsewhere, old session metadata): ask who we are.
+      final me = await Api.get('me');
+      final profile = me.data is Map ? (me.data as Map)['profile'] : null;
+      final fresh = profile is Map ? profile['username'] as String? : null;
+      if (fresh != null && fresh != name) {
+        current = name = fresh;
+        res = await Api.get('profile/${Uri.encodeComponent(fresh)}');
+      }
+      // Never show someone else's record as the own one (a stale name may belong to another player now).
+      if (res != null && res.ok && !_isOwn(res)) res = null;
+    }
     if (!mounted || request != _request) return;
     setState(() {
       _loading = false;
-      if (res.ok && res.data is Map) {
+      if (current != null) _renamed = current == widget.username ? null : current;
+      if (res != null && res.ok && res.data is Map) {
         _data = res.data as Map;
         _error = null;
       } else {
-        _error = res.error ?? 'Profil nicht gefunden.';
+        _error = res?.error ?? 'Profil nicht gefunden.';
       }
     });
   }
 
+  /// Whether the answer is the signed-in player's own profile.
+  bool _isOwn(ApiResult<dynamic>? res) {
+    if (res == null || !res.ok || res.data is! Map) return false;
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    return uid == null || ((res.data as Map)['stats'] as Map?)?['user_id'] == uid;
+  }
+
   void _open(String username) {
-    if (username.isEmpty || username == widget.username) return;
+    if (username.isEmpty || username.toLowerCase() == _name.toLowerCase()) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(username: username)));
+  }
+
+  Future<void> _changeAvatar(bool hasAvatar) async {
+    if (_avatarBusy) return;
+    final choice = await showAvatarSheet(context, hasAvatar: hasAvatar);
+    if (choice == null || !mounted) return;
+
+    if (choice == AvatarChoice.remove) {
+      setState(() => _avatarBusy = true);
+      final res = await Api.post('profile', {'op': 'removeAvatar'});
+      if (!mounted) return;
+      if (res.ok) {
+        await _load();
+        if (mounted) toast(context, 'Profilbild entfernt');
+      } else {
+        toast(context, res.error!, error: true);
+      }
+      if (mounted) setState(() => _avatarBusy = false);
+      return;
+    }
+
+    final result = await pickAndUploadAvatar(
+      choice == AvatarChoice.camera ? ImageSource.camera : ImageSource.gallery,
+      onPicked: () {
+        if (mounted) setState(() => _avatarBusy = true);
+      },
+    );
+    if (!mounted) return;
+    switch (result) {
+      case AvatarCancelled():
+        break;
+      case AvatarDone():
+        // Keep the spinner until the new portrait is loaded so the old one does not flash.
+        await _load();
+        if (mounted) toast(context, 'Profilbild aktualisiert');
+      case AvatarFailed(:final message):
+        toast(context, message, error: true);
+    }
+    if (mounted) setState(() => _avatarBusy = false);
+  }
+
+  Future<void> _rename() async {
+    final name = await showRenameSheet(context, current: _name);
+    if (name == null || !mounted) return;
+    try {
+      // New token, so session-bound data catches up with the new name.
+      await Supabase.instance.client.auth.refreshSession();
+    } catch (_) {
+      // The rename is saved either way; the next automatic refresh will do.
+    }
+    if (!mounted) return;
+    setState(() => _renamed = name == widget.username ? null : name);
+    toast(context, 'Name geändert');
+    await _load();
   }
 
   Future<void> _signOut() async {
@@ -134,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (_error != null) ...[
           EmptyNote(_error!, icon: Icons.wifi_off_rounded),
           SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: _load),
-        ] else if (_loading || widget.username.trim().isNotEmpty)
+        ] else if (_loading || _name.trim().isNotEmpty)
           const ProfileSkeleton()
         else
           const EmptyNote('Dein Profil wird geladen …'),
@@ -154,7 +241,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return [
       topBar,
-      ProfileHeader(stats: stats, titles: titles, elo: asInt(rating?['rating'] ?? 1000)),
+      ProfileHeader(
+        stats: stats,
+        titles: titles,
+        elo: asInt(rating?['rating'] ?? 1000),
+        avatarBusy: _avatarBusy,
+        onAvatarTap: widget.isMe ? () => _changeAvatar(stats['avatar_url'] != null) : null,
+        onRename: widget.isMe ? _rename : null,
+      ),
       const SizedBox(height: 22),
       RatingPanel(rating: rating),
       const SizedBox(height: 12),

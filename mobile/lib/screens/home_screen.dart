@@ -10,8 +10,11 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/playing_card.dart';
 import 'campaign_screen.dart';
+import 'courts_screen.dart';
 import 'decks_screen.dart';
+import 'gallery_screen.dart';
 import 'game_screen.dart';
+import 'tutorial_screen.dart';
 
 /// The court: start or join a table, invitations, open tables and the solo modes.
 class HomeScreen extends StatefulWidget {
@@ -222,6 +225,27 @@ class _HomeScreenState extends State<HomeScreen> {
               title: 'Deine Decks',
               text: 'Wähle, mit welchem Deck du an den Tisch kommst.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
+            ),
+            const SectionTitle('Am Hof'),
+            _ModeTile(
+              emoji: '🏰',
+              title: 'Höfe',
+              text: 'Deine feste Runde mit Wappen und eigener Tabelle.',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourtsScreen())),
+            ),
+            const SizedBox(height: 10),
+            _ModeTile(
+              emoji: '🖼️',
+              title: 'Deck-Galerie',
+              text: 'Decks anderer Spieler ansehen, liken und kopieren.',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryScreen())),
+            ),
+            const SizedBox(height: 10),
+            _ModeTile(
+              emoji: '📜',
+              title: 'Spielen lernen',
+              text: 'Sieben kurze Lektionen, Schritt für Schritt.',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorialScreen())),
             ),
             if (king != null) ...[
               const SectionTitle('König der Woche'),

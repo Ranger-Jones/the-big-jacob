@@ -75,7 +75,11 @@ class ProfileHeader extends StatelessWidget {
   final Map stats;
   final List<String> titles;
   final int elo;
-  const ProfileHeader({super.key, required this.stats, required this.titles, required this.elo});
+
+  /// Own profile only: tapping the portrait changes it, the pencil renames.
+  final VoidCallback? onAvatarTap, onRename;
+  final bool avatarBusy;
+  const ProfileHeader({super.key, required this.stats, required this.titles, required this.elo, this.onAvatarTap, this.onRename, this.avatarBusy = false});
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +90,20 @@ class ProfileHeader extends StatelessWidget {
       Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
         Container(
           decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .28), blurRadius: 34, spreadRadius: 2)]),
-          child: Avatar(name: name, url: stats['avatar_url'] as String?, size: 108, ring: C.gold),
+          child: _portrait(name),
         ),
+        if (onAvatarTap != null)
+          Positioned(
+            left: -4, bottom: -2,
+            child: GestureDetector(
+              onTap: avatarBusy ? null : onAvatarTap,
+              child: Container(
+                width: 36, height: 36, alignment: Alignment.center,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: C.gold, border: Border.all(color: C.velvet, width: 3)),
+                child: const Icon(Icons.photo_camera_rounded, size: 18, color: C.onGold),
+              ),
+            ),
+          ),
         Positioned(
           right: -4, bottom: -2,
           child: Container(
@@ -98,7 +114,20 @@ class ProfileHeader extends StatelessWidget {
         ),
       ]).animate().scale(begin: const Offset(.85, .85), curve: Curves.easeOutBack, duration: 500.ms).fadeIn(),
       const SizedBox(height: 14),
-      Text(name, style: T.display(42), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+      if (onRename == null)
+        Text(name, style: T.display(42), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)
+      else
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          // Balances the pencil so the name stays centred.
+          const SizedBox(width: 40),
+          Flexible(child: Text(name, style: T.display(42), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
+          IconButton(
+            tooltip: 'Benutzername ändern',
+            onPressed: onRename,
+            style: IconButton.styleFrom(fixedSize: const Size(40, 40), backgroundColor: C.surface.withValues(alpha: .7)),
+            icon: const Icon(Icons.edit_rounded, size: 18, color: C.goldSoft),
+          ),
+        ]),
       const SizedBox(height: 4),
       Text(
         [
@@ -115,6 +144,27 @@ class ProfileHeader extends StatelessWidget {
         ]),
       ],
     ]);
+  }
+
+  Widget _portrait(String name) {
+    final avatar = Avatar(name: name, url: stats['avatar_url'] as String?, size: 108, ring: C.gold);
+    if (onAvatarTap == null) return avatar;
+    return Semantics(
+      button: true,
+      label: 'Profilbild ändern',
+      child: GestureDetector(
+        onTap: avatarBusy ? null : onAvatarTap,
+        child: Stack(alignment: Alignment.center, children: [
+          avatar,
+          if (avatarBusy)
+            Container(
+              width: 108, height: 108, alignment: Alignment.center,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: C.night.withValues(alpha: .6)),
+              child: const SizedBox(width: 34, height: 34, child: CircularProgressIndicator(strokeWidth: 3, color: C.gold)),
+            ),
+        ]),
+      ),
+    );
   }
 }
 
