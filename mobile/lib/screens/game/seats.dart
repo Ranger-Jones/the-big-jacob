@@ -7,15 +7,24 @@ import '../../game/controller.dart';
 import '../../game/rules.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/jakob_icons.dart';
 
-/// Emoji for a rank title (index in the current order).
-String titleEmoji(int index, int count) {
-  if (index < 0) return '';
-  if (index == 0) return '👑';
-  if (index == count - 1) return '🧹';
-  if (count >= 4 && index == 1) return '🎩';
-  if (count >= 4 && index == count - 2) return '🧺';
-  return '';
+/// Small round badge with the icon of a rank title (index in the current order).
+class RankBadge extends StatelessWidget {
+  final int index, count;
+  final double size;
+  const RankBadge(this.index, this.count, {super.key, this.size = 22});
+
+  @override
+  Widget build(BuildContext context) {
+    if (index < 0) return SizedBox(width: size, height: size);
+    final top = index == 0 || (count >= 4 && index == 1);
+    return Container(
+      width: size, height: size, alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: C.velvet, border: Border.all(color: top ? C.gold : C.line, width: 1.2)),
+      child: JIcon(rankIcon(index, count), size: size * .68, color: top ? C.goldSoft : C.inkSoft),
+    );
+  }
 }
 
 /// The other players in turn order, as a compact strip at the top of the table.
@@ -65,7 +74,6 @@ class Seat extends StatelessWidget {
     final passed = s.phase == 'play' && s.passed.contains(id);
     final out = s.finished.contains(id);
     final idx = s.order.indexOf(id);
-    final emoji = titleEmoji(idx, s.order.length);
     final count = s.handCounts[id] ?? 0;
     final offline = p?.bot == null && !g.online.contains(id);
     final team = s.teams?[id];
@@ -89,9 +97,9 @@ class Seat extends StatelessWidget {
                 .scaleXY(begin: .9, end: 1.08, duration: 900.ms),
           if (turn && s.deadline != null) _TurnRing(g: g),
           avatar,
-          if (emoji.isNotEmpty) Positioned(top: -10, right: -4, child: Text(emoji, style: const TextStyle(fontSize: 18))),
+          if (idx >= 0) Positioned(top: -6, right: -6, child: RankBadge(idx, s.order.length)),
           if (offline) Positioned(bottom: 0, left: 0, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: C.inkMute, shape: BoxShape.circle, border: Border.all(color: C.night, width: 2)))),
-          if (p?.autopilot == true) const Positioned(bottom: -4, left: -6, child: Text('🤖', style: TextStyle(fontSize: 16))),
+          if (p?.autopilot == true) const Positioned(bottom: -4, left: -6, child: JIcon('bot', size: 20, color: C.goldSoft)),
           for (final r in reactions)
             Positioned(
               top: -26,
@@ -112,8 +120,8 @@ class Seat extends StatelessWidget {
               key: ValueKey('$count-$out-$passed'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!out && !passed) ...[const Icon(Icons.style_rounded, size: 13, color: C.inkSoft), const SizedBox(width: 3)],
-                Text(out ? '✓ fertig' : passed ? 'passt' : '$count', style: T.label(12, color: out ? C.vert : C.inkSoft)),
+                if (!passed) ...[JIcon(out ? 'check' : 'cards', size: 14, color: out ? C.vert : C.inkSoft), const SizedBox(width: 3)],
+                Text(out ? 'fertig' : passed ? 'passt' : '$count', style: T.label(12, color: out ? C.vert : C.inkSoft)),
               ],
             ),
           ),

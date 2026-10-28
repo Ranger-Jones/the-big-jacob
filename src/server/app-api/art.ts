@@ -2,6 +2,7 @@ import 'server-only';
 import { createElement, Fragment, isValidElement, type ReactNode } from 'react';
 import { CardArt, FullCardArt, hasArt } from '@/components/deck/art';
 import { JesterWord } from '@/components/deck/jester-word';
+import { Icon, ICON_NAMES } from '@/components/ui/icons';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -70,4 +71,12 @@ export function renderArt(id: string, params: URLSearchParams): string | null {
     ? renderSvg(createElement(CardArt, { id }))
     : renderSvg(createElement(FullCardArt, { id, rank, bg, numeral: params.get('numeral') !== '0' }));
   return markup.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+}
+
+/** The "Hofstaat" UI icons as standalone SVGs (stroke/fill use currentColor), for the app's icon set. */
+export function renderIcons(): Record<string, string> {
+  return Object.fromEntries(ICON_NAMES.map((name) => [
+    name,
+    renderSvg(createElement(Icon, { name })).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"').replace(/ class="[^"]*"/, ''),
+  ]));
 }

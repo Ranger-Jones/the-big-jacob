@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { InviteToTableButton } from '@/components/social/invite-to-table-button';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useOnlineUsers } from '@/components/app-shell/online-presence';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 import { Modal } from '@/components/ui/modal';
 import { cx } from '@/lib/cx';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
@@ -32,9 +33,48 @@ function Row({ profile, online, children }: { profile: ProfileLite; online?: boo
   );
 }
 
-export function FriendsClient({ me, lists }: { me: string; lists: FriendLists }) {
+/** Confirm card for /freunde?add=<username>, e.g. after scanning a friend's QR code with the phone camera. */
+function AddFromCodeCard({ profile, onSend, onDismiss }: { profile: ProfileLite; onSend: () => Promise<void>; onDismiss: () => void }) {
+  const t = useT();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Card className="flex flex-col items-center gap-3 text-center ring-2! ring-gold! sm:flex-row sm:text-left">
+      <Avatar profile={profile} size="lg" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-3xl font-bold">{profile.username}</p>
+        <p className="text-ink-soft">{t('möchte dich als Freund hinzufügen?')}</p>
+      </div>
+      <div className="flex w-full flex-col gap-2 sm:w-auto">
+        <Button
+          size="lg"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onSend();
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <Icon name="friends" />
+          {t('Freundschaftsanfrage senden')}
+        </Button>
+        <Button variant="ghost" onClick={onDismiss} className="min-h-12">
+          <Icon name="close" />
+          {t('Nicht jetzt')}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+export function FriendsClient({ me, lists, addProfile = null, hasAddParam = false }: {
+  me: string; lists: FriendLists; addProfile?: ProfileLite | null; hasAddParam?: boolean;
+}) {
   const t = useT();
   const router = useRouter();
+  const [addDismissed, setAddDismissed] = useState(false);
   const online = useOnlineUsers();
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const [query, setQuery] = useState('');
@@ -75,6 +115,25 @@ export function FriendsClient({ me, lists }: { me: string; lists: FriendLists })
     router.refresh();
   }
 
+  // Drops ?add from the address bar (also when the card is not shown: myself, already a friend …).
+  const clearAddParam = useCallback(() => router.replace('/freunde', { scroll: false }), [router]);
+  useEffect(() => {
+    if (hasAddParam && !addProfile) clearAddParam();
+  }, [hasAddParam, addProfile, clearAddParam]);
+
+  async function sendFromCode(profile: ProfileLite) {
+    const res = await sendFriendRequestAction(profile.username);
+    if (!res.ok) return void toast.error(t(res.error));
+    toast.success(res.data.status === 'accepted' ? t('Ihr seid jetzt Freunde!') : t('Anfrage an {name} gesendet', { name: profile.username }));
+    setAddDismissed(true);
+    clearAddParam();
+  }
+
+  function dismissAdd() {
+    setAddDismissed(true);
+    clearAddParam();
+  }
+
   async function respond(entry: FriendEntry, accept: boolean) {
     const res = await respondFriendRequestAction(entry.friendshipId, accept);
     if (!res.ok) return toast.error(t(res.error));
@@ -95,6 +154,9 @@ export function FriendsClient({ me, lists }: { me: string; lists: FriendLists })
     <main className="mx-auto grid w-full content-start max-w-5xl flex-1 grid-cols-[minmax(0,1fr)] gap-5 px-4 pb-12 lg:grid-cols-2 lg:items-start">
       <div className="flex flex-col gap-5">
         <h1 className="text-5xl font-bold">{t('Freunde')}</h1>
+        {addProfile && !addDismissed && (
+          <AddFromCodeCard profile={addProfile} onSend={() => sendFromCode(addProfile)} onDismiss={dismissAdd} />
+        )}
         <Card className="flex flex-col gap-3">
           <h2 className="text-3xl font-bold">{t('Freunde finden')}</h2>
           <input

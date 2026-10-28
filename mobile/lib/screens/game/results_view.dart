@@ -4,9 +4,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../api.dart';
 import '../../game/controller.dart';
-import '../../game/rules.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// The game is over: podium, final table, revealed missions, rematch.
 class ResultsView extends StatefulWidget {
@@ -60,7 +60,12 @@ class _ResultsViewState extends State<ResultsView> {
         children: [
           Center(child: Text(mine == 1 ? 'Du bist der Große Jakob!' : 'Platz $mine', textAlign: TextAlign.center, style: T.display(40, color: mine == 1 ? C.goldSoft : C.ink))
               .animate().scaleXY(begin: .7, end: 1, curve: Curves.easeOutBack, duration: 600.ms)),
-          if (s.throneWinner != null) Center(child: Text('🏰 Thronfolge von ${g.nameOf(s.throneWinner!, you: true)}', style: T.body(16, color: C.goldSoft))),
+          if (s.throneWinner != null)
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const JIcon('castle', size: 18, color: C.goldSoft),
+              const SizedBox(width: 6),
+              Text('Thronfolge von ${g.nameOf(s.throneWinner!, you: true)}', style: T.body(16, color: C.goldSoft)),
+            ]),
           const SizedBox(height: 24),
           SizedBox(
             height: 200,
@@ -69,7 +74,7 @@ class _ResultsViewState extends State<ResultsView> {
                 if (i < podium.length)
                   Expanded(
                     child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      if (i == 0) const Text('👑', style: TextStyle(fontSize: 30)).animate(delay: 900.ms).moveY(begin: -40, end: 0, curve: Curves.bounceOut, duration: 700.ms).fadeIn(),
+                      if (i == 0) const JIcon('crown', size: 36, color: C.gold).animate(delay: 900.ms).moveY(begin: -40, end: 0, curve: Curves.bounceOut, duration: 700.ms).fadeIn(),
                       Avatar(name: g.nameOf(podium[i].id), url: g.profiles[podium[i].id]?.avatarUrl, emoji: podium[i].bot?.emoji, size: i == 0 ? 64 : 50, ring: i == 0 ? C.gold : C.line),
                       const SizedBox(height: 6),
                       Text(g.nameOf(podium[i].id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(14, color: C.ink)),
@@ -103,9 +108,10 @@ class _ResultsViewState extends State<ResultsView> {
                     if (missions?[p.id] is Map)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Text(
-                          '${missionText[(missions![p.id] as Map)['id']]?.emoji ?? '📜'}${(missions[p.id] as Map)['done'] == true ? '✓' : '✗'}',
-                          style: T.label(13, color: (missions[p.id] as Map)['done'] == true ? C.vert : C.inkMute),
+                        child: JIcon(
+                          missionIcons[(missions![p.id] as Map)['id']] ?? 'target',
+                          size: 20,
+                          color: (missions[p.id] as Map)['done'] == true ? C.vert : C.inkMute,
                         ),
                       ),
                     Text('${s.points[p.id] ?? 0}', style: T.display(22)),

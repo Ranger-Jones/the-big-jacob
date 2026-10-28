@@ -7,6 +7,7 @@ import '../widgets/common.dart';
 import 'game/lobby_view.dart';
 import 'game/results_view.dart';
 import 'game/table_view.dart';
+import '../widgets/jakob_icons.dart';
 
 Future<void> openTable(BuildContext context, String code) =>
     Navigator.push(context, MaterialPageRoute(builder: (_) => GameScreen(code: code)));
@@ -96,7 +97,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   child: Padding(
                     padding: const EdgeInsets.all(28),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Text('🏚️', style: TextStyle(fontSize: 56)),
+                      const JIcon('castle', size: 64, color: C.inkSoft),
                       const SizedBox(height: 12),
                       Text(_error ?? 'Dieser Tisch wurde aufgelöst.', textAlign: TextAlign.center, style: T.display(26)),
                       const SizedBox(height: 22),

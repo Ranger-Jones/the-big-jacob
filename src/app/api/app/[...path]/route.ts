@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { renderArt } from '@/server/app-api/art';
+import { renderArt, renderIcons } from '@/server/app-api/art';
 import { appUser } from '@/server/app-api/auth';
 import { GET as GETS, POST as POSTS, PUBLIC_POST } from '@/server/app-api/handlers';
 
@@ -30,6 +30,8 @@ export async function GET(request: NextRequest, { params }: Route) {
     if (!svg) return new NextResponse('Not found', { status: 404 });
     return new NextResponse(svg, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=31536000, immutable' } });
   }
+  // The UI icon set, bundled into the app by mobile/tool/sync_icons.sh.
+  if (name === 'icons') return json({ ok: true, data: renderIcons() });
   const handler = Object.hasOwn(GETS, name) ? GETS[name] : undefined;
   if (!handler) return json({ ok: false, error: 'Unbekannte Anfrage.' }, 404);
   const admin = createAdminClient();

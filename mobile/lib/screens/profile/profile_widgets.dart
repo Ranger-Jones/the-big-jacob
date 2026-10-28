@@ -8,6 +8,7 @@ import '../../theme.dart';
 import '../../widgets/charts.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
+import '../../widgets/jakob_icons.dart';
 
 // ---------------------------------------------------------------------------
 // Parsing and formatting helpers (JSON numbers may arrive as int, double or string).
@@ -32,7 +33,9 @@ String deDate(String iso, {bool time = true}) {
   return '$date, ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
-String placeMedal(int? place) => switch (place) { 1 => '🥇', 2 => '🥈', 3 => '🥉', null => '–', _ => '$place.' };
+/// Medal for places 1–3, the number otherwise.
+Widget placeMedal(int? place, {double size = 24}) =>
+    place == null ? Text('–', style: T.display(size * .8, color: C.inkSoft)) : Center(child: Medal(place, size: size));
 
 /// The built-in "Hofstaat" deck, used to show the favourite card.
 final hofstaatDeck = Deck.from({
@@ -109,7 +112,7 @@ class ProfileHeader extends StatelessWidget {
           child: Container(
             width: 40, height: 40, alignment: Alignment.center,
             decoration: BoxDecoration(shape: BoxShape.circle, color: C.velvet, border: Border.all(color: tier.color, width: 2.5)),
-            child: Text(tier.emoji, style: const TextStyle(fontSize: 20)),
+            child: JIcon(tier.icon, size: 22, color: tier.color),
           ),
         ),
       ]).animate().scale(begin: const Offset(.85, .85), curve: Curves.easeOutBack, duration: 500.ms).fadeIn(),
@@ -140,7 +143,7 @@ class ProfileHeader extends StatelessWidget {
       if (titles.isNotEmpty) ...[
         const SizedBox(height: 12),
         Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
-          for (final t in titles) Pill('👑 $t', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
+          for (final t in titles) Pill(t, jicon: 'crown', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
         ]),
       ],
     ]);
@@ -191,7 +194,7 @@ class RatingPanel extends StatelessWidget {
           Container(
             width: 60, height: 60, alignment: Alignment.center,
             decoration: BoxDecoration(shape: BoxShape.circle, color: tier.color.withValues(alpha: .2), border: Border.all(color: tier.color, width: 3)),
-            child: Text(tier.emoji, style: const TextStyle(fontSize: 30)),
+            child: JIcon(tier.icon, size: 32, color: tier.color),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -211,7 +214,7 @@ class RatingPanel extends StatelessWidget {
           Text(
             [
               if (provisional) 'Vorläufig, bis 5 Partien gewertet sind',
-              if (next != null) 'Noch ${next.min - elo} bis ${next.emoji} ${next.name}',
+              if (next != null) 'Noch ${next.min - elo} bis ${next.name}',
             ].join(' · '),
             style: T.body(13, color: C.inkMute),
           ),
@@ -256,21 +259,21 @@ class StatTiles extends StatelessWidget {
   Widget build(BuildContext context) {
     final games = asInt(stats['games_played']), wins = asInt(stats['wins']);
     final tiles = [
-      ('🎴', '$games', 'Spiele'),
-      ('🏆', '$wins', 'Siege'),
-      ('📈', games == 0 ? '–' : '${(wins * 100 / games).round()} %', 'Siegquote'),
-      ('👑', '${asInt(stats['crowns'])}', 'Kronen'),
-      ('🎯', games == 0 ? '–' : deNum(asDouble(stats['avg_place'])), 'Ø Platz'),
-      ('✊', '${asInt(stats['revolutions']) + asInt(stats['grand_revolutions'])}', 'Revolutionen'),
+      ('cards', '$games', 'Spiele'),
+      ('trophy', '$wins', 'Siege'),
+      ('target', games == 0 ? '–' : '${(wins * 100 / games).round()} %', 'Siegquote'),
+      ('crown', '${asInt(stats['crowns'])}', 'Kronen'),
+      ('ladder', games == 0 ? '–' : deNum(asDouble(stats['avg_place'])), 'Ø Platz'),
+      ('fist', '${asInt(stats['revolutions']) + asInt(stats['grand_revolutions'])}', 'Revolutionen'),
     ];
     Widget tile(int i) {
-      final (emoji, value, label) = tiles[i];
+      final (icon, value, label) = tiles[i];
       return Expanded(
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
           decoration: BoxDecoration(color: C.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: C.line)),
           child: Column(children: [
-            Text(emoji, style: const TextStyle(fontSize: 20)),
+            JIcon(icon, size: 22, color: C.goldSoft),
             const SizedBox(height: 4),
             FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: T.display(30, color: C.goldSoft))),
             const SizedBox(height: 2),
@@ -384,7 +387,7 @@ class BadgeGrid extends StatelessWidget {
 
   Widget _badge(Map b, int i) {
     final earned = b['earned'] == true;
-    final emoji = Text(b['emoji'] as String? ?? '⭐', style: const TextStyle(fontSize: 30));
+    final emoji = JIcon(badgeIcons[b['id']] ?? 'star', size: 32, color: earned ? C.goldSoft : C.inkSoft);
     return Container(
       constraints: const BoxConstraints(minHeight: 128),
       padding: const EdgeInsets.all(14),
@@ -519,7 +522,7 @@ class _HistoryTileState extends State<_HistoryTile> {
           Row(children: [
             SizedBox(
               width: 40,
-              child: Text(placeMedal(me?.place), textAlign: TextAlign.center, style: (me?.place ?? 9) <= 3 ? const TextStyle(fontSize: 26) : T.display(24, color: C.inkSoft)),
+              child: placeMedal(me?.place, size: 28),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -554,7 +557,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                   child: Opacity(
                     opacity: s.left ? .5 : 1,
                     child: Row(children: [
-                      SizedBox(width: 30, child: Text(placeMedal(s.place), textAlign: TextAlign.center, style: T.body(15, weight: FontWeight.w800))),
+                      SizedBox(width: 30, child: placeMedal(s.place, size: 20)),
                       const SizedBox(width: 8),
                       Avatar(name: s.name, url: s.avatarUrl, emoji: s.emoji, size: 30),
                       const SizedBox(width: 10),

@@ -17,20 +17,20 @@ String levelTitle(int level) {
 }
 
 class Tier {
-  final String name, emoji;
+  final String name, icon;
   final int min;
   final Color color;
-  const Tier(this.name, this.emoji, this.min, this.color);
+  const Tier(this.name, this.icon, this.min, this.color);
 }
 
 const tiers = [
-  Tier('Knecht', '🧹', 0, Color(0xFF8A7A6A)),
-  Tier('Bürger', '🧺', 900, Color(0xFFA8662A)),
-  Tier('Ritter', '🛡️', 1100, Color(0xFF9AA3AD)),
-  Tier('Baron', '💎', 1250, Color(0xFF3A6FD8)),
-  Tier('Graf', '🎖️', 1400, Color(0xFF8B4FC7)),
-  Tier('Herzog', '⚜️', 1550, Color(0xFFE09B1A)),
-  Tier('Großer Jakob', '👑', 1700, Color(0xFFF4B73A)),
+  Tier('Knecht', 'broom', 0, Color(0xFF8A7A6A)),
+  Tier('Bürger', 'basket', 900, Color(0xFFA8662A)),
+  Tier('Ritter', 'shield', 1100, Color(0xFF9AA3AD)),
+  Tier('Baron', 'coronet', 1250, Color(0xFF3A6FD8)),
+  Tier('Graf', 'medal', 1400, Color(0xFF8B4FC7)),
+  Tier('Herzog', 'throne', 1550, Color(0xFFE09B1A)),
+  Tier('Großer Jakob', 'crown', 1700, Color(0xFFF4B73A)),
 ];
 
 Tier tierFor(int rating) => tiers.lastWhere((t) => rating >= t.min, orElse: () => tiers.first);

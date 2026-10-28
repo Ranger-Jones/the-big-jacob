@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../api.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/jakob_icons.dart';
 
 /// The bouncer at the castle gate: one question before anyone gets in.
 class GateScreen extends StatefulWidget {
@@ -47,7 +48,7 @@ class _GateScreenState extends State<GateScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(children: [
-                const Text('👑', style: TextStyle(fontSize: 72))
+                const JIcon('crown', size: 84, color: C.gold)
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .moveY(begin: -4, end: 4, duration: 1800.ms, curve: Curves.easeInOut),
                 const SizedBox(height: 8),

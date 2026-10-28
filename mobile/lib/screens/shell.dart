@@ -7,6 +7,7 @@ import 'friends_screen.dart';
 import 'home_screen.dart';
 import 'leaderboard_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/jakob_icons.dart';
 
 /// Four tabs: court (home), friends, leaderboard, own profile.
 class Shell extends StatefulWidget {
@@ -56,10 +57,10 @@ class _NavBar extends StatelessWidget {
   const _NavBar({required this.index, required this.badge, required this.onTap});
 
   static const _items = [
-    (Icons.castle_rounded, 'Hof'),
-    (Icons.people_alt_rounded, 'Freunde'),
-    (Icons.emoji_events_rounded, 'Rangliste'),
-    (Icons.person_rounded, 'Profil'),
+    ('castle', 'Hof'),
+    ('friends', 'Freunde'),
+    ('trophy', 'Rangliste'),
+    ('user', 'Profil'),
   ];
 
   @override
@@ -87,7 +88,7 @@ class _NavBar extends StatelessWidget {
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(color: i == index ? C.gold.withValues(alpha: .16) : Colors.transparent, borderRadius: BorderRadius.circular(99)),
-                    child: Icon(_items[i].$1, color: i == index ? C.goldSoft : C.inkMute, size: 24),
+                    child: JIcon(_items[i].$1, color: i == index ? C.goldSoft : C.inkMute, size: 25),
                   ),
                   if (i == 1 && badge > 0)
                     Positioned(right: 6, top: -4, child: Container(

@@ -16,6 +16,7 @@ import { describeCards, EVENT_TEXT } from '@/lib/jakob/texts';
 import { seatColor } from '@/lib/player-colors';
 import type { ProfileLite } from '@/server/social-service';
 import { EVENT_ICONS, Icon, rankIcon } from '@/components/ui/icons';
+import { botArtUrl } from '@/lib/bot-art';
 
 interface Props {
   code: string;
@@ -81,7 +82,7 @@ export function ReplayViewer({ code, players, rounds, history, profiles, decks }
   };
   const avatar = (id: string): AvatarProfile => {
     const p = byId.get(id)?.p;
-    if (p?.bot) return { username: t(p.bot.name), avatar_url: null, emoji: p.bot.emoji };
+    if (p?.bot) return { username: t(p.bot.name), avatar_url: null, emoji: p.bot.emoji, bot_art: botArtUrl(p.bot.name) };
     return profiles[id] ?? { username: '…', avatar_url: null };
   };
   const deckOf = (id: string) => resolveDeck(byId.get(id)?.p.deckId, decks);

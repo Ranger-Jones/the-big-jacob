@@ -8,6 +8,7 @@ import '../api.dart';
 import '../game/models.dart';
 import '../game/rules.dart';
 import '../theme.dart';
+import '../widgets/jakob_icons.dart';
 
 Color hexColor(String hex, [Color fallback = C.surface]) {
   final h = hex.replaceFirst('#', '');
@@ -190,7 +191,11 @@ class CardBack extends StatelessWidget {
                   decoration: BoxDecoration(shape: BoxShape.circle, color: a, border: Border.all(color: b, width: math.max(1, 3 * s))),
                   child: art != null
                       ? Padding(padding: EdgeInsets.all(5 * s), child: SvgPicture.network(Api.artUrl(art, full: false)))
-                      : Center(child: Text(back['emblem'] as String? ?? '👑', style: TextStyle(fontSize: 24 * s))),
+                      : Center(
+                          child: back['emblem'] is String
+                              ? Text(back['emblem'] as String, style: TextStyle(fontSize: 24 * s))
+                              : JIcon('crown', size: 30 * s, color: b),
+                        ),
                 ),
               ),
             ),

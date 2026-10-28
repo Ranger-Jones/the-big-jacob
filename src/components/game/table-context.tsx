@@ -7,6 +7,7 @@ import { resolveDeck, type DeckEntry } from '@/lib/decks';
 import { useT } from '@/lib/i18n/client';
 import type { Player, PublicState } from '@/lib/jakob/engine';
 import { seatColor } from '@/lib/player-colors';
+import { botArtUrl } from '@/lib/bot-art';
 
 export interface TableApi {
   g: UseGame;
@@ -44,7 +45,7 @@ export function TableProvider({ g, me, felt, children }: { g: UseGame; me: strin
       },
       avatarOf: (id) => {
         const p = player(id);
-        if (p?.bot) return { username: t(p.bot.name), avatar_url: null, emoji: p.bot.emoji };
+        if (p?.bot) return { username: t(p.bot.name), avatar_url: null, emoji: p.bot.emoji, bot_art: botArtUrl(p.bot.name) };
         return g.profiles[id] ?? { username: '…', avatar_url: null };
       },
       deckOf: (id) => resolveDeck(player(id)?.deckId, g.decks),

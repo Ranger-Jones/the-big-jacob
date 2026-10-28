@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import 'campaign/campaign_path.dart';
 import 'campaign/stage_sheet.dart';
 import 'game_screen.dart';
+import '../widgets/jakob_icons.dart';
 
 /// "Vom Bauern zum König": a road of stations climbing from the farm to the throne.
 class CampaignScreen extends StatefulWidget {
@@ -216,7 +217,7 @@ class _ThroneCap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final crown = Text('👑', style: TextStyle(fontSize: 40, color: Colors.white.withValues(alpha: reached ? 1 : .5)));
+    const crown = JIcon('crown', size: 46, color: C.gold);
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 4),
       child: Column(children: [

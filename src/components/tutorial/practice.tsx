@@ -16,6 +16,7 @@ import { applyAction, placements, privateHand, rankTitle, type GameAction, type 
 import { legalPlays, worstCards } from '@/lib/jakob/rules';
 import { describeCards, describeLog } from '@/lib/jakob/texts';
 import { ctxOf, newPracticeGame as newGame, PRACTICE_ME as ME, practiceRand as rand } from '@/lib/tutorial';
+import { botArtUrl } from '@/lib/bot-art';
 
 const BOT_DELAY = 750;
 
@@ -147,7 +148,8 @@ export function Practice({ deck, onExit }: { deck: DeckEntry; onExit: () => void
           const pos = state.order.indexOf(id);
           return (
             <li key={id} className={cx('flex flex-col items-center gap-0.5 rounded-2xl bg-velvet-deep/70 p-2 text-center ring-2 transition-colors', state.turn === id ? 'ring-gold' : 'ring-white/10', state.passed.includes(id) && 'opacity-60')}>
-              <span className="text-3xl" aria-hidden>{p?.bot?.emoji}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- static cached SVG portrait */}
+              {p?.bot && <img src={botArtUrl(p.bot.name)} alt="" className="size-10 rounded-full" />}
               <span className="w-full truncate font-bold">{name(id)}</span>
               {pos >= 0 && <span className="text-xs text-parchment/70">{t(rankTitle(pos, state.order.length))}</span>}
               <span className="tabular text-sm">{state.finished.includes(id) ? <><Icon name="check" /> {t('fertig')}</> : state.passed.includes(id) ? t('passt') : <><Icon name="cards" /> {state.hands[id]?.length ?? 0}</>}</span>

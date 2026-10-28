@@ -9,6 +9,8 @@ import '../api.dart';
 import '../game/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/jakob_icons.dart';
+import 'friends/qr_friend_sheet.dart';
 import 'game_screen.dart';
 import 'profile_screen.dart';
 
@@ -267,6 +269,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
         if (mounted) _load();
       });
 
+  /// QR sheet ("Mein Code" or straight to "Scannen"); reloads after a request went out.
+  Future<void> _openQr({bool scan = false}) async {
+    _searchFocus.unfocus();
+    final message = await showQrFriendSheet(context, scan: scan);
+    if (!mounted || message == null) return;
+    toast(context, message);
+    await _load();
+  }
+
   void _openProfile(Profile p) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(username: p.username, isMe: false)));
 
@@ -291,8 +302,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(18, MediaQuery.paddingOf(context).top + 14, 18, 120),
           children: [
-            _Header(count: friends.length, online: onlineCount, loaded: _loaded),
+            _Header(count: friends.length, online: onlineCount, loaded: _loaded, onScan: () => _openQr(scan: true)),
             const SizedBox(height: 18),
+            _QrAction(onTap: _openQr),
+            const SizedBox(height: 12),
             _SearchField(
               controller: _searchCtrl,
               focusNode: _searchFocus,
@@ -398,7 +411,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
 class _Header extends StatelessWidget {
   final int count, online;
   final bool loaded;
-  const _Header({required this.count, required this.online, required this.loaded});
+  final VoidCallback onScan;
+  const _Header({required this.count, required this.online, required this.loaded, required this.onScan});
 
   @override
   Widget build(BuildContext context) {
@@ -412,10 +426,59 @@ class _Header extends StatelessWidget {
           Text('Freunde', style: T.display(40)),
         ]),
       ),
-      const Text('🤝', style: TextStyle(fontSize: 34))
+      const JIcon('friends', size: 34, color: C.gold)
           .animate(onPlay: (c) => c.repeat(reverse: true))
           .rotate(begin: -.02, end: .02, duration: 1800.ms, curve: Curves.easeInOut),
+      const SizedBox(width: 10),
+      Material(
+        color: C.surfaceHi,
+        shape: const CircleBorder(side: BorderSide(color: C.line)),
+        child: IconButton(
+          tooltip: 'Code scannen',
+          constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onScan();
+          },
+          icon: const JIcon('scan', size: 24, color: C.goldSoft),
+        ),
+      ),
     ]);
+  }
+}
+
+/// Prominent entry to the QR sheet: for two players standing next to each other.
+class _QrAction extends StatelessWidget {
+  final VoidCallback onTap;
+  const _QrAction({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.goldSoft, C.gold]),
+            boxShadow: const [BoxShadow(color: C.goldDeep, offset: Offset(0, 2))],
+          ),
+          alignment: Alignment.center,
+          child: const JIcon('qr', size: 26, color: C.onGold),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Per QR-Code hinzufügen', style: T.body(17, weight: FontWeight.w800)),
+            Text('Ihr steht nebeneinander? Code zeigen oder scannen.', style: T.body(14, color: C.inkSoft)),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.chevron_right_rounded, color: C.inkMute),
+      ]),
+    ).animate().fadeIn(duration: 320.ms).slideY(begin: .1, curve: Curves.easeOutCubic);
   }
 }
 
@@ -588,7 +651,7 @@ class _IncomingPanel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 10, 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          const Text('📜', style: TextStyle(fontSize: 22)),
+          const JIcon('scroll', size: 24, color: C.goldSoft),
           const SizedBox(width: 10),
           Expanded(child: Text(entries.length == 1 ? 'Neue Anfrage' : 'Neue Anfragen', style: T.display(24, color: C.goldSoft))),
           Padding(
@@ -724,7 +787,7 @@ class _EmptyFriends extends StatelessWidget {
     return Panel(
       padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
       child: Column(children: [
-        const Text('🏰', style: TextStyle(fontSize: 46))
+        const JIcon('castle', size: 46, color: C.gold)
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(begin: -3, end: 3, duration: 1700.ms, curve: Curves.easeInOut),
         const SizedBox(height: 10),

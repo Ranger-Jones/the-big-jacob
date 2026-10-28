@@ -15,6 +15,7 @@ import 'decks_screen.dart';
 import 'gallery_screen.dart';
 import 'game_screen.dart';
 import 'tutorial_screen.dart';
+import '../widgets/jakob_icons.dart';
 
 /// The court: start or join a table, invitations, open tables and the solo modes.
 class HomeScreen extends StatefulWidget {
@@ -138,8 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
             if (d != null) ...[
               const SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, children: [
-                Pill('Stufe $level · ${levelTitle(level)}', icon: Icons.star_rounded, textColor: C.goldSoft),
-                Pill('${tierFor(elo).emoji} $elo Elo', color: tierFor(elo).color.withValues(alpha: .22)),
+                Pill('Stufe $level · ${levelTitle(level)}', jicon: 'star', textColor: C.goldSoft),
+                Pill('$elo Elo', jicon: tierFor(elo).icon, color: tierFor(elo).color.withValues(alpha: .22)),
               ]),
             ],
             const SizedBox(height: 20),
@@ -202,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             const SectionTitle('Allein am Hof'),
             _ModeTile(
-              emoji: '🏰',
+              icon: 'ladder',
               title: 'Kampagne',
               text: campaign == null ? 'Vom Bauern zum König' : 'Dein Titel: ${campaign['title']} · Station ${math.min(((campaign['level'] as num?) ?? 0).toInt() + 1, ((campaign['stages'] as num?) ?? 8).toInt())} von ${campaign['stages']}',
               onTap: () async {
@@ -212,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 10),
             _ModeTile(
-              emoji: '📅',
+              icon: 'calendar',
               title: 'Tägliche Herausforderung',
               text: daily != null ? 'Heute erledigt: ${daily['points']} Punkte' : 'Dieselbe Hand für alle. Heute noch offen.',
               done: daily != null,
@@ -221,28 +222,28 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 10),
             _ModeTile(
-              emoji: '🎴',
+              icon: 'cards',
               title: 'Deine Decks',
               text: 'Wähle, mit welchem Deck du an den Tisch kommst.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
             ),
             const SectionTitle('Am Hof'),
             _ModeTile(
-              emoji: '🏰',
+              icon: 'castle',
               title: 'Höfe',
               text: 'Deine feste Runde mit Wappen und eigener Tabelle.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourtsScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(
-              emoji: '🖼️',
+              icon: 'image',
               title: 'Deck-Galerie',
               text: 'Decks anderer Spieler ansehen, liken und kopieren.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(
-              emoji: '📜',
+              icon: 'book',
               title: 'Spielen lernen',
               text: 'Sieben kurze Lektionen, Schritt für Schritt.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorialScreen())),
@@ -254,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(children: [
                   Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
                     Avatar(name: king['username'] as String? ?? '?', url: king['avatar_url'] as String?, size: 56, ring: C.gold),
-                    const Positioned(top: -20, child: Text('👑', style: TextStyle(fontSize: 26))),
+                    const Positioned(top: -22, child: JIcon('crown', size: 28, color: C.gold)),
                   ]),
                   const SizedBox(width: 16),
                   Expanded(
@@ -303,7 +304,7 @@ class _Hero extends StatelessWidget {
                   .animate(delay: (i * 90).ms)
                   .fadeIn(duration: 400.ms)
                   .moveY(begin: 30, end: 0, curve: Curves.easeOutBack, duration: 600.ms),
-            const Positioned(top: 0, child: Text('👑', style: TextStyle(fontSize: 34)))
+            const Positioned(top: 0, child: JIcon('crown', size: 40, color: C.gold))
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .moveY(begin: -3, end: 3, duration: 1600.ms, curve: Curves.easeInOut),
           ]),
@@ -312,9 +313,9 @@ class _Hero extends StatelessWidget {
         GoldButton(label: 'Neuen Tisch eröffnen', icon: Icons.add_rounded, large: true, busy: starting == 'new', onPressed: onNew),
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: SoftButton(label: waiting > 0 ? 'Online · $waiting warten' : 'Online spielen', icon: Icons.public_rounded, onPressed: starting == null ? onOnline : null)),
+          Expanded(child: SoftButton(label: waiting > 0 ? 'Online · $waiting warten' : 'Online spielen', jicon: 'globe', onPressed: starting == null ? onOnline : null)),
           const SizedBox(width: 10),
-          Expanded(child: SoftButton(label: 'Code', icon: Icons.tag_rounded, onPressed: onCode)),
+          Expanded(child: SoftButton(label: 'Code', jicon: 'hash', onPressed: onCode)),
         ]),
       ]),
     );
@@ -322,10 +323,10 @@ class _Hero extends StatelessWidget {
 }
 
 class _ModeTile extends StatelessWidget {
-  final String emoji, title, text;
+  final String icon, title, text;
   final VoidCallback? onTap;
   final bool done, busy;
-  const _ModeTile({required this.emoji, required this.title, required this.text, this.onTap, this.done = false, this.busy = false});
+  const _ModeTile({required this.icon, required this.title, required this.text, this.onTap, this.done = false, this.busy = false});
 
   @override
   Widget build(BuildContext context) => Panel(
@@ -334,7 +335,7 @@ class _ModeTile extends StatelessWidget {
           Container(
             width: 52, height: 52, alignment: Alignment.center,
             decoration: BoxDecoration(color: C.night, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line)),
-            child: Text(emoji, style: const TextStyle(fontSize: 26)),
+            child: JIcon(icon, size: 28, color: C.goldSoft),
           ),
           const SizedBox(width: 14),
           Expanded(

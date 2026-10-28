@@ -72,6 +72,9 @@ export const PAGES: Record<string, string> = {
   // Friends
   'Ihr seid jetzt Freunde!': 'You’re friends now!',
   'Anfrage an {name} gesendet': 'Request sent to {name}',
+  'möchte dich als Freund hinzufügen?': 'wants to add you as a friend?',
+  'Freundschaftsanfrage senden': 'Send friend request',
+  'Nicht jetzt': 'Not now',
   'Du und {name} seid jetzt Freunde': 'You and {name} are friends now',
   'Benutzername suchen': 'Search username',
   'Niemand mit diesem Namen gefunden.': 'Nobody found with that name.',

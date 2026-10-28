@@ -2,7 +2,11 @@
 import { cx } from '@/lib/cx';
 import { nameColor } from '@/lib/player-colors';
 
-export interface AvatarProfile { username: string; avatar_url: string | null; emoji?: string; avatar_frame?: string | null }
+export interface AvatarProfile {
+  username: string; avatar_url: string | null; emoji?: string; avatar_frame?: string | null;
+  /** Computer players: their drawn portrait (see lib/bot-art). */
+  bot_art?: string;
+}
 
 const SIZES = { xs: 'size-7 text-xs', sm: 'size-9 text-sm', md: 'size-12 text-base', lg: 'size-20 text-2xl', xl: 'size-28 text-4xl' };
 const EMOJI_SIZES = { xs: 'text-base', sm: 'text-xl', md: 'text-2xl', lg: 'text-4xl', xl: 'text-6xl' };
@@ -60,6 +64,8 @@ export function Avatar({
       <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: color }}>
         {profile?.avatar_url ? (
           <img src={profile.avatar_url} alt="" className="size-full object-cover" />
+        ) : profile?.bot_art ? (
+          <img src={profile.bot_art} alt="" className="size-full object-cover" />
         ) : profile?.emoji ? (
           <span aria-hidden className={EMOJI_SIZES[size]}>{profile.emoji}</span>
         ) : (

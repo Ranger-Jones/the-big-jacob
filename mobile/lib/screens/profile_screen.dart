@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import 'decks_screen.dart';
 import 'profile/profile_edit.dart';
 import 'profile/profile_widgets.dart';
+import '../widgets/jakob_icons.dart';
 
 /// A player's court record: rating, numbers, charts, badges, rivals and recent games.
 /// As the own tab (isMe) it also offers the decks, changing portrait and name, and signing out.
@@ -262,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               width: 52, height: 52, alignment: Alignment.center,
               decoration: BoxDecoration(color: C.night, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line)),
-              child: const Text('🎴', style: TextStyle(fontSize: 26)),
+              child: const JIcon('cards', size: 28, color: C.goldSoft),
             ),
             const SizedBox(width: 14),
             Expanded(

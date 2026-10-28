@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PORTRAIT_IDS, PORTRAITS, portraitCard, RankNumeral, RESCUE_IDS } from './portraits';
+import { BOT_ART } from './bot-portraits';
 import { MORE_PORTRAITS, OFFICE_IDS, PIRATE_IDS, UNI_IDS } from './portraits-more';
 
 /**
@@ -344,7 +345,7 @@ const gems: Record<string, ReactNode> = {
   'g-pebble': <Treasure><Gem shape="cabochon" color="#7d6e5f" light="#b7a896" dark="#3f362c" /></Treasure>,
 };
 
-export const ART: Record<string, ReactNode> = { ...PORTRAITS, ...MORE_PORTRAITS, ...heraldry, ...cosmos, ...gems };
+export const ART: Record<string, ReactNode> = { ...PORTRAITS, ...MORE_PORTRAITS, ...heraldry, ...cosmos, ...gems, ...BOT_ART };
 
 export const ART_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Hofstaat', ids: PORTRAIT_IDS },

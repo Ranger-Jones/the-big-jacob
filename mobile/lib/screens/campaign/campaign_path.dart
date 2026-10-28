@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// One station of the campaign as sent by `GET campaign`.
 class Stage {
@@ -141,7 +142,7 @@ class StationNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emoji = Text(stage.emoji, style: TextStyle(fontSize: size * .44));
+    final emoji = JIcon(stageIcons[stage.level] ?? 'castle', size: size * .5, color: state == StageState.won ? C.onGold : C.goldSoft);
     final Widget disc = switch (state) {
       StageState.won => Container(
           width: size, height: size, alignment: Alignment.center,

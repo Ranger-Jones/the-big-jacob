@@ -11,6 +11,7 @@ import '../../game/rules.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// Before the game: who sits at the table, bots, your deck, the rules, and the start.
 class LobbyView extends StatelessWidget {
@@ -78,14 +79,19 @@ class LobbyView extends StatelessWidget {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(g.nameOf(players[i].id), style: T.body(17, weight: FontWeight.w700)),
-                        Text(
-                          players[i].id == s.hostId
-                              ? '👑 Gastgeber'
-                              : players[i].bot != null
-                                  ? (players[i].bot!.level == 'sly' ? '🦊 Gerissener Bot' : '🙂 Einfacher Bot')
-                                  : players[i].id == g.me ? 'Du' : 'Höfling',
-                          style: T.body(13, color: C.inkSoft),
-                        ),
+                        Builder(builder: (_) {
+                          final p = players[i];
+                          final (icon, label) = p.id == s.hostId
+                              ? ('crown', 'Gastgeber')
+                              : p.bot != null
+                                  ? (p.bot!.level == 'sly' ? ('fox', 'Gerissener Bot') : ('smile', 'Einfacher Bot'))
+                                  : ('user', p.id == g.me ? 'Du' : 'Höfling');
+                          return Row(children: [
+                            JIcon(icon, size: 15, color: icon == 'crown' ? C.gold : C.inkSoft),
+                            const SizedBox(width: 4),
+                            Text(label, style: T.body(13, color: C.inkSoft)),
+                          ]);
+                        }),
                       ]),
                     ),
                     if (g.deckOf(players[i].id) != null) PlayingCard(rank: 1, deck: g.deckOf(players[i].id)!, width: 30),
@@ -99,9 +105,9 @@ class LobbyView extends StatelessWidget {
               ),
             if (canManage && !full)
               Row(children: [
-                Expanded(child: SoftButton(label: '🙂 Einfacher Bot', onPressed: () => _act(context, {'type': 'addBot', 'level': 'easy'}))),
+                Expanded(child: SoftButton(label: 'Einfacher Bot', jicon: 'smile', onPressed: () => _act(context, {'type': 'addBot', 'level': 'easy'}))),
                 const SizedBox(width: 10),
-                Expanded(child: SoftButton(label: '🦊 Gerissen', onPressed: () => _act(context, {'type': 'addBot', 'level': 'sly'}))),
+                Expanded(child: SoftButton(label: 'Gerissen', jicon: 'fox', onPressed: () => _act(context, {'type': 'addBot', 'level': 'sly'}))),
               ]),
             const SectionTitle('Dein Deck'),
             SizedBox(
@@ -238,10 +244,10 @@ class _RulesSummary extends StatelessWidget {
     final turn = s.settings['turnSeconds'];
     final active = settingText.entries.where((e) => s.setting(e.key) && e.key != 'chat' && e.key != 'tracker').map((e) => e.value.label);
     return Wrap(spacing: 8, runSpacing: 8, children: [
-      Pill(s.goal != null ? 'Bis ${s.goal} Punkte' : '${s.rounds} Runden', icon: Icons.loop_rounded),
-      Pill(turn == null ? 'Ohne Zugzeit' : '${turn}s Zugzeit', icon: Icons.timer_outlined),
-      Pill('Steuern: ${taxOptions[s.settings['tax']] ?? 'Normal'}', icon: Icons.account_balance_rounded),
-      for (final a in active) Pill(a, color: C.gold.withValues(alpha: .16), textColor: C.goldSoft),
+      Pill(s.goal != null ? 'Bis ${s.goal} Punkte' : '${s.rounds} Runden', jicon: 'rotate'),
+      Pill(turn == null ? 'Ohne Zugzeit' : '${turn}s Zugzeit', jicon: 'hourglass'),
+      Pill('Steuern: ${taxOptions[s.settings['tax']] ?? 'Normal'}', jicon: 'coins'),
+      for (final a in active) Pill(a, jicon: 'sparkles', color: C.gold.withValues(alpha: .16), textColor: C.goldSoft),
     ]);
   }
 }

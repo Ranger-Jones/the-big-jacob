@@ -9,6 +9,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
 import 'seats.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// The felt with its wooden rim; the trick lands in the middle.
 class FeltTable extends StatelessWidget {
@@ -147,7 +148,11 @@ class CourtPanel extends StatelessWidget {
       if (s.revolution != null)
         Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text(s.revolution!['grand'] == true ? '🔥 Große Revolution!' : '✊ Revolution – keine Steuern!', style: T.display(20, color: C.goldSoft))
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            JIcon(s.revolution!['grand'] == true ? 'flame' : 'fist', size: 22, color: C.goldSoft),
+            const SizedBox(width: 6),
+            Text(s.revolution!['grand'] == true ? 'Große Revolution!' : 'Revolution – keine Steuern!', style: T.display(20, color: C.goldSoft)),
+          ])
               .animate().scaleXY(begin: .6, end: 1, curve: Curves.easeOutBack, duration: 500.ms),
         ),
       if (event != null)
@@ -155,14 +160,22 @@ class CourtPanel extends StatelessWidget {
           margin: const EdgeInsets.only(top: 10),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(color: Colors.black.withValues(alpha: .28), borderRadius: BorderRadius.circular(14)),
-          child: Text('${event.emoji} ${event.title}: ${event.text}', textAlign: TextAlign.center, style: T.body(14)),
+          child: Column(children: [
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              JIcon(eventIcons[s.event] ?? 'sparkles', size: 18, color: C.goldSoft),
+              const SizedBox(width: 6),
+              Text(event.title, style: T.body(15, weight: FontWeight.w800, color: C.goldSoft)),
+            ]),
+            const SizedBox(height: 2),
+            Text(event.text, textAlign: TextAlign.center, style: T.body(14)),
+          ]),
         ),
       const SizedBox(height: 10),
       for (var i = 0; i < order.length; i++)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            SizedBox(width: 26, child: Text(titleEmoji(i, order.length), style: const TextStyle(fontSize: 16))),
+            Padding(padding: const EdgeInsets.only(right: 8), child: RankBadge(i, order.length, size: 20)),
             SizedBox(width: 120, child: Text(rankTitle(i, order.length), style: T.label(13, color: C.goldSoft))),
             SizedBox(width: 110, child: Text(g.nameOf(order[i], you: true), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(15, weight: FontWeight.w700))),
             Icon(s.ready.contains(order[i]) ? Icons.check_circle_rounded : Icons.hourglass_empty_rounded, size: 16, color: s.ready.contains(order[i]) ? C.vert : C.inkMute),
@@ -221,7 +234,7 @@ class RoundEndPanel extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            SizedBox(width: 28, child: Text(i == 0 ? '👑' : '${i + 1}.', style: T.display(18, color: i == 0 ? C.goldSoft : C.inkSoft))),
+            SizedBox(width: 30, child: i == 0 ? const JIcon('crown', size: 22, color: C.gold) : Text('${i + 1}.', style: T.display(18, color: C.inkSoft))),
             SizedBox(width: 120, child: Text(g.nameOf(finish[i], you: true), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(16, weight: FontWeight.w700))),
             SizedBox(width: 44, child: Text('+${last!.points[finish[i]] ?? 0}', textAlign: TextAlign.right, style: T.label(14, color: C.vert))),
             SizedBox(width: 50, child: Text('${s.points[finish[i]] ?? 0}', textAlign: TextAlign.right, style: T.display(18))),
@@ -243,20 +256,29 @@ class Burst extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (emoji, word, color) = switch (kind) {
-      'snap' => ('⚡', 'Schnapp!', C.goldSoft),
-      'bomb' => ('💣', 'Bombe!', C.wax),
-      'unbeatable' => ('👑', 'Unschlagbar!', C.goldSoft),
-      'revolution' => ('✊', 'Revolution!', C.wax),
-      'grandRevolution' => ('🔥', 'Große Revolution!', C.wax),
-      'kingFall' => ('💥', 'Königssturz!', C.wax),
-      'throne' => ('🏰', 'Thronfolge!', C.goldSoft),
-      _ => ('🎉', '$who ist raus!', C.vert),
+    final (icon, word, color) = switch (kind) {
+      'snap' => ('bolt', 'Schnapp!', C.goldSoft),
+      'bomb' => ('bomb', 'Bombe!', C.wax),
+      'unbeatable' => ('crown', 'Unschlagbar!', C.goldSoft),
+      'revolution' => ('fist', 'Revolution!', C.wax),
+      'grandRevolution' => ('flame', 'Große Revolution!', C.wax),
+      'kingFall' => ('crown', 'Königssturz!', C.wax),
+      'throne' => ('castle', 'Thronfolge!', C.goldSoft),
+      _ => ('sparkles', '$who ist raus!', C.vert),
     };
     return IgnorePointer(
       child: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(emoji, style: const TextStyle(fontSize: 64))
+          Container(
+            width: 104, height: 104, alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const RadialGradient(colors: [C.surfaceHi, C.velvet]),
+              border: Border.all(color: color, width: 3),
+              boxShadow: [BoxShadow(color: color.withValues(alpha: .55), blurRadius: 34, spreadRadius: 4)],
+            ),
+            child: JIcon(icon, size: 62, color: color),
+          )
               .animate()
               .scaleXY(begin: .2, end: 1.15, duration: 380.ms, curve: Curves.easeOutBack)
               .then()
@@ -304,7 +326,7 @@ class AutopilotBanner extends StatelessWidget {
         glow: true,
         padding: const EdgeInsets.all(14),
         child: Row(children: [
-          const Text('🤖', style: TextStyle(fontSize: 26)),
+          const JIcon('bot', size: 28, color: C.goldSoft),
           const SizedBox(width: 12),
           Expanded(child: Text('Ein Bot spielt gerade für dich.', style: T.body(15))),
           GoldButton(label: 'Zurück ins Spiel', expand: false, onPressed: () => g.dispatch({'type': 'resume'})),

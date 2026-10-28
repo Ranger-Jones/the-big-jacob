@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'profile/profile_widgets.dart';
 import 'profile_screen.dart';
+import '../widgets/jakob_icons.dart';
 
 enum _Tab { gesamt, monat, elo }
 
@@ -41,16 +42,16 @@ class _Row {
       case _Tab.gesamt:
         final games = asInt(m['games_played']);
         return _Row(id, name, url, asInt(m['wins']), 'Siege',
-            '👑 ${asInt(m['crowns'])} · ${games == 1 ? '1 Spiel' : '$games Spiele'} · Ø ${deNum(asDouble(m['avg_place']))}');
+            '${asInt(m['crowns'])} Kronen · ${games == 1 ? '1 Spiel' : '$games Spiele'} · Ø ${deNum(asDouble(m['avg_place']))}');
       case _Tab.monat:
         final games = asInt(m['games']);
         return _Row(id, name, url, asInt(m['wins']), 'Siege',
-            '👑 ${asInt(m['crowns'])} · ${games == 1 ? '1 Spiel' : '$games Spiele'} · ${asInt(m['points'])} Punkte');
+            '${asInt(m['crowns'])} Kronen · ${games == 1 ? '1 Spiel' : '$games Spiele'} · ${asInt(m['points'])} Punkte');
       case _Tab.elo:
         final rating = asInt(m['rating']), rated = asInt(m['rated_games']);
         return _Row(id, name, url, rating, 'Elo',
             'Stufe ${levelFromXp(asInt(m['xp']))} · ${rated == 1 ? '1 Partie' : '$rated Partien'} · Bestwert ${asInt(m['peak_rating'])}',
-            badge: tierFor(rating).emoji);
+            badge: tierFor(rating).icon);
     }
   }
 }
@@ -119,7 +120,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Expanded(child: Text('Bestenliste', style: T.display(40))),
-              if (myIndex >= 0) Pill('Du: Platz ${myIndex + 1}', icon: Icons.person_rounded, color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
+              if (myIndex >= 0) Pill('Du: Platz ${myIndex + 1}', jicon: 'user', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
             ]),
             const SizedBox(height: 16),
             _Segmented(value: _tab, onChanged: _select),
@@ -256,7 +257,7 @@ class _Pedestal extends StatelessWidget {
     final avatar = first ? 84.0 : 66.0;
     final height = switch (place) { 1 => 116.0, 2 => 86.0, _ => 66.0 };
 
-    Widget crown = Text(first ? '👑' : place == 2 ? '🥈' : '🥉', style: TextStyle(fontSize: first ? 34 : 24));
+    Widget crown = first ? const JIcon('crown', size: 38, color: C.gold) : Medal(place, size: 28);
     if (first) {
       crown = crown.animate(onPlay: (c) => c.repeat(reverse: true)).moveY(begin: -2, end: 3, duration: 1600.ms, curve: Curves.easeInOut);
     }
@@ -295,7 +296,10 @@ class _Pedestal extends StatelessWidget {
             ),
             padding: const EdgeInsets.only(top: 10),
             child: Column(children: [
-              Text('${row.badge != null ? '${row.badge} ' : ''}${row.value}', style: T.display(first ? 30 : 24, color: first ? C.goldSoft : C.ink)),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                if (row.badge != null) ...[JIcon(row.badge!, size: first ? 22 : 18, color: C.goldSoft), const SizedBox(width: 4)],
+                Text('${row.value}', style: T.display(first ? 30 : 24, color: first ? C.goldSoft : C.ink)),
+              ]),
               Text(row.valueLabel, style: T.label(12)),
               if (first) ...[const Spacer(), Text('1', style: T.display(26, color: C.gold.withValues(alpha: .5))), const SizedBox(height: 6)],
             ]),
@@ -335,7 +339,10 @@ class _RankRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${row.badge != null ? '${row.badge} ' : ''}${row.value}', style: T.display(24, color: C.goldSoft)),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              if (row.badge != null) ...[JIcon(row.badge!, size: 18, color: C.goldSoft), const SizedBox(width: 4)],
+              Text('${row.value}', style: T.display(24, color: C.goldSoft)),
+            ]),
             Text(row.valueLabel, style: T.label(11, color: C.inkMute)),
           ]),
         ]),

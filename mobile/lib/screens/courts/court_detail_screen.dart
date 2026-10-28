@@ -11,6 +11,7 @@ import 'court_dialogs.dart';
 import 'court_forms.dart';
 import 'court_models.dart';
 import 'crest.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// One court: crest, invite code, the court table and the owner's tools.
 /// Pops with true when the user left the court.
@@ -258,12 +259,10 @@ class _StandingRow extends StatelessWidget {
     required this.onKick,
   });
 
-  static const _medals = ['🥇', '🥈', '🥉'];
 
   @override
   Widget build(BuildContext context) {
     final s = standing;
-    final rank = s.games == 0 ? '–' : (place <= 3 ? _medals[place - 1] : '$place');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       child: Material(
@@ -285,7 +284,7 @@ class _StandingRow extends StatelessWidget {
               child: Row(children: [
                 SizedBox(
                   width: 34,
-                  child: Text(rank, textAlign: TextAlign.center, style: place <= 3 && s.games > 0 ? const TextStyle(fontSize: 24) : T.display(22, color: C.inkSoft)),
+                  child: s.games == 0 ? Text('–', textAlign: TextAlign.center, style: T.display(22, color: C.inkSoft)) : Center(child: Medal(place, size: 24)),
                 ),
                 const SizedBox(width: 6),
                 Avatar.of(s.profile, size: 42, ring: mine ? C.gold : null),
@@ -296,7 +295,7 @@ class _StandingRow extends StatelessWidget {
                       Flexible(child: Text(s.profile.username, overflow: TextOverflow.ellipsis, style: T.body(17, weight: FontWeight.w800))),
                       if (s.owner) ...[
                         const SizedBox(width: 6),
-                        Semantics(label: 'Hofherr', child: const Tooltip(message: 'Hofherr', child: Text('👑', style: TextStyle(fontSize: 16)))),
+                        Semantics(label: 'Hofherr', child: const Tooltip(message: 'Hofherr', child: JIcon('crown', size: 18, color: C.gold))),
                       ],
                     ]),
                     const SizedBox(height: 2),

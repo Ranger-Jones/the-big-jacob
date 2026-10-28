@@ -11,6 +11,7 @@ import 'chat_sheet.dart';
 import 'hand_fan.dart';
 import 'seats.dart';
 import 'table_center.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// A running game: seats on top, the felt in the middle, your hand and actions at the bottom.
 class TableView extends StatefulWidget {
@@ -136,7 +137,7 @@ class _TableViewState extends State<TableView> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(children: [
-                Text(idx >= 0 ? '${titleEmoji(idx, s.order.length)} ${rankTitle(idx, s.order.length)}' : '', style: T.label(13, color: C.goldSoft)),
+                if (idx >= 0) ...[RankBadge(idx, s.order.length, size: 20), const SizedBox(width: 6), Text(rankTitle(idx, s.order.length), style: T.label(13, color: C.goldSoft))],
                 const Spacer(),
                 Text('${s.points[me] ?? 0} Punkte', style: T.label(13, color: C.inkSoft)),
                 if (g.hand.mission != null) ...[
@@ -202,7 +203,12 @@ class _TopBar extends StatelessWidget {
           Expanded(
             child: Column(children: [
               Text(s.phase == 'draw' ? 'Platzwahl' : 'Runde ${s.round} $rounds', style: T.display(20)),
-              if (event != null) Text('${event.emoji} ${event.title}', style: T.label(12, color: C.goldSoft)),
+              if (event != null)
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  JIcon(eventIcons[s.event] ?? 'sparkles', size: 15, color: C.goldSoft),
+                  const SizedBox(width: 4),
+                  Text(event.title, style: T.label(12, color: C.goldSoft)),
+                ]),
               if (!g.connected) Text('Verbindung wird wiederhergestellt …', style: T.label(12, color: C.wax)),
             ]),
           ),
@@ -323,8 +329,8 @@ class _MissionChip extends StatelessWidget {
     if (info == null) return const SizedBox();
     final done = mission['done'] == true;
     return GestureDetector(
-      onTap: () => toast(context, '${info.emoji} ${info.title}: ${info.text}${done ? ' (erfüllt!)' : ''}'),
-      child: Pill('${info.emoji} Mission', color: done ? C.vert.withValues(alpha: .3) : C.surfaceHi, textColor: done ? C.vert : C.goldSoft),
+      onTap: () => toast(context, '${info.title}: ${info.text}${done ? ' (erfüllt!)' : ''}'),
+      child: Pill('Mission', jicon: missionIcons[mission['id']] ?? 'target', color: done ? C.vert.withValues(alpha: .3) : C.surfaceHi, textColor: done ? C.vert : C.goldSoft),
     );
   }
 }
@@ -395,14 +401,21 @@ void showLog(BuildContext context, GameController g) {
       builder: (ctx, scroll) => ListenableBuilder(
         listenable: g,
         builder: (ctx, _) {
-          final lines = g.state!.log.reversed
-              .map((e) => describeLog(e, (id) => g.nameOf(id), g.me))
-              .whereType<String>()
-              .toList();
+          final lines = [
+            for (final e in g.state!.log.reversed)
+              if (describeLog(e, (id) => g.nameOf(id), g.me) case final text?) (logIcons[e['kind']], stripEmoji(text)),
+          ];
           return ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(22, 0, 22, 30), children: [
             Text('Verlauf', style: T.display(28)),
             const SizedBox(height: 10),
-            for (final l in lines) Padding(padding: const EdgeInsets.symmetric(vertical: 5), child: Text(l, style: T.body(15))),
+            for (final (icon, text) in lines)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SizedBox(width: 26, child: icon == null ? null : JIcon(icon, size: 18, color: C.goldSoft)),
+                  Expanded(child: Text(text, style: T.body(15))),
+                ]),
+              ),
           ]);
         },
       ),

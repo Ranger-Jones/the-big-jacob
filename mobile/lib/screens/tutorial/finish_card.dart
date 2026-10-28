@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// Shown after the last lesson: on to the campaign for practice against bots.
 class FinishCard extends StatelessWidget {
@@ -15,7 +16,7 @@ class FinishCard extends StatelessWidget {
         glow: true,
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Text('👑', textAlign: TextAlign.center, style: TextStyle(fontSize: 64))
+          const Center(child: JIcon('crown', size: 72, color: C.gold))
               .animate()
               .scaleXY(begin: .3, end: 1, duration: 520.ms, curve: Curves.easeOutBack)
               .rotate(begin: -.06, end: 0, duration: 520.ms),
