@@ -244,6 +244,7 @@ const settingText = {
   'jesterCurse': SettingInfo('Narrenfluch', 'Wer am Rundenende noch Narren hat, verliert pro Narr einen Punkt.'),
   'courtSwap': SettingInfo('Hoftausch', 'Nach den Steuern reichen die Bürger blind eine Karte weiter.'),
   'blitz': SettingInfo('Blitzrunde', 'Die Zugzeit wird jede Runde 5 Sekunden kürzer (mindestens 10 s).'),
+  'duel': SettingInfo('Duell', 'Nur zu zweit: je 15 Karten, der Rest liegt verdeckt als Hofstapel. Wer passt, zieht eine Karte. Der Rundensieger bekommt so viele Punkte, wie der andere noch Karten hat (Narren doppelt).'),
   'throne': SettingInfo('Thronfolge', 'Wer dreimal hintereinander Großer Jakob wird, gewinnt sofort.'),
   'teams': SettingInfo('Adel gegen Volk', 'Zwei Teams (abwechselnd nach Sitzplatz), die Punkte zählen fürs Team. Gerade Spielerzahl ab 4.'),
   'doubleDeck': SettingInfo('Doppeldeck', 'Zwei Kartensätze (160 Karten) – bis zu 12 Spieler am Tisch.'),

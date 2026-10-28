@@ -211,6 +211,153 @@ const BOTS: Record<string, { art: ReactNode }> = {
       />
     ),
   },
+  'König Peschel': {
+    art: (
+      <Portrait
+        id="bot-peschel" bg="#9c1c32" skin={SKIN.mid} garment="#5b2a86" brows="calm" smile="smirk"
+        back={<circle cx="50" cy="34" r="30" fill={GOLD} opacity="0.22" />}
+        collar={<>
+          <path d="M45 80 H55 V104 H45 Z" fill={GOLD} {...outline} />
+          <path d="M19 92 C23 78 34 71 50 71 C66 71 77 78 81 92 C73 86 62 83 50 83 C38 83 27 86 19 92 Z" fill="#fbf7ee" {...outline} />
+          {[[26, 83], [34, 77], [42, 75], [58, 75], [66, 77], [74, 83]].map(([x, y]) => (
+            <path key={x} d={`M${x} ${y} c-1.2 1.6 -1.2 3 0 4 c1.2 -1 1.2 -2.4 0 -4 Z`} fill={INK} />
+          ))}
+          {jewel(50, 89, '#c8323c', 2.8)}{jewel(50, 96, '#3a6fd8', 2)}
+        </>}
+        hair={<path d="M36.5 44 C36 32 64 32 63.5 44 C60 38 40 38 36.5 44 Z" fill="#5a3a22" {...outline} />}
+        face={<>
+          <path d="M39 52 C40 63 60 63 61 52 C57 57.5 54 57 50 58 C46 57 43 57.5 39 52 Z" fill="#5a3a22" {...outline} />
+          <path d="M41 52 C44 49 48 50 50 51.5 C52 50 56 49 59 52 C56 53 53 52.5 50 53.5 C47 52.5 44 53 41 52 Z" fill="#5a3a22" />
+        </>}
+        hat={<>
+          <path d="M36 31 C36 15 64 15 64 31 Z" fill="#5b2a86" {...outline} />
+          <path d="M33 32 L30 15 L38 23 L42 11 L46 21 L50 8 L54 21 L58 11 L62 23 L70 15 L67 32 Z" fill={GOLD} {...outline} />
+          <rect x="32" y="29" width="36" height="7" rx="1.5" fill={GOLD} {...outline} />
+          {jewel(38, 32.5, '#3a6fd8')}{jewel(44, 32.5, '#2f9e62')}{jewel(50, 32.5, '#c8323c', 2.4)}{jewel(56, 32.5, '#2f9e62')}{jewel(62, 32.5, '#3a6fd8')}
+          {jewel(30, 15, '#fbf7ee', 1.6)}{jewel(42, 11, '#fbf7ee', 1.6)}{jewel(58, 11, '#fbf7ee', 1.6)}{jewel(70, 15, '#fbf7ee', 1.6)}
+          {jewel(50, 9, '#c8323c', 2.4)}{jewel(50, 24, '#3a6fd8', 1.8)}
+        </>}
+        item={<>
+          <path d="M80 100 L85 60" stroke={GOLD} strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M85.5 45 L90.5 53 L85.5 61 L80.5 53 Z" fill={GOLD} {...outline} />
+          {jewel(85.5, 53, '#3a6fd8', 2)}{jewel(85.5, 44, '#fbf7ee', 1.6)}
+        </>}
+      />
+    ),
+  },
+  'Gräfin Charlotta': {
+    art: (
+      <Portrait
+        id="bot-charlotta" bg="#5e2456" skin={SKIN.deep} garment="#1f8a7a" brows="proud" smile="smirk"
+        back={<path d="M33 46 C28 32 32 14 50 10 C68 14 72 32 67 46 C64 40 36 40 33 46 Z" fill="#1c140e" {...outline} />}
+        collar={<>
+          <path d="M38 71 C40 84 60 84 62 71" fill="none" stroke={GOLD} strokeWidth="2.2" />
+          <path d="M41 74 C44 81 56 81 59 74" fill="none" stroke="#fbf7ee" strokeWidth="3" strokeDasharray="0.1 3.4" strokeLinecap="round" />
+          {jewel(50, 82, '#2f9e62', 2.4)}
+        </>}
+        hair={<path d="M36.5 44 C35 28 65 28 63.5 44 C60 34 50 32 44 36 C40 38 38 40 36.5 44 Z" fill="#1c140e" {...outline} />}
+        face={<>{jewel(36.8, 52, '#fbf7ee', 1.5)}{jewel(63.2, 52, '#fbf7ee', 1.5)}</>}
+        hat={<>
+          <path d="M36 27 C44 20 56 20 64 27" fill="none" stroke="#fbf7ee" strokeWidth="2.8" strokeDasharray="0.1 3.4" strokeLinecap="round" />
+          {jewel(50, 16, '#2f9e62', 2.6)}
+        </>}
+        item={<>
+          <path d="M75 88 L62.1 72.7 A20 20 0 0 1 85 70.7 Z" fill="#fbf7ee" {...outline} />
+          <path d="M75 88 L67.3 69.5 A20 20 0 0 1 73.3 68.1 Z M75 88 L79.3 68.5 A20 20 0 0 1 85 70.7 Z" fill="#1f8a7a" stroke={INK} strokeWidth="1" strokeLinejoin="round" />
+        </>}
+      />
+    ),
+  },
+  'Hofmeister Paul': {
+    art: (
+      <Portrait
+        id="bot-paul" bg="#b08a3a" skin={SKIN.light} garment="#2f5a3a" brows="calm" smile="smile"
+        collar={<>
+          <path d="M41 76 H59 V104 H41 Z" fill="#6b4c30" {...outline} />
+          <path d="M44 71 L50 79 L56 71 Z" fill="#fbf7ee" {...outline} />
+          <path d="M30 79 C36 92 64 92 70 79" fill="none" stroke={INK} strokeWidth="4.4" strokeLinecap="round" />
+          <path d="M30 79 C36 92 64 92 70 79" fill="none" stroke={GOLD} strokeWidth="2.6" strokeDasharray="2.6 1.2" />
+          <circle cx="50" cy="91" r="4.2" fill={GOLD} {...outline} />
+          <circle cx="50" cy="91" r="1.8" fill="#2f5a3a" />
+        </>}
+        hair={<>
+          <path d="M36 46 C34 27 66 27 64 46 C61 38 52 35 45 35.5 C41 37 38 41 36 46 Z" fill="#2a1a10" {...outline} />
+          <path d="M44.5 31.5 C44.6 33 45 34.5 45.3 35.6" fill="none" stroke="#6b4c30" strokeWidth="1.2" strokeLinecap="round" />
+        </>}
+        face={<path d="M42 52 C45 49.5 48 50.5 50 51.5 C52 50.5 55 49.5 58 52 C59 51 60 50 61 50.5 C60 53 57 53.5 55 53 C53 52.8 51.5 53 50 53.5 C48.5 53 47 52.8 45 53 C43 53.5 40 53 39 50.5 C40 50 41 51 42 52 Z" fill="#2a1a10" />}
+        item={<>
+          <circle cx="75" cy="62" r="5.5" fill="none" stroke={INK} strokeWidth="4.2" />
+          <circle cx="75" cy="62" r="5.5" fill="none" stroke={GOLD} strokeWidth="2.4" />
+          <path d="M72.5 70 L71 82 M71.4 78.5 H68 M71 81.5 H68 M79 70.5 L80.5 82 M80.1 78.5 H83.5 M80.5 81.5 H83.5" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
+          <path d="M72.5 70 L71 82 M71.4 78.5 H68 M71 81.5 H68 M79 70.5 L80.5 82 M80.1 78.5 H83.5 M80.5 81.5 H83.5" stroke={GOLD} strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="72.5" cy="68" r="2.6" fill={GOLD} {...outline} />
+          <circle cx="79" cy="68.5" r="2.6" fill={GOLD} {...outline} />
+        </>}
+      />
+    ),
+  },
+  'Wissenschaftlerin Maxi': {
+    art: (
+      <Portrait
+        id="bot-maxi" bg="#2f8a8a" skin={SKIN.tan} garment="#24407e" brows="raised" smile="grin"
+        back={<>
+          {[[35, 36], [41, 28], [50, 25], [59, 28], [65, 36], [33, 46], [67, 46]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="6.5" fill="#b5532a" {...outline} />)}
+        </>}
+        collar={<>
+          <path d="M43 71 L50 80 L57 71 Z" fill="#fbf7ee" {...outline} />
+          {jewel(42, 86, '#c9a06a', 1.8)}{jewel(42, 94, '#c9a06a', 1.8)}
+        </>}
+        hair={<path d="M36.5 44 C35 34 39 31 43 32 L45.5 37 L48.5 32 L51.5 37 L54.5 32 L57 37 C61 34 64 38 63.5 44 C60 39 40 39 36.5 44 Z" fill="#b5532a" {...outline} />}
+        hat={<>
+          <path d="M35 35 C40 27 60 27 65 35" fill="none" stroke="#6b4c30" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="44" cy="30" r="5.5" fill="#c9a06a" {...outline} />
+          <circle cx="56" cy="30" r="5.5" fill="#c9a06a" {...outline} />
+          <circle cx="44" cy="30" r="3.4" fill="#9fe3ff" stroke={INK} strokeWidth="0.8" />
+          <circle cx="56" cy="30" r="3.4" fill="#9fe3ff" stroke={INK} strokeWidth="0.8" />
+          <path d="M42.5 28.5 L44 27.5 M54.5 28.5 L56 27.5" stroke="#fff" strokeWidth="1" strokeLinecap="round" />
+        </>}
+        item={<>
+          <path d="M73 62 L67 76 C66 78 67 80 69 80 H81 C83 80 84 78 83 76 L77 62 Z" fill="#dff4ff" {...outline} />
+          <path d="M69.6 70 H80.4 L83 76 C84 78 83 80 81 80 H69 C67 80 66 78 67 76 Z" fill="#5ad06a" {...outline} />
+          <rect x="71.5" y="55" width="7" height="3" rx="1" fill="#c9a06a" {...outline} />
+          <path d="M73 58 V62 M77 58 V62" stroke={INK} strokeWidth="1.8" />
+          <circle cx="74" cy="74" r="1.2" fill="#fbf7ee" />
+          <circle cx="78" cy="76.5" r="0.9" fill="#fbf7ee" />
+          <circle cx="76" cy="66" r="1.2" fill="#5ad06a" stroke={INK} strokeWidth="0.6" />
+          <circle cx="78.5" cy="51" r="1.4" fill="#5ad06a" stroke={INK} strokeWidth="0.6" />
+        </>}
+      />
+    ),
+  },
+  'Leibwächter Ali': {
+    art: (
+      <Portrait
+        id="bot-ali" bg="#4a5a6e" skin={SKIN.mid} garment="#9aa3ad" brows="proud" smile="flat"
+        collar={<>
+          <path d="M14 90 C16 76 28 70 38 73 L37 82 C30 82 22 86 14 90 Z M86 90 C84 76 72 70 62 73 L63 82 C70 82 78 86 86 90 Z" fill="#b8c0c8" {...outline} />
+          <path d="M35 80 H65 L67 104 H33 Z" fill="#c8323c" {...outline} />
+          <path d="M43 94 L42 86 L46 89 L50 84 L54 89 L58 86 L57 94 Z" fill={GOLD} {...outline} />
+          <path d="M38 70 C40 77 60 77 62 70 L66 75 C60 84 40 84 34 75 Z" fill="#c9cdd8" {...outline} />
+          <circle cx="40" cy="78" r="0.9" fill={INK} /><circle cx="60" cy="78" r="0.9" fill={INK} />
+        </>}
+        face={<>
+          <path d="M37 48 C37 66 63 66 63 48 C60 56 55 56 50 57 C45 56 40 56 37 48 Z" fill="#2a1a10" {...outline} />
+          <path d="M41 52 C44 49 48 50 50 51.5 C52 50 56 49 59 52 C56 53 53 52.5 50 53.5 C47 52.5 44 53 41 52 Z" fill="#2a1a10" />
+        </>}
+        hat={<>
+          <path d="M37 34 C37 17 63 17 63 34 Z" fill="#b8c0c8" {...outline} />
+          <path d="M50 18.5 V31" stroke="#6f7882" strokeWidth="1.5" />
+          <ellipse cx="50" cy="34.5" rx="21" ry="4" fill="#c9cdd8" {...outline} />
+        </>}
+        item={<>
+          <path d="M18 100 L22.5 36" stroke="#8a5a2b" strokeWidth="3" strokeLinecap="round" />
+          <path d="M21.5 30 L23.5 39 L20.5 39 Z" fill="#c9cdd8" {...outline} />
+          <path d="M21.6 43 C13 41 10 50 12 59 C15 55 19 54 21 53 Z" fill="#c9cdd8" {...outline} />
+          <path d="M22.4 45 L29 43 L22.2 49 Z" fill="#c9cdd8" {...outline} />
+        </>}
+      />
+    ),
+  },
 };
 
 /** Generic courtier for extra bots beyond the named ones ("Höfling 9"). */

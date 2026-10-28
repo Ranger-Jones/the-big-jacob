@@ -119,6 +119,8 @@ const _botArt = {
   'Hofnarr Hugo': 'bot-hugo', 'Gräfin Gisela': 'bot-gisela', 'Bauer Bernd': 'bot-bernd', 'Ritter Rüdiger': 'bot-ruediger',
   'Köchin Klara': 'bot-klara', 'Mönch Matthias': 'bot-matthias', 'Baronin Berta': 'bot-berta', 'Schäferin Sina': 'bot-sina',
   'Steinmetz Stefan': 'bot-stefan', 'Näherin Nora': 'bot-nora', 'Erzbischof Egon': 'bot-egon', 'Marschall Max': 'bot-max',
+  'König Peschel': 'bot-peschel', 'Gräfin Charlotta': 'bot-charlotta', 'Hofmeister Paul': 'bot-paul',
+  'Wissenschaftlerin Maxi': 'bot-maxi', 'Leibwächter Ali': 'bot-ali',
 };
 
 String botArtId(String name) => _botArt[name] ?? 'bot-hoefling';

@@ -9,6 +9,7 @@ import '../game/progress.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/playing_card.dart';
+import 'bots_screen.dart';
 import 'campaign_screen.dart';
 import 'courts_screen.dart';
 import 'decks_screen.dart';
@@ -211,6 +212,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const CampaignScreen()));
                 _load();
               },
+            ),
+            const SizedBox(height: 10),
+            _ModeTile(
+              icon: 'sword',
+              title: 'Gegen Bots spielen',
+              text: '17 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins.',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BotsScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(

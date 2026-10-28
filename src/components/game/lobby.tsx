@@ -19,6 +19,7 @@ import { RatingBadge } from '@/components/rating/rating-badge';
 import { useRatings } from '@/hooks/use-ratings';
 import { PublicLobbyBanner, PublicRules } from './public-lobby';
 import { SettingsPanel } from './settings-panel';
+import { PersonaPicker } from '@/components/bots/persona-picker';
 import { useTable } from './table-context';
 import { Icon, TEAM_ICONS } from '@/components/ui/icons';
 
@@ -30,6 +31,7 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
   const [invited, setInvited] = useState<Set<string>>(new Set());
   const [removing, setRemoving] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const inGame = new Set(state.players.map((p) => p.id));
   const invitable = friends.filter((f) => !inGame.has(f.id));
   const seats = maxPlayers(state);
@@ -149,6 +151,17 @@ export function Lobby({ friends, myDecks }: { friends: ProfileLite[]; myDecks: D
             <span className="font-bold text-ink-soft">{t('Bot an den Tisch holen:')}</span>
             <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'easy' })}><Icon name="smile" /> {t('Einfach')}</Button>
             <Button size="sm" variant="secondary" disabled={full} onClick={() => g.dispatch({ type: 'addBot', level: 'sly' })}><Icon name="fox" /> {t('Gerissen')}</Button>
+            <Button size="sm" variant="secondary" disabled={full} onClick={() => setPickerOpen(true)}><Icon name="crown" /> {t('Charakter wählen …')}</Button>
+            <PersonaPicker
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              disabled={full || g.busy}
+              seated={new Set(state.players.flatMap((p) => (p.bot?.persona ? [p.bot.persona] : [])))}
+              onPick={(persona) => {
+                setPickerOpen(false);
+                void g.dispatch({ type: 'addBot', persona });
+              }}
+            />
           </div>
         )}
 

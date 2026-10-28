@@ -6,7 +6,9 @@ Map<String, dynamic> _map(dynamic v) => v is Map ? Map<String, dynamic>.from(v) 
 
 class Bot {
   final String name, emoji, level;
-  const Bot(this.name, this.emoji, this.level);
+  /// Character from the bot gallery (src/lib/jakob/personas.ts), null for plain bots.
+  final String? persona;
+  const Bot(this.name, this.emoji, this.level, [this.persona]);
 }
 
 class Player {
@@ -20,7 +22,7 @@ class Player {
     final b = m['bot'];
     return Player(
       m['id'] as String, m['left'] == true, m['deckId'] as String?,
-      b is Map ? Bot(b['name'] as String? ?? 'Bot', b['emoji'] as String? ?? '🤖', b['level'] as String? ?? 'easy') : null,
+      b is Map ? Bot(b['name'] as String? ?? 'Bot', b['emoji'] as String? ?? '🤖', b['level'] as String? ?? 'easy', b['persona'] as String?) : null,
       m['autopilot'] == true,
     );
   }
@@ -90,11 +92,15 @@ class GameState {
           m['revolution'] as String? ?? 'none',
         );
       }).toList();
+  /// Duel: cards left in the face-down reserve.
+  int get reserveCount => (raw['reserveCount'] as num?)?.toInt() ?? 0;
+  /// The last line a persona bot said: {by, text, seq}.
+  Map? get quip => raw['quip'] as Map?;
   Map<String, dynamic>? get missionsRevealed => raw['missionsRevealed'] is Map ? _map(raw['missionsRevealed']) : null;
 
   RuleCtx get ctx => RuleCtx(snap: setting('snap'), bomb: setting('bomb'), event: event);
 
-  int get maxPlayers => setting('doubleDeck') ? 12 : 8;
+  int get maxPlayers => setting('duel') ? 2 : setting('doubleDeck') ? 12 : 8;
 
   /// Final places (port of the engine's placements).
   Map<String, int> placements() {

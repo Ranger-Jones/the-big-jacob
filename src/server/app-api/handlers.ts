@@ -32,7 +32,8 @@ import {
   inviteFriendToTable, inviteToGame, listFriends, listPendingInvites, removeFriend, respondFriendRequest,
   respondInvite, searchProfiles, sendFriendRequest,
 } from '../social-service';
-import { startCampaign, startDaily } from '../solo-service';
+import { botRoster, startCampaign, startDaily, startDuel } from '../solo-service';
+import { DUEL_VARIANTS } from '@/lib/jakob/duel';
 import type { AppUser } from './auth';
 
 export interface Ctx { admin: AdminClient; user: AppUser; params: string[]; body: Record<string, unknown>; query: URLSearchParams }
@@ -128,6 +129,12 @@ export const GET: Record<string, Handler> = {
     return ok(await listFriends(admin, user.id));
   },
 
+  /** The persona bots with the player's record, and the duel rule sets. */
+  async bots({ admin, user }) {
+    const bots = await botRoster(admin, user.id);
+    return ok({ bots: bots.map(({ quips, ...b }) => ({ ...b, greeting: quips.greet[0] })), variants: DUEL_VARIANTS });
+  },
+
   async search({ admin, user, query }) {
     const q = name.safeParse(query.get('q') ?? '');
     return ok(q.success ? await searchProfiles(admin, user.id, q.data) : []);
@@ -189,6 +196,7 @@ export const POST: Record<string, Handler> = {
       case 'join': return joinGame(admin, user.id, String(body.code ?? ''));
       case 'campaign': return startCampaign(admin, user.id, Number(body.level));
       case 'daily': return startDaily(admin, user.id);
+      case 'duel': return startDuel(admin, user.id, String(body.persona ?? ''), String(body.variant ?? 'klassisch'));
       default: return fail('Ungültige Aktion.');
     }
   },

@@ -140,6 +140,9 @@ async function afterFinish(admin: AdminClient, gameId: string, state: GameState)
       await admin.from('profiles').update({ campaign_level: level, campaign_won_on: berlinDay() }).eq('id', human.id);
     }
   }
+  if (state.mode === 'duel' && state.modeRef && state.history.length > 0) {
+    await admin.rpc('record_bot_duel', { p_user: human.id, p_persona: state.modeRef, p_won: place === 1 });
+  }
   if (state.mode === 'daily' && state.modeRef) {
     await admin.from('daily_results').upsert(
       { day: state.modeRef, user_id: human.id, game_id: gameId, points: state.points[human.id] ?? 0, place },
@@ -149,17 +152,20 @@ async function afterFinish(admin: AdminClient, gameId: string, state: GameState)
 }
 
 /** A solo game against bots that starts right away (campaign stage or daily challenge). */
+/** Games against bots only, started from their own screens (campaign, daily challenge, bot duel). */
+export type SoloMode = 'campaign' | 'daily' | 'duel';
+
 export async function createSoloGame(
   admin: AdminClient, userId: string,
-  options: { mode: 'campaign' | 'daily'; ref: string; settings: Settings; bots: BotLevel[]; seed?: number; deckId?: string | null },
+  options: { mode: SoloMode; ref: string; settings: Settings; bots: (BotLevel | { persona: string })[]; seed?: number; deckId?: string | null },
 ): Promise<ServiceResult<{ code: string }>> {
   let state = createGameState(userId, options.settings);
   state.players[0].deckId = options.deckId ?? null;
   state.mode = options.mode;
   state.modeRef = options.ref;
   state.seed = options.seed ?? null;
-  for (const level of options.bots) {
-    const res = applyAction(state, userId, { type: 'addBot', level }, rand);
+  for (const bot of options.bots) {
+    const res = applyAction(state, userId, typeof bot === 'string' ? { type: 'addBot', level: bot } : { type: 'addBot', persona: bot.persona }, rand);
     if (!res.ok) return fail(res.error);
     state = res.state;
   }
@@ -170,7 +176,7 @@ export async function createSoloGame(
 }
 
 /** Unfinished solo game of this kind, so a reload continues instead of starting over. */
-export async function findOpenSoloGame(admin: AdminClient, userId: string, mode: 'campaign' | 'daily', ref: string): Promise<string | null> {
+export async function findOpenSoloGame(admin: AdminClient, userId: string, mode: SoloMode, ref: string): Promise<string | null> {
   const { data } = await admin.from('games').select('code, game_players!inner(user_id, left_game)')
     .eq('mode', mode).eq('mode_ref', ref).eq('status', 'playing')
     .eq('game_players.user_id', userId).eq('game_players.left_game', false).limit(1);

@@ -21,6 +21,7 @@ import { deadlineFraction, Seats } from './seats';
 import { useTable } from './table-context';
 import { TrickArea } from './trick-area';
 import { TurnBanner } from './turn-banner';
+import { QuipBubble } from './quip-bubble';
 import { Icon } from '@/components/ui/icons';
 import { MissionCard } from './mission-card';
 
@@ -183,6 +184,12 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
         </div>
 
         <Seats timer={state.phase === 'play' ? fraction : null} />
+        <QuipBubble />
+        {state.settings.duel && state.phase === 'play' && (
+          <p className="-my-1 text-center text-sm font-bold text-parchment/75">
+            <Icon name="cards" /> {t('Hofstapel: {count} verdeckte Karten · wer passt, zieht eine', { count: state.reserveCount })}
+          </p>
+        )}
         <DealOverlay round={state.round} seats={state.order.length} mySeat={state.order.indexOf(me)} design={deck.design} />
 
         {state.phase === 'draw' && <DrawPhase secondsLeft={secondsLeft} />}
@@ -222,7 +229,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>{t('Abwählen')}</Button>}
               {state.phase === 'play' && myTurn && state.trick && (
                 <Button variant="secondary" className="flex-1" onClick={() => { setSelection({}); void g.dispatch({ type: 'pass' }, { move: true }); }} disabled={g.busy}>
-                  {t('Passen')}
+                  {state.settings.duel && state.reserveCount > 0 ? t('Passen (+1 Karte)') : t('Passen')}
                 </Button>
               )}
               {state.phase === 'play' && (

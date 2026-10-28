@@ -15,13 +15,16 @@ export function SettingsPanel() {
   const set = (patch: Partial<Settings>) => {
     if (isHost) void g.dispatch({ type: 'updateSettings', settings: patch });
   };
+  // The duel needs exactly two seats; teams and the double deck do not go with it.
+  const blocked = (key: keyof typeof SETTING_TEXT) =>
+    (key === 'duel' && !s.duel && state.players.length > 2) || ((key === 'teams' || key === 'doubleDeck') && s.duel);
   const toggle = (key: keyof typeof SETTING_TEXT) => {
     const text: { label: string; hint?: string } = SETTING_TEXT[key];
     return (
       <Switch
         key={key}
         checked={s[key] as boolean}
-        disabled={!isHost}
+        disabled={!isHost || blocked(key)}
         onChange={(v) => set({ [key]: v } as Partial<Settings>)}
         label={t(text.label)}
         hint={text.hint && t(text.hint)}

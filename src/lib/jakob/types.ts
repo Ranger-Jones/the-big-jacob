@@ -72,6 +72,11 @@ export interface Settings {
   blitz: boolean;
   /** "Doppeldeck": two 80-card decks for up to 12 players. */
   doubleDeck: boolean;
+  /**
+   * "Duell" (exactly two players): 15 cards each, the rest stays face down as the reserve; whoever
+   * passes draws a card from it; the round winner scores the cards the loser still holds.
+   */
+  duel: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -97,9 +102,21 @@ export const DEFAULT_SETTINGS: Settings = {
   courtSwap: false,
   blitz: false,
   doubleDeck: false,
+  duel: false,
 };
 
-export interface BotInfo { name: string; emoji: string; level: BotLevel }
+/** Cards per player in a duel; the rest of the deck is the face-down reserve. */
+export const DUEL_HAND = 15;
+/** Point goal a duel is usually played to. */
+export const DUEL_GOAL = 30;
+
+export interface BotInfo {
+  name: string;
+  emoji: string;
+  level: BotLevel;
+  /** Character from personas.ts: plays with its own style and talks at the table. */
+  persona?: string;
+}
 
 export interface Player {
   id: string;
@@ -124,7 +141,7 @@ export type LogKind =
   | 'play' | 'pass' | 'clear' | 'out' | 'revolution' | 'grandRevolution' | 'tax'
   | 'bomb' | 'snap' | 'timeout' | 'event' | 'left' | 'jesterOut' | 'kingFall' | 'unbeatable'
   | 'mission' | 'mercy' | 'abdicate' | 'jesterCurse' | 'courtSwap' | 'pest' | 'audit' | 'charity'
-  | 'autopilot' | 'resume' | 'throne' | 'fastForward';
+  | 'autopilot' | 'resume' | 'throne' | 'fastForward' | 'duelDraw';
 
 export interface LogEntry {
   seq: number;
@@ -178,7 +195,10 @@ export const EMPTY_STATS: PlayerStats = {
 export interface Mission { id: MissionId; done: boolean }
 
 /** Replay data: p = play, x = pass, c = trick cleared (by = who leads next). */
-export type ReplayMove = { k: 'p'; by: string; c: number[] } | { k: 'x'; by: string } | { k: 'c'; by: string | null };
+export type ReplayMove =
+  | { k: 'p'; by: string; c: number[] } | { k: 'x'; by: string } | { k: 'c'; by: string | null }
+  /** Duel: drew a card from the reserve after passing. */
+  | { k: 'd'; by: string; c: number[] };
 export interface ReplayRound {
   round: number;
   order: string[];
@@ -188,7 +208,7 @@ export interface ReplayRound {
   moves: ReplayMove[];
 }
 
-export type GameMode = 'normal' | 'campaign' | 'daily' | 'public';
+export type GameMode = 'normal' | 'campaign' | 'daily' | 'public' | 'duel';
 
 /** Open online lobby: waiting time, size and bot fill-up. */
 export const PUBLIC_WAIT_SECONDS = 300;
@@ -257,13 +277,19 @@ export interface PublicState {
   kicked: string[];
   /** Full replay, revealed when the game is over. */
   replay: ReplayRound[] | null;
+  /** Duel: cards left in the face-down reserve. */
+  reserveCount: number;
+  /** The last thing a persona bot said at the table (seq = moveSeq when said). */
+  quip: { by: string; text: string; seq: number } | null;
 }
 
-export interface PrivateNotes { received: number[]; gave: number[]; swapGave?: number[]; swapGot?: number[] }
+export interface PrivateNotes { received: number[]; gave: number[]; swapGave?: number[]; swapGot?: number[]; drawn?: number[] }
 
 /** Full server-side state: public part plus everyone's hands. */
-export interface GameState extends Omit<PublicState, 'handCounts'> {
+export interface GameState extends Omit<PublicState, 'handCounts' | 'reserveCount'> {
   hands: Record<string, number[]>;
+  /** Duel: the face-down rest of the deck. */
+  reserve: number[];
   notes: Record<string, PrivateNotes>;
   /** Secret missions (only the owner sees theirs until the game ends). */
   missions: Record<string, Mission>;
@@ -280,6 +306,8 @@ export interface PrivateHand {
   gave: number[];
   swapGave?: number[];
   swapGot?: number[];
+  /** Duel: cards drawn from the reserve this round. */
+  drawn?: number[];
   mission?: Mission | null;
 }
 
@@ -289,7 +317,7 @@ export type GameAction =
   | { type: 'start' }
   | { type: 'autoStart' }
   | { type: 'updateSettings'; settings: Partial<Settings> }
-  | { type: 'addBot'; level: BotLevel }
+  | { type: 'addBot'; level?: BotLevel; persona?: string }
   | { type: 'removePlayer'; playerId: string }
   | { type: 'setDeck'; deckId: string | null }
   | { type: 'draw' }

@@ -23,7 +23,39 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "court_members": {
+            "bot_records": {
+                  Row: {
+                    "first_win_at": string | null,"persona": string,"played": number,"user_id": string,"won": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "first_win_at"?: string | null,"persona": string,"played"?: number,"user_id": string,"won"?: number
+                  }
+                  Update: {
+                    "first_win_at"?: string | null,"persona"?: string,"played"?: number,"user_id"?: string,"won"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "bot_records_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "bot_records_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "bot_records_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"court_members": {
                   Row: {
                     "court_id": string,"joined_at": string,"user_id": string
                   }
@@ -716,6 +748,9 @@ isOneToOne: false
                            },
 "open_loot_chest":
 { Args: { "p_dupe_dukaten": number,"p_item": string,"p_user": string }; Returns: number
+                           },
+"record_bot_duel":
+{ Args: { "p_persona": string,"p_user": string,"p_won": boolean }; Returns: undefined
                            }
           }
           Enums: {

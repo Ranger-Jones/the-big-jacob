@@ -9,6 +9,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'chat_sheet.dart';
 import 'emoji_layer.dart';
+import 'quip_bubble.dart';
 import 'hand_fan.dart';
 import 'seats.dart';
 import 'table_center.dart';
@@ -148,6 +149,8 @@ class _TableViewState extends State<TableView> {
                     ),
                   ),
                   if (s.setting('tracker') && s.phase == 'play') Positioned(left: 0, right: 0, bottom: 10, child: _Tracker(played: s.played)),
+                  // Duel: the face-down reserve that whoever passes draws from.
+                  if (s.setting('duel') && s.phase == 'play') Positioned(top: 10, right: 14, child: Pill('Hofstapel ${s.reserveCount}', jicon: 'cards', color: Colors.black38, textColor: C.goldSoft)),
                 ]),
               ),
             ),
@@ -208,6 +211,7 @@ class _TableViewState extends State<TableView> {
           if (_burst != null)
             Positioned.fill(child: Burst(key: ValueKey(_burst!.id), kind: _burst!.kind, who: _burst!.who)),
           Positioned.fill(child: EmojiLayer(g: g)),
+          Positioned(left: 0, right: 0, top: MediaQuery.paddingOf(context).top + 150, child: Center(child: QuipBubble(g: g))),
         ]);
       },
     );
@@ -321,7 +325,7 @@ class _ActionBar extends StatelessWidget {
       final error = chosen.isEmpty ? null : judgePlay(chosen, s.trick, s.ctx);
       bar = Row(children: [
         if (s.trick != null) ...[
-          SizedBox(width: 120, child: SoftButton(label: 'Passen', onPressed: onPass)),
+          SizedBox(width: 120, child: SoftButton(label: s.setting('duel') && s.reserveCount > 0 ? 'Passen +1' : 'Passen', onPressed: onPass)),
           const SizedBox(width: 10),
         ],
         Expanded(

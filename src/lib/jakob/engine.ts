@@ -2,9 +2,12 @@ import {
   containsAll, fullDeck, JESTER, remainingDeck, removeCards, seededRand, shuffle, sortHand, type RandInt,
 } from './cards';
 import { chooseBotPlay, chooseBotTaxReturn, wantsRevolution } from './bots';
+import { chooseBrainPlay, chooseBrainTaxReturn } from './brain';
+import { PERSONA_BY_ID, type Persona, type QuipMoment } from './personas';
+import type { TableView } from './search';
 import { bestCards, isUnbeatable, judgePlay, worstCards, type RuleContext } from './rules';
 import {
-  BOT_LEVELS, COURT_EVENTS, DEFAULT_SETTINGS, EMPTY_STATS, GOAL_OPTIONS, MAX_PLAYERS, PUBLIC_FILL_THRESHOLD, PUBLIC_FILL_TO, PUBLIC_MAX_HUMANS, PUBLIC_WAIT_SECONDS, MAX_PLAYERS_DOUBLE, MIN_PLAYERS,
+  BOT_LEVELS, COURT_EVENTS, DEFAULT_SETTINGS, DUEL_HAND, EMPTY_STATS, GOAL_OPTIONS, MAX_PLAYERS, PUBLIC_FILL_THRESHOLD, PUBLIC_FILL_TO, PUBLIC_MAX_HUMANS, PUBLIC_WAIT_SECONDS, MAX_PLAYERS_DOUBLE, MIN_PLAYERS,
   MISSION_POINTS, MISSIONS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS,
   type BotLevel, type GameAction, type GameState, type LogEntry, type LogKind, type MissionId, type Player,
   type PlayerStats, type PrivateHand, type PublicState, type RoundResult, type Settings,
@@ -81,7 +84,9 @@ export function createGameState(hostId: string, settings: Settings = DEFAULT_SET
     autoStartAt: null,
     kicked: [],
     replay: null,
+    quip: null,
     hands: {},
+    reserve: [],
     notes: {},
     missions: {},
     seed: null,
@@ -127,6 +132,7 @@ export function normalizeState(state: GameState): GameState {
 
 export function maxPlayers(state: Pick<GameState, 'settings'> & { mode?: GameState['mode'] }): number {
   if (state.mode === 'public') return PUBLIC_MAX_HUMANS;
+  if (getSettings(state).duel) return 2;
   return getSettings(state).doubleDeck ? MAX_PLAYERS_DOUBLE : MAX_PLAYERS;
 }
 
@@ -277,13 +283,13 @@ function assignMissions(state: GameState, rand: RandInt) {
 // Projections
 
 export function publicState(state: GameState): PublicState {
-  const { hands, notes: _notes, missions: _missions, seed: _seed, replayLog: _replay, ...pub } = state;
+  const { hands, reserve, notes: _notes, missions: _missions, seed: _seed, replayLog: _replay, ...pub } = state;
   void _notes;
   void _missions;
   void _seed;
   void _replay;
   const handCounts = Object.fromEntries(Object.entries(hands).map(([id, cards]) => [id, cards.length]));
-  return structuredClone({ ...pub, handCounts });
+  return structuredClone({ ...pub, handCounts, reserveCount: reserve?.length ?? 0 });
 }
 
 export function privateHand(state: GameState, id: string): PrivateHand {
@@ -294,6 +300,7 @@ export function privateHand(state: GameState, id: string): PrivateHand {
     gave: [...(notes?.gave ?? [])],
     swapGave: notes?.swapGave ? [...notes.swapGave] : undefined,
     swapGot: notes?.swapGot ? [...notes.swapGot] : undefined,
+    drawn: notes?.drawn ? [...notes.drawn] : undefined,
     mission: state.missions?.[id] ? { ...state.missions[id] } : null,
   };
 }
@@ -304,15 +311,17 @@ export interface Secrets {
   missions: GameState['missions'];
   seed: number | null;
   replayLog: GameState['replayLog'];
+  reserve: number[];
 }
 
 export function secretsOf(state: GameState): Secrets {
-  return { hands: state.hands, notes: state.notes, missions: state.missions, seed: state.seed, replayLog: state.replayLog };
+  return { hands: state.hands, notes: state.notes, missions: state.missions, seed: state.seed, replayLog: state.replayLog, reserve: state.reserve };
 }
 
 export function fromParts(pub: PublicState, secret: Partial<Secrets>): GameState {
-  const { handCounts: _counts, ...rest } = structuredClone(pub);
+  const { handCounts: _counts, reserveCount: _reserve, ...rest } = structuredClone(pub);
   void _counts;
+  void _reserve;
   return normalizeState({
     ...rest,
     hands: structuredClone(secret.hands ?? {}),
@@ -320,6 +329,7 @@ export function fromParts(pub: PublicState, secret: Partial<Secrets>): GameState
     missions: structuredClone(secret.missions ?? {}),
     seed: secret.seed ?? null,
     replayLog: structuredClone(secret.replayLog ?? []),
+    reserve: structuredClone(secret.reserve ?? []),
   } as GameState);
 }
 
@@ -420,7 +430,10 @@ function beginRound(state: GameState, order: string[], rand: RandInt, now: numbe
   state.audit = null;
   for (const id of state.players.map((p) => p.id)) state.hands[id] = [];
   const deck = shuffle(fullDeck(decks(state)), dealRand);
-  deck.forEach((card, i) => state.hands[order[i % order.length]].push(card));
+  // Duel: 15 cards each, the rest stays face down as the reserve.
+  const dealt = isDuel(state) ? DUEL_HAND * order.length : deck.length;
+  state.reserve = deck.slice(dealt);
+  deck.slice(0, dealt).forEach((card, i) => state.hands[order[i % order.length]].push(card));
   for (const id of order) state.hands[id] = sortHand(state.hands[id]);
   if (state.event) log(state, 'event');
   if (state.event === 'audit' && order.length > 0) {
@@ -463,6 +476,7 @@ function declareRevolution(state: GameState, id: string) {
   log(state, grand ? 'grandRevolution' : 'revolution', { by: id });
   if (grand) state.order = [...state.order].reverse();
   completeMission(state, id, 'revolutionary');
+  say(state, id, 'revolution');
 }
 
 function grantMercy(state: GameState, id: string) {
@@ -481,7 +495,9 @@ function taxCounts(state: GameState): [number, number] {
   const settings = getSettings(state);
   if (settings.tax === 'none' || state.revolution || state.event === 'holiday') return [0, 0];
   const hike = state.event === 'taxHike' ? 1 : 0;
-  const [great, lesser] = settings.tax === 'high' ? [3 + hike, 2 + hike] : [2 + hike, 1 + hike];
+  // Smaller duel hands pay a smaller tax.
+  const base = isDuel(state) ? [1, 0] : [2, 1];
+  const [great, lesser] = settings.tax === 'high' ? [base[0] + 1 + hike, base[1] + 1 + hike] : [base[0] + hike, base[1] + hike];
   return [state.mercyRound ? 0 : great, lesser];
 }
 
@@ -519,7 +535,7 @@ function startTax(state: GameState, rand: RandInt, now: number) {
   }
   setWait(state, taxSecondsFor(state), now);
   for (const pair of pairs) {
-    if (isAutomated(player(state, pair.to))) returnTax(state, pair.to, chooseBotTaxReturn(state.hands[pair.to], pair.count, ctx));
+    if (isAutomated(player(state, pair.to))) returnTax(state, pair.to, automatedTaxReturn(state, pair.to, pair.count));
   }
   maybeFinishTax(state, rand, now);
 }
@@ -649,6 +665,12 @@ function finishRound(state: GameState, rand: RandInt, now: number) {
     const coronation = state.event === 'coronation' && i === 0 ? 2 : 1;
     points[id] = (n - 1 - i) * factor * coronation;
   });
+  // Duel: the winner scores every card the loser still holds (jesters twice).
+  if (isDuel(state) && n === 2) {
+    const left = state.hands[finish[1]] ?? [];
+    const margin = Math.max(1, left.length + left.filter((c) => c === JESTER).length);
+    points[finish[0]] = margin * factor * (state.event === 'coronation' ? 2 : 1);
+  }
   // "Narrenfluch": jesters still in hand cost a point each.
   if (settings.jesterCurse) {
     for (const id of finish) {
@@ -660,6 +682,10 @@ function finishRound(state: GameState, rand: RandInt, now: number) {
     }
   }
   for (const id of finish) addPoints(state, id, points[id]);
+  if (n > 1) {
+    say(state, finish[n - 1], 'servant');
+    say(state, finish[0], 'crown');
+  }
 
   if (n > 0) {
     bumpStat(state, finish[0], 'crowns');
@@ -711,6 +737,8 @@ function maybeFinishRoundEnd(state: GameState, rand: RandInt, now: number) {
 }
 
 function finishGame(state: GameState) {
+  const places = placements(state);
+  for (const p of state.players) if (p.bot?.persona && !p.left && state.history.length > 0) say(state, p.id, places[p.id] === 1 ? 'win' : 'lose');
   for (const p of state.players) {
     if (!p.left && state.history.length >= 2 && stats(state, p.id).servant === 0) completeMission(state, p.id, 'neverServant');
   }
@@ -755,7 +783,10 @@ function doPlay(state: GameState, actor: string, cards: number[], rand: RandInt,
   state.trick = { cards: sortHand(cards), rank: verdict.rank, count: cards.length, by: actor, seq: state.moveSeq };
   record(state, { k: 'p', by: actor, c: sortHand(cards) });
   log(state, verdict.bomb ? 'bomb' : 'play', { by: actor, cards: sortHand(cards) });
-  if (verdict.bomb) bumpStat(state, actor, 'bombs');
+  if (verdict.bomb) {
+    bumpStat(state, actor, 'bombs');
+    say(state, actor, 'bomb');
+  }
   if (cards.length >= 4) completeMission(state, actor, 'bigPlay');
   if (cards.length === 1 && cards[0] === JESTER) completeMission(state, actor, 'loneJester');
 
@@ -800,6 +831,16 @@ function doPass(state: GameState, actor: string, now: number, kind: LogKind = 'p
   state.passed = [...new Set([...state.passed, actor])];
   record(state, { k: 'x', by: actor });
   log(state, kind, { by: actor });
+  // Duel: passing costs a card from the reserve.
+  if (isDuel(state) && state.reserve.length > 0) {
+    const [card, ...rest] = state.reserve;
+    state.reserve = rest;
+    state.hands[actor] = sortHand([...state.hands[actor], card]);
+    const notes = state.notes[actor] ?? { received: [], gave: [] };
+    state.notes[actor] = { ...notes, drawn: [...(notes.drawn ?? []), card] };
+    record(state, { k: 'd', by: actor, c: [card] });
+    log(state, 'duelDraw', { by: actor });
+  }
   advanceAfter(state, actor, now);
   return null;
 }
@@ -819,10 +860,15 @@ function forcedMove(state: GameState, actor: string, rand: RandInt, now: number)
 function automatedPlay(state: GameState, id: string, rand: RandInt, now: number) {
   const p = player(state, id);
   const level: BotLevel = p?.bot?.level ?? 'sly';
-  const choice = chooseBotPlay(state.hands[id], state.trick, ruleCtx(state), level, rand, {
-    handCounts: activeIds(state).filter((o) => o !== id).map((o) => state.hands[o].length),
-    jesterBan: getSettings(state).jesterBan,
-  });
+  const persona = personaOf(p);
+  const opponents = activeIds(state).filter((o) => o !== id).map((o) => state.hands[o].length);
+  const jesterBan = getSettings(state).jesterBan;
+  const choice = persona
+    ? chooseBrainPlay(state.hands[id], state.trick, ruleCtx(state), persona.style, rand, {
+      played: state.played, decks: decks(state), opponents, duelDraw: isDuel(state) && state.reserve.length > 0, jesterBan,
+      table: tableView(state, id),
+    })
+    : chooseBotPlay(state.hands[id], state.trick, ruleCtx(state), level, rand, { handCounts: opponents, jesterBan });
   const error = choice ? doPlay(state, id, choice, rand, now) : doPass(state, id, now);
   if (error) forcedMove(state, id, rand, now);
 }
@@ -886,7 +932,7 @@ function actFor(state: GameState, id: string, rand: RandInt, now: number) {
       return maybeFinishCourt(state, rand, now);
     case 'tax': {
       const pair = state.tax.find((t) => t.to === id && !t.done);
-      if (pair) returnTax(state, id, chooseBotTaxReturn(state.hands[id], pair.count, ruleCtx(state)));
+      if (pair) returnTax(state, id, automatedTaxReturn(state, id, pair.count));
       return maybeFinishTax(state, rand, now);
     }
     case 'roundEnd':
@@ -940,6 +986,45 @@ function dropPlayer(state: GameState, id: string, rand: RandInt, now: number) {
   }
 }
 
+const isDuel = (state: Pick<GameState, 'settings'>) => getSettings(state).duel;
+
+/** What a bot may know about the table: seats in turn order from its own, card counts, passes. */
+export function tableView(state: GameState, id: string): TableView {
+  const active = activeIds(state);
+  const at = Math.max(0, active.indexOf(id));
+  const order = [...active.slice(at), ...active.slice(0, at)];
+  return {
+    me: id,
+    active: order,
+    counts: Object.fromEntries(order.map((o) => [o, state.hands[o]?.length ?? 0])),
+    passed: [...state.passed],
+    finishedCount: state.finished.length + state.shamed.length,
+    players: presentOrder(state).length,
+    reserve: state.reserve.length,
+    duelDraw: isDuel(state) && state.reserve.length > 0,
+  };
+}
+
+function personaOf(p: Player | undefined): Persona | null {
+  return p?.bot?.persona ? PERSONA_BY_ID[p.bot.persona] ?? null : null;
+}
+
+function automatedTaxReturn(state: GameState, id: string, count: number): number[] {
+  const persona = personaOf(player(state, id));
+  const ctx = ruleCtx(state);
+  return persona
+    ? chooseBrainTaxReturn(state.hands[id], count, ctx, persona.style, state.played, decks(state))
+    : chooseBotTaxReturn(state.hands[id], count, ctx);
+}
+
+/** A persona bot says something fitting; the line is picked from the move counter (no randomness needed). */
+function say(state: GameState, id: string, moment: QuipMoment) {
+  const persona = personaOf(player(state, id));
+  const lines = persona?.quips[moment];
+  if (!lines?.length) return;
+  state.quip = { by: id, text: lines[(state.moveSeq + state.round) % lines.length], seq: state.moveSeq };
+}
+
 function nextBotIdentity(state: GameState): { name: string; emoji: string } {
   const used = new Set(state.players.map((p) => p.bot?.name));
   return BOT_NAMES.find((b) => !used.has(b.name)) ?? { name: `Höfling ${state.players.length}`, emoji: '🎭' };
@@ -947,7 +1032,7 @@ function nextBotIdentity(state: GameState): { name: string; emoji: string } {
 
 const BOOLEAN_SETTINGS: (keyof Settings)[] = [
   'revolution', 'jestersTaxable', 'chat', 'snap', 'bomb', 'kingFall', 'jesterBan', 'events', 'tracker',
-  'missions', 'throne', 'teams', 'mercy', 'abdicate', 'jesterCurse', 'courtSwap', 'blitz', 'doubleDeck',
+  'missions', 'throne', 'teams', 'mercy', 'abdicate', 'jesterCurse', 'courtSwap', 'blitz', 'doubleDeck', 'duel',
 ];
 
 function validSettingsPatch(patch: Partial<Settings>): boolean {
@@ -976,6 +1061,8 @@ function beginGame(state: GameState, rand: RandInt, now: number) {
   state.teams = settings.teams ? Object.fromEntries(state.players.map((p, i) => [p.id, (i % 2) as 0 | 1])) : null;
   if (settings.missions) assignMissions(state, rand);
   state.moveSeq += 1;
+  const talkers = state.players.filter((p) => p.bot?.persona);
+  if (talkers.length > 0) say(state, talkers[rand(talkers.length)].id, 'greet');
   // The daily challenge skips the draw so that everybody gets the same seat and deal.
   if (state.seed !== null) {
     state.phase = 'draw';
@@ -1044,6 +1131,7 @@ function applyActionInner(
       if (settings.teams && (state.players.length < 4 || state.players.length % 2 !== 0)) {
         return fail('Für Adel gegen Volk braucht ihr eine gerade Spielerzahl ab 4.');
       }
+      if (settings.duel && state.players.length !== 2) return fail('Ein Duell spielt man zu zweit.');
       beginGame(state, rand, now);
       return done();
     }
@@ -1075,6 +1163,9 @@ function applyActionInner(
       if (action.settings.doubleDeck === false && state.players.length > MAX_PLAYERS) {
         return fail(`Ohne Doppeldeck passen nur ${MAX_PLAYERS} an den Tisch.`);
       }
+      if (action.settings.duel === true && state.players.length > 2) return fail('Ein Duell spielt man zu zweit.');
+      const next = { ...getSettings(state), ...action.settings };
+      if (next.duel && (next.teams || next.doubleDeck)) return fail('Das Duell geht nicht zusammen mit Teams oder Doppeldeck.');
       state.settings = { ...getSettings(state), ...action.settings };
       return done();
     }
@@ -1083,10 +1174,17 @@ function applyActionInner(
       if (state.mode === 'public') return fail('Bots kommen in der offenen Lobby automatisch dazu.');
       if (!isHost) return fail('Nur der Host kann Bots holen.');
       if (state.status !== 'lobby') return fail('Bots gehen nur in der Lobby.');
-      if (!(BOT_LEVELS as readonly string[]).includes(action.level)) return fail('Unbekannte Bot-Stufe.');
       if (state.players.length >= maxPlayers(state)) return fail(full());
-      const identity = nextBotIdentity(state);
       const id = `bot-${rand(2 ** 30).toString(36)}${rand(2 ** 30).toString(36)}`;
+      if (action.persona !== undefined) {
+        const persona = typeof action.persona === 'string' && Object.hasOwn(PERSONA_BY_ID, action.persona) ? PERSONA_BY_ID[action.persona] : null;
+        if (!persona) return fail('Diesen Bot gibt es nicht.');
+        if (state.players.some((p) => p.bot?.persona === persona.id)) return fail(`${persona.name} sitzt schon am Tisch.`);
+        state.players.push({ id, left: false, deckId: null, bot: { name: persona.name, emoji: persona.emoji, level: 'sly', persona: persona.id } });
+        return done();
+      }
+      if (!(BOT_LEVELS as readonly string[]).includes(action.level ?? '')) return fail('Unbekannte Bot-Stufe.');
+      const identity = nextBotIdentity(state);
       state.players.push({ id, left: false, deckId: null, bot: { ...identity, level: action.level as BotLevel } });
       return done();
     }

@@ -1,6 +1,7 @@
 import { after } from 'next/server';
 import { z } from 'zod';
 import type { GameAction } from '@/lib/jakob/engine';
+import { PERSONA_IDS } from '@/lib/jakob/personas';
 import { BOT_LEVELS, GOAL_OPTIONS, ROUND_OPTIONS, TAX_OPTIONS, TURN_OPTIONS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { canUseDeck } from './deck-service';
@@ -41,9 +42,13 @@ const actionSchema = z.discriminatedUnion('type', [
       courtSwap: z.boolean().optional(),
       blitz: z.boolean().optional(),
       doubleDeck: z.boolean().optional(),
+      duel: z.boolean().optional(),
     }).strict(),
   }),
-  z.object({ type: z.literal('addBot'), level: z.enum(BOT_LEVELS) }),
+  // Either a plain bot of a level or a persona from personas.ts – exactly one of the two.
+  z.object({
+    type: z.literal('addBot'), level: z.enum(BOT_LEVELS).optional(), persona: z.enum(PERSONA_IDS as [string, ...string[]]).optional(),
+  }).refine((a) => (a.level === undefined) !== (a.persona === undefined)),
   z.object({ type: z.literal('removePlayer'), playerId: z.string().min(1).max(64) }),
   z.object({ type: z.literal('setDeck'), deckId: z.string().min(1).max(64).nullable() }),
   z.object({ type: z.literal('draw') }),

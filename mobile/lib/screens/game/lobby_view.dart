@@ -12,6 +12,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
 import '../../widgets/jakob_icons.dart';
+import '../bots_screen.dart';
 
 /// Before the game: who sits at the table, bots, your deck, the rules, and the start.
 class LobbyView extends StatelessWidget {
@@ -109,6 +110,18 @@ class LobbyView extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(child: SoftButton(label: 'Gerissen', jicon: 'fox', onPressed: () => _act(context, {'type': 'addBot', 'level': 'sly'}))),
               ]),
+            if (canManage && !full) ...[
+              const SizedBox(height: 10),
+              SoftButton(
+                label: 'Charakter wählen …',
+                jicon: 'crown',
+                onPressed: () async {
+                  final seated = {for (final p in players) if (p.bot?.persona != null) p.bot!.persona!};
+                  final persona = await showPersonaPicker(context, seated);
+                  if (persona != null && context.mounted) _act(context, {'type': 'addBot', 'persona': persona});
+                },
+              ),
+            ],
             const SectionTitle('Dein Deck'),
             SizedBox(
               height: 128,
@@ -194,7 +207,11 @@ class LobbyView extends StatelessWidget {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: s.setting(e.key),
-                  onChanged: (v) => set(e.key, v),
+                  // The duel needs exactly two seats; teams and the double deck do not go with it.
+                  onChanged: (e.key == 'duel' && !s.setting('duel') && s.players.length > 2) ||
+                          ((e.key == 'teams' || e.key == 'doubleDeck') && s.setting('duel'))
+                      ? null
+                      : (v) => set(e.key, v),
                   title: Text(e.value.label, style: T.body(17, weight: FontWeight.w700)),
                   subtitle: e.value.hint == null ? null : Text(e.value.hint!, style: T.body(13, color: C.inkSoft)),
                 ),

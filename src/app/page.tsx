@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { botArtUrl } from '@/lib/bot-art';
 import { FriendRequests } from '@/components/dashboard/friend-requests';
 import { FriendsOnline } from '@/components/dashboard/friends-online';
 import { HomeHero } from '@/components/dashboard/home-hero';
@@ -122,6 +123,20 @@ export default async function Home() {
               <span className="block font-display text-3xl font-bold">{t('Tägliche Herausforderung')}</span>
               <span className="block text-parchment/75">{t('Dieselbe Hand für alle – wer holt heute die meisten Punkte?')}</span>
               <span className="block text-sm text-gold-soft">{daily ? t('Heute erledigt: {points} Punkte', { points: daily.points }) : t('Heute noch offen')}</span>
+            </span>
+          </Card>
+        </Link>
+        <Link href="/bots" className="group sm:col-span-2">
+          <Card tone="velvet" className="flex h-full items-center gap-4 transition-transform group-hover:-translate-y-0.5">
+            <span className="flex shrink-0 -space-x-4">
+              {['König Peschel', 'Gräfin Charlotta', 'Hofnarr Hugo'].map((name) => (
+                // eslint-disable-next-line @next/next/no-img-element -- static cached SVG portrait
+                <img key={name} src={botArtUrl(name)} alt="" className="size-12 rounded-full ring-2 ring-gold" />
+              ))}
+            </span>
+            <span>
+              <span className="block font-display text-3xl font-bold">{t('Gegen Bots spielen')}</span>
+              <span className="block text-parchment/75">{t('17 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins')}</span>
             </span>
           </Card>
         </Link>

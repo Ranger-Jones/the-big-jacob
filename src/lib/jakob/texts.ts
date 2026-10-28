@@ -58,6 +58,7 @@ function describeOwnLog(entry: LogEntry, t: T, cards: () => string): string | nu
     case 'kingFall': return t('👑💥 Königssturz! Du fällst auf den letzten Platz');
     case 'mercy': return t('🙏 Du bittest um Gnade – keine große Steuer');
     case 'resume': return t('👋 Du bist zurück');
+    case 'duelDraw': return t('🂠 Du passt und ziehst eine Karte vom Hofstapel');
     default: return null;
   }
 }
@@ -110,6 +111,7 @@ export function describeLog(entry: LogEntry, name: (id: string) => string, t: T 
     case 'fastForward': return t('⏩ Nur noch Bots haben Karten – die Runde wurde zu Ende gespielt');
     case 'resume': return t('👋 {name} ist zurück', { name: who });
     case 'throne': return t('🏰 Thronfolge! {name} war dreimal in Folge Großer Jakob', { name: who });
+    case 'duelDraw': return t('🂠 {name} zieht eine Karte vom Hofstapel', { name: who });
   }
 }
 
@@ -135,6 +137,7 @@ export const SETTING_TEXT = {
   courtSwap: { label: 'Hoftausch', hint: 'Nach den Steuern reichen die Bürger blind eine Karte weiter.' },
   blitz: { label: 'Blitzrunde', hint: 'Die Zugzeit wird jede Runde 5 Sekunden kürzer (mindestens 10 s).' },
   doubleDeck: { label: 'Doppeldeck', hint: 'Zwei Kartensätze (160 Karten) – bis zu 12 Spieler am Tisch.' },
+  duel: { label: 'Duell', hint: 'Nur zu zweit: je 15 Karten, der Rest liegt verdeckt als Hofstapel. Wer passt, zieht eine Karte. Der Rundensieger bekommt so viele Punkte, wie der andere noch Karten hat (Narren doppelt).' },
 } as const;
 
 export const KNIFFE = [
@@ -142,7 +145,7 @@ export const KNIFFE = [
 ] as const satisfies (keyof Settings)[];
 
 /** How the game ends and how big the table can be. */
-export const GAME_MODES = ['throne', 'teams', 'doubleDeck'] as const satisfies (keyof Settings)[];
+export const GAME_MODES = ['duel', 'throne', 'teams', 'doubleDeck'] as const satisfies (keyof Settings)[];
 
 export function goalLabel(goal: Settings['goal'], t: T = de): string {
   return goal === null ? t('Aus') : t('{goal} P.', { goal });
