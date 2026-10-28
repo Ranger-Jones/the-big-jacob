@@ -40,7 +40,26 @@ cd mobile && flutter run --release
 cd mobile && flutter analyze && flutter test
 ```
 
-## An Freunde verteilen (ohne App Store Connect)
+## An Freunde verteilen über TestFlight (ohne Gerätekennungen)
+
+Die App kommt dabei nicht in den App Store – nur wer den Einladungslink hat, kann sie über Apples TestFlight-App installieren.
+
+Einmalig:
+1. In [App Store Connect](https://appstoreconnect.apple.com) unter **Apps → + → Neue App** anlegen: iOS, Name „Der Große Jakob“, Sprache Deutsch, Bundle-ID `de.rangerjones.derGrosseJakob`, SKU z. B. `dergrossejakob`.
+2. In Xcode unter **Settings → Accounts** ist der Eventings-Account angemeldet (Rolle Admin oder App Manager).
+
+Pro Version:
+1. `mobile/tool/build_testflight.sh` – baut, signiert und lädt hoch (Build-Nummer kommt aus der Uhrzeit).
+2. Nach 10–30 Minuten erscheint der Build in App Store Connect unter **TestFlight**.
+
+Beim ersten Mal für externe Tester:
+1. **TestFlight → Externe Tests → +** eine Gruppe „Freunde“ anlegen und den Build hinzufügen.
+2. **Testinformationen** ausfüllen: kurze Beschreibung, Feedback-E-Mail, Kontaktdaten und ein **Demo-Konto** (Benutzername + Passwort), mit dem sich Apples Prüfer anmelden können.
+3. Zur Beta-Prüfung einreichen (meist innerhalb eines Tages), danach **Öffentlichen Link aktivieren** und den Link verschicken.
+
+Spätere Builds derselben Version brauchen meist keine neue Prüfung. Jeder Build läuft nach 90 Tagen ab.
+
+## An Freunde verteilen per Ad hoc (mit Gerätekennungen)
 
 Die App wird mit dem Eventings-Entwicklerkonto **ad hoc** signiert. Sie läuft dann auf allen iPhones, die im
 Konto registriert sind (bis zu 100 iPhones pro Jahr), ganz ohne App Store oder TestFlight.
