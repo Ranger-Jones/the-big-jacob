@@ -39,11 +39,11 @@ class SeatsStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = g.state!;
     final order = s.order.isNotEmpty ? s.order : s.players.map((p) => p.id).toList();
-    // Start right after me so the strip reads in playing order.
+    // Start right after me so the strip reads in playing order (spectators see everyone in order).
     final mine = order.indexOf(g.me);
-    final others = [
-      for (var i = 1; i < order.length; i++) order[(math.max(mine, 0) + i) % order.length],
-    ].where((id) => id != g.me).toList();
+    final others = mine < 0
+        ? order
+        : [for (var i = 1; i < order.length; i++) order[(mine + i) % order.length]];
     final present = s.players.where((p) => !p.left).map((p) => p.id).toSet();
     return SizedBox(
       height: 118,

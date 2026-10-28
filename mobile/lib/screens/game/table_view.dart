@@ -159,9 +159,9 @@ class _TableViewState extends State<TableView> {
               height: 42,
               child: autopilot
                   ? AutopilotBanner(g: g)
-                  : Center(child: _StatusLine(text: _revealing ? 'Gleich geht es los …' : statusLine(g), active: !_revealing && (myTurn || myTax != null))),
+                  : Center(child: _StatusLine(text: _revealing ? 'Gleich geht es los …' : g.spectating ? spectatorLine(g) : statusLine(g), active: !_revealing && (myTurn || myTax != null))),
             ),
-            Padding(
+            if (!g.spectating) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(children: [
                 if (idx >= 0) ...[RankBadge(idx, s.order.length, size: 20), const SizedBox(width: 6), Text(rankTitle(idx, s.order.length), style: T.label(13, color: C.goldSoft))],
@@ -177,7 +177,7 @@ class _TableViewState extends State<TableView> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: SizedBox(
                 height: HandFan.heightFor(MediaQuery.sizeOf(context).width - 20),
-                child: deck == null || s.phase == 'draw' || _revealing ? null : HandFan(
+                child: g.spectating ? _SpectatorPanel(g: g) : deck == null || s.phase == 'draw' || _revealing ? null : HandFan(
                   cards: g.hand.cards,
                   deck: deck,
                   selection: _selection,
@@ -193,7 +193,7 @@ class _TableViewState extends State<TableView> {
             ),
             SizedBox(
               height: 62,
-              child: _revealing ? null : _ActionBar(
+              child: _revealing || g.spectating ? null : _ActionBar(
               g: g,
               myTurn: myTurn,
               myTax: myTax,
@@ -233,7 +233,7 @@ class _TopBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
         child: Row(children: [
-          IconButton(onPressed: onLeave, icon: const Icon(Icons.close_rounded, color: C.inkSoft), tooltip: 'Tisch verlassen'),
+          IconButton(onPressed: onLeave, icon: const Icon(Icons.close_rounded, color: C.inkSoft), tooltip: g.spectating ? 'Zuschauen beenden' : 'Tisch verlassen'),
           Expanded(
             child: Column(children: [
               Text(s.phase == 'draw' ? 'Platzwahl' : 'Runde ${s.round} $rounds', style: T.display(20)),
@@ -244,10 +244,16 @@ class _TopBar extends StatelessWidget {
                   Text(event.title, style: T.label(12, color: C.goldSoft)),
                 ]),
               if (!g.connected) Text('Verbindung wird wiederhergestellt …', style: T.label(12, color: C.wax)),
+              if (g.spectators.isNotEmpty)
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  const JIcon('eye', size: 14, color: C.inkSoft),
+                  const SizedBox(width: 4),
+                  Text(_watchers(g), style: T.label(12)),
+                ]),
             ]),
           ),
           _ReactionButton(g: g),
-          if (s.setting('chat')) ChatButton(g: g),
+          if (s.setting('chat') && !g.spectating) ChatButton(g: g),
           IconButton(onPressed: () => showLog(context, g), icon: const Icon(Icons.receipt_long_rounded, color: C.inkSoft), tooltip: 'Verlauf'),
         ]),
       ),
@@ -447,4 +453,61 @@ void showLog(BuildContext context, GameController g) {
       ),
     ),
   );
+}
+
+String _watchers(GameController g) {
+  final names = [for (final id in g.spectators) g.profiles[id]?.username ?? 'Jemand'];
+  if (names.length == 1) return '${names.first} schaut zu';
+  return '${names.length} schauen zu';
+}
+
+/// What spectators read under the table (statusLine speaks to a player).
+String spectatorLine(GameController g) {
+  final s = g.state!;
+  switch (s.phase) {
+    case 'draw':
+      return 'Die Plätze werden ausgelost …';
+    case 'court':
+      return 'Hofzeremonie';
+    case 'tax':
+      return 'Die Steuern werden gezahlt …';
+    case 'play':
+      return s.turn == null ? '…' : '${g.nameOf(s.turn!)} ist dran';
+    case 'roundEnd':
+      return 'Runde ${s.round} ist vorbei';
+  }
+  return '';
+}
+
+/// Spectators see no cards; instead they cheer with one tap.
+class _SpectatorPanel extends StatelessWidget {
+  final GameController g;
+  const _SpectatorPanel({required this.g});
+
+  @override
+  Widget build(BuildContext context) => Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          const JIcon('eye', size: 20, color: C.goldSoft),
+          const SizedBox(width: 8),
+          Text('Du schaust zu', style: T.display(24)),
+        ]),
+        const SizedBox(height: 4),
+        Text('Die Karten bleiben geheim – feuere sie mit Reaktionen an.', textAlign: TextAlign.center, style: T.body(14, color: C.inkSoft)),
+        const SizedBox(height: 14),
+        Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
+          for (final e in g.quickEmojis)
+            InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                g.sendEmoji(e);
+              },
+              child: Container(
+                width: 52, height: 52, alignment: Alignment.center,
+                decoration: BoxDecoration(color: C.surfaceHi, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line)),
+                child: Text(e, style: const TextStyle(fontSize: 28)),
+              ),
+            ),
+        ]),
+      ]);
 }

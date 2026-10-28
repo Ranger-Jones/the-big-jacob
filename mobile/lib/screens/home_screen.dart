@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -29,15 +30,31 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Map? _data;
   String? _error;
   String? _starting;
+  /// Friends start and finish games all the time: keep "Freunde am Tisch" fresh.
+  Timer? _refresh;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+    _refresh = Timer.periodic(const Duration(seconds: 45), (_) => _load());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refresh?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -116,6 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final level = levelFromXp(xp);
     final invites = (d?['invites'] as List?) ?? const [];
     final active = (d?['active'] as List?) ?? const [];
+    final friendTables = ((d?['friendTables'] as List?) ?? const []).whereType<Map>().toList();
     final campaign = d?['campaign'] as Map?;
     final daily = d?['daily'] as Map?;
     final lobby = d?['lobby'] as Map?;
@@ -202,6 +220,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     ]),
                   ),
                 ),
+            ],
+            if (friendTables.isNotEmpty) ...[
+              const SectionTitle('Freunde am Tisch'),
+              for (final t in friendTables)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Panel(
+                    onTap: () => openTable(context, t['code'] as String, spectate: true),
+                    child: Row(children: [
+                      Avatar.of(Profile.from(t['friend'] as Map), size: 44, ring: C.vert),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(_friendNames(t), style: T.body(16, weight: FontWeight.w800)),
+                          Text('spielt Runde ${t['round']} · ${t['players']} am Tisch', style: T.body(14, color: C.inkSoft)),
+                        ]),
+                      ),
+                      const Pill('Zuschauen', jicon: 'eye', textColor: C.goldSoft),
+                    ]),
+                  ),
+                ).animate().fadeIn().slideX(begin: .05),
             ],
             const SectionTitle('Allein am Hof'),
             _ModeTile(
@@ -375,4 +414,12 @@ class _ModeTile extends StatelessWidget {
             const Icon(Icons.check_circle_rounded, color: C.vert),
         ]),
       );
+}
+
+/// "Anna" or "Anna und 2 weitere Freunde" for a table with several of your friends.
+String _friendNames(Map table) {
+  final name = (table['friend'] as Map)['username'] as String? ?? 'Ein Freund';
+  final more = ((table['friendIds'] as List?)?.length ?? 1) - 1;
+  if (more <= 0) return name;
+  return '$name und $more ${more == 1 ? 'weiterer Freund' : 'weitere Freunde'}';
 }

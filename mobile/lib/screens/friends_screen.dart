@@ -36,7 +36,7 @@ class FriendsScreen extends StatefulWidget {
   State<FriendsScreen> createState() => _FriendsScreenState();
 }
 
-class _FriendsScreenState extends State<FriendsScreen> {
+class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserver {
   final SupabaseClient _sb = Supabase.instance.client;
   late final String _me = _sb.auth.currentUser!.id;
 
@@ -58,17 +58,39 @@ class _FriendsScreenState extends State<FriendsScreen> {
   RealtimeChannel? _friendsChannel, _ownPresence;
   final Map<String, RealtimeChannel> _presence = {};
   final Set<String> _online = {};
-  Timer? _reloadTimer;
+  Timer? _reloadTimer, _tablesTimer;
+  /// Friends sitting at a running table: friend id → {code, round, players}.
+  Map<String, Map> _atTable = {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
     _subscribe();
+    // Who is playing changes without any friendship event: look again now and then.
+    _tablesTimer = Timer.periodic(const Duration(seconds: 45), (_) => _load());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // iOS drops the websocket in the background. Coming back, join the presence channels again
+    // so friends see us online (and we see them) without restarting the app.
+    if (state != AppLifecycleState.resumed) return;
+    for (final ch in [_ownPresence, ..._presence.values]) {
+      if (ch != null) _sb.removeChannel(ch);
+    }
+    _ownPresence = null;
+    _presence.clear();
+    setState(_online.clear);
+    _trackOwnPresence();
+    _load();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tablesTimer?.cancel();
     _debounce?.cancel();
     _reloadTimer?.cancel();
     _searchCtrl.dispose();
@@ -91,6 +113,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
         _friends = _Entry.list(d['friends']);
         _incoming = _Entry.list(d['incoming']);
         _outgoing = _Entry.list(d['outgoing']);
+        _atTable = {
+          for (final t in ((d['tables'] as List?) ?? const []).whereType<Map>())
+            for (final id in ((t['friendIds'] as List?) ?? const []).whereType<String>()) id: t,
+        };
         _error = null;
       } else {
         _error = res.error;
@@ -125,8 +151,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
         )
       ..subscribe();
 
-    // Like the web: everyone tracks presence in their own private channel "online:<id>",
-    // friends listen there. The friends tab lives for the whole app session (IndexedStack).
+    _trackOwnPresence();
+  }
+
+  /// Like the web: everyone tracks presence in their own private channel `online:<id>`,
+  /// friends listen there. The friends tab lives for the whole app session (IndexedStack).
+  void _trackOwnPresence() {
     final own = _sb.channel('online:$_me', opts: RealtimeChannelConfig(private: true, key: _me));
     _ownPresence = own;
     own.subscribe((status, _) async {
@@ -341,6 +371,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     child: _FriendRow(
                       entry: friends[i],
                       online: _online.contains(friends[i].profile.id),
+                      table: _atTable[friends[i].profile.id],
+                      onWatch: () => openTable(context, _atTable[friends[i].profile.id]!['code'] as String, spectate: true),
                       inviting: _busy.contains('invite:${friends[i].profile.id}'),
                       onInvite: () => _invite(friends[i]),
                       onOpen: () => _openProfile(friends[i].profile),
@@ -694,8 +726,13 @@ class _IncomingPanel extends StatelessWidget {
 class _FriendRow extends StatelessWidget {
   final _Entry entry;
   final bool online, inviting;
-  final VoidCallback onInvite, onOpen, onRemove;
-  const _FriendRow({required this.entry, required this.online, required this.inviting, required this.onInvite, required this.onOpen, required this.onRemove});
+  /// The running table this friend sits at, if any.
+  final Map? table;
+  final VoidCallback onInvite, onOpen, onRemove, onWatch;
+  const _FriendRow({
+    required this.entry, required this.online, required this.inviting, required this.onInvite, required this.onOpen,
+    required this.onRemove, required this.onWatch, this.table,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -709,10 +746,16 @@ class _FriendRow extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p.username, style: T.body(18, weight: FontWeight.w800), overflow: TextOverflow.ellipsis),
-            Text(online ? 'online' : 'nicht da', style: T.label(13, color: online ? C.vert : C.inkMute)),
+            if (table != null)
+              Text('spielt gerade · Runde ${table!['round']}', style: T.label(13, color: C.goldSoft))
+            else
+              Text(online ? 'online' : 'nicht da', style: T.label(13, color: online ? C.vert : C.inkMute)),
           ]),
         ),
-        _SmallButton(label: 'Einladen', icon: Icons.style_rounded, outlined: true, busy: inviting, onPressed: onInvite),
+        if (table != null)
+          _SmallButton(label: 'Zuschauen', icon: Icons.visibility_rounded, outlined: true, busy: false, onPressed: onWatch)
+        else
+          _SmallButton(label: 'Einladen', icon: Icons.style_rounded, outlined: true, busy: inviting, onPressed: onInvite),
         PopupMenuButton<String>(
           tooltip: 'Mehr',
           icon: const Icon(Icons.more_horiz_rounded, color: C.inkSoft),

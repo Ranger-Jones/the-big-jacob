@@ -43,6 +43,8 @@ class GameController extends ChangeNotifier {
   List<String> quickEmojis = allowedEmojis.take(6).toList();
   Set<String> online = {};
   bool connected = true, busy = false, gone = false, kicked = false;
+  /// Watching a friend's game: no seat, no hand, reactions only.
+  bool spectating = false;
   final List<EmojiEvent> emojis = [];
   final List<ChatMessage> chat = [];
   int unreadChat = 0;
@@ -67,9 +69,13 @@ class GameController extends ChangeNotifier {
 
   Deck? deckOf(String id) => decks[id];
 
-  /// Opens the table by code (joins if needed). Returns an error message or null.
-  Future<String?> open(String code) async {
-    final res = await Api.get('game/$code');
+  /// People watching right now: present on the table channel but not seated.
+  List<String> get spectators => [for (final id in online) if (state?.player(id) == null && id != me) id];
+
+  /// Opens the table by code (joins if needed, or watches with [spectate]). Returns an error message or null.
+  Future<String?> open(String code, {bool spectate = false}) async {
+    spectating = spectate;
+    final res = await Api.get(spectate ? 'spectate/$code' : 'game/$code');
     if (!res.ok) return res.error;
     _load(res.data as Map);
     await _subscribe();
@@ -128,15 +134,16 @@ class GameController extends ChangeNotifier {
             if (row['user_id'] == me && row['hand'] is Map) _applyHand(row['hand'] as Map, (row['version'] as num?)?.toInt() ?? 0);
           },
         )
-        .onBroadcast(event: 'emoji', callback: (payload) {
+        .onBroadcast(event: 'emoji', callback: (message) {
+          final payload = broadcastBody(message);
           final from = payload['from'], emoji = payload['emoji'], eid = payload['id'];
           if (from is! String || emoji is! String || eid is! String || !allowedEmojis.contains(emoji)) return;
           // Broadcasts are unauthenticated: only accept senders present on the channel.
           if (!online.contains(from)) return;
           _pushEmoji(EmojiEvent(eid, emoji, from));
         })
-        .onBroadcast(event: 'kicked', callback: (payload) {
-          if (payload['userId'] != me) return;
+        .onBroadcast(event: 'kicked', callback: (message) {
+          if (broadcastBody(message)['userId'] != me) return;
           kicked = true;
           refetch();
         })
@@ -232,7 +239,8 @@ class GameController extends ChangeNotifier {
     final noDeck = s.players.where((p) => !decks.containsKey(p.id) || (p.deckId != null && decks[p.id]!.id != p.deckId)).toList();
     if (noDeck.isNotEmpty) {
       // Re-opening resolves presets and custom decks on the server in one go.
-      final res = await Api.get('game/${game!.code}');
+      // Spectators must never go through 'game/', which would seat them at a table still in the lobby.
+      final res = await Api.get(spectating ? 'spectate/${game!.code}' : 'game/${game!.code}');
       if (res.ok) {
         ((res.data as Map)['decks'] as Map).forEach((k, v) => decks[k as String] = Deck.from(v as Map));
       }
@@ -301,7 +309,8 @@ class GameController extends ChangeNotifier {
     _lastEmoji = now;
     final e = EmojiEvent('$me-$now', emoji, me);
     _pushEmoji(e);
-    _channel?.sendBroadcastMessage(event: 'emoji', payload: {'id': e.id, 'emoji': emoji, 'from': me});
+    // Wrapped in "payload" like supabase-js sends it, so web clients receive app reactions (see broadcastBody).
+    _channel?.sendBroadcastMessage(event: 'emoji', payload: {'payload': {'id': e.id, 'emoji': emoji, 'from': me}});
   }
 
   void _pushEmoji(EmojiEvent e) {
@@ -390,3 +399,8 @@ class GameController extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// The fields of a broadcast. supabase-js nests them under "payload"; the Dart client puts whatever map
+/// it is given at the top level of the message. App builds before the fix sent them unwrapped, so both
+/// shapes are accepted.
+Map broadcastBody(Map message) => message['payload'] is Map ? message['payload'] as Map : message;

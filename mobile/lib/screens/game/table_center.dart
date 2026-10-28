@@ -174,7 +174,7 @@ class _DrawPanelState extends State<DrawPanel> {
     final draws = s.draws;
     final players = s.players.where((p) => !p.left).toList();
     final myDeck = g.deckOf(g.me);
-    final mustPick = !widget.reveal && s.phase == 'draw' && !draws.containsKey(g.me);
+    final mustPick = !widget.reveal && !g.spectating && s.phase == 'draw' && !draws.containsKey(g.me);
     // Lowest card wins; ties go to whoever drew first (the order the server decided).
     final winner = widget.reveal && s.order.isNotEmpty ? s.order.first : null;
 

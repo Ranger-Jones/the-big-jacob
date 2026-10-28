@@ -33,6 +33,7 @@ import {
   respondInvite, searchProfiles, sendFriendRequest,
 } from '../social-service';
 import { botRoster, startCampaign, startDaily, startDuel } from '../solo-service';
+import { addSpectator, canSpectate, listFriendTables } from '../spectate-service';
 import { DUEL_VARIANTS } from '@/lib/jakob/duel';
 import type { AppUser } from './auth';
 
@@ -89,7 +90,7 @@ export const GET: Record<string, Handler> = {
   },
 
   async home({ admin, user }) {
-    const [friends, active, invites, progress, daily, lobby, rating, defaultDeck] = await Promise.all([
+    const [friends, active, invites, progress, daily, lobby, rating, defaultDeck, friendTables] = await Promise.all([
       listFriends(admin, user.id),
       listActiveGames(admin, user.id),
       listPendingInvites(admin, user.id),
@@ -98,6 +99,7 @@ export const GET: Record<string, Handler> = {
       publicLobbyStats(admin),
       getRatingSummary(admin, user.id),
       getDefaultDeckId(admin, user.id),
+      listFriendTables(admin, user.id),
     ]);
     const king = await getKingOfWeek(admin, [user.id, ...friends.friends.map((f) => f.profile.id)]);
     const level = progress.data?.campaign_level ?? 0;
@@ -109,11 +111,40 @@ export const GET: Record<string, Handler> = {
       daily: daily.data ?? null,
       lobby,
       deck: defaultDeck ?? PRESETS[0].id,
+      friendTables,
     });
   },
 
   async game(ctx) {
     return openGame(ctx);
+  },
+
+  /** Watch a friend's running game: the table without a hand, reactions allowed. */
+  async spectate({ admin, user, params }) {
+    const game = await loadGameByCode(admin, params[0] ?? '');
+    if (!game) return fail('Kein Spiel mit diesem Code gefunden.');
+    if (game.state.players.some((p) => p.id === user.id)) return fail('Du sitzt selbst an diesem Tisch.');
+    const allowed = await canSpectate(admin, user.id, game);
+    if (!allowed.ok) return allowed;
+    await addSpectator(admin, user.id, game.id);
+    const humanIds = game.state.players.filter((p) => !p.bot).map((p) => p.id);
+    const deckIds = game.state.players.map((p) => p.deckId).filter((d): d is string => !!d);
+    const [{ data: profiles }, custom, quickEmojis] = await Promise.all([
+      admin.from('profiles').select('id, username, avatar_url, avatar_frame, loot_equipped').in('id', humanIds),
+      getDecksByIds(admin, deckIds),
+      getQuickEmojis(admin, user.id),
+    ]);
+    return ok({
+      view: toView(game),
+      hand: { cards: [], received: [], gave: [], mission: null },
+      profiles: Object.fromEntries((profiles ?? []).map((p) => [p.id, p])),
+      decks: Object.fromEntries(game.state.players.map((p) => [p.id, resolveDeck(p.deckId, custom)])),
+      friends: [],
+      myDecks: [],
+      quickEmojis,
+      serverNow: Date.now(),
+      spectating: true,
+    });
   },
 
   async campaign({ admin, user }) {
@@ -126,7 +157,8 @@ export const GET: Record<string, Handler> = {
   },
 
   async friends({ admin, user }) {
-    return ok(await listFriends(admin, user.id));
+    const [friends, tables] = await Promise.all([listFriends(admin, user.id), listFriendTables(admin, user.id)]);
+    return ok({ ...friends, tables });
   },
 
   /** The persona bots with the player's record, and the duel rule sets. */

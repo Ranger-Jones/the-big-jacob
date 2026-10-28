@@ -9,13 +9,15 @@ import 'game/results_view.dart';
 import 'game/table_view.dart';
 import '../widgets/jakob_icons.dart';
 
-Future<void> openTable(BuildContext context, String code) =>
-    Navigator.push(context, MaterialPageRoute(builder: (_) => GameScreen(code: code)));
+Future<void> openTable(BuildContext context, String code, {bool spectate = false}) =>
+    Navigator.push(context, MaterialPageRoute(builder: (_) => GameScreen(code: code, spectate: spectate)));
 
 /// One table, from lobby to results.
 class GameScreen extends StatefulWidget {
   final String code;
-  const GameScreen({super.key, required this.code});
+  /// Watch a friend's game instead of taking a seat.
+  final bool spectate;
+  const GameScreen({super.key, required this.code, this.spectate = false});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -34,7 +36,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _open() async {
-    final error = await _g.open(widget.code);
+    final error = await _g.open(widget.code, spectate: widget.spectate);
     if (!mounted) return;
     setState(() {
       _error = error;
@@ -57,7 +59,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   Future<void> _leave() async {
     final s = _g.state;
-    if (s == null || s.status == 'finished') return Navigator.pop(context);
+    if (s == null || s.status == 'finished' || _g.spectating) return Navigator.pop(context);
     final running = s.status == 'playing';
     final ok = await showDialog<bool>(
       context: context,
