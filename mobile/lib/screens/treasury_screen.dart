@@ -343,7 +343,12 @@ class _ChestPanel extends StatelessWidget {
         const SizedBox(height: 10),
         SoftButton(label: 'Truhe kaufen · $price Dukaten', jicon: 'coins', onPressed: dukaten >= price ? onBuy : null),
         const SizedBox(height: 6),
-        Text('Doppelte Stücke werden zu Dukaten.', style: T.body(13, color: C.inkMute)),
+        Text(
+          'Dukaten gibt es für doppelte Stücke, die tägliche Herausforderung, jede neu eroberte Kampagnen-Station '
+          'und den ersten Sieg gegen jeden Bot.',
+          textAlign: TextAlign.center,
+          style: T.body(13, color: C.inkMute, height: 1.35),
+        ),
       ]),
     );
   }

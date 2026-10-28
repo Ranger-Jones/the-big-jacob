@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _ModeTile(
               icon: 'sword',
               title: 'Gegen Bots spielen',
-              text: '17 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins.',
+              text: '18 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BotsScreen())),
             ),
             const SizedBox(height: 10),

@@ -12,7 +12,7 @@ export const BOTS_EN: Record<string, string> = {
   'Duell fortsetzen': 'Continue the duel',
   'Duell beginnen': 'Start the duel',
   'Duell läuft': 'Duel in progress',
-  '17 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins': '17 characters from the farmer to the king – in a one-on-one duel',
+  '{n} Charaktere vom Bauern bis zum König – im Duell, eins gegen eins': '{n} characters from the farmer to the king – in a one-on-one duel',
   'Charakter an den Tisch holen': 'Seat a character',
   'sitzt schon da': 'already seated',
   'Charakter wählen …': 'Choose a character …',
@@ -34,6 +34,25 @@ export const BOTS_EN: Record<string, string> = {
   'Bis 50 Punkte – oder wer dreimal in Folge die Krone holt, gewinnt sofort.': 'Up to 50 points – or whoever takes the crown three times in a row wins at once.',
   'Schnapp-Duell': 'Snap duel',
   'Gleiche Zahl darf gelegt werden und gewinnt den Stich. Schnell und gemein. Bis 20 Punkte.': 'The same number may be played and wins the trick. Fast and nasty. Up to 20 points.',
+
+  'Ehrengäste': 'Guests of honour',
+  'Die Gesichter des Hofes – nach Stärke sortiert.': 'The faces of the court – strongest first.',
+  'Erster Sieg: +{n} Dukaten': 'First win: +{n} ducats',
+
+  // Hinterwäldler Nikita
+  'Hinterwäldler Nikita': 'Nikita the Backwoodsman',
+  'Kommt aus den tiefsten Wäldern, spaltet Holzklötze mit einer Hand – und Stiche mit der anderen.': 'Comes from the deepest woods and splits logs with one hand – and tricks with the other.',
+  'Frisch aus dem Wald – und hungrig auf Stiche!': 'Fresh from the forest – and hungry for tricks!',
+  'Ich hab Bäume gefällt, die größer waren als dein Blatt.': 'I’ve felled trees bigger than your hand.',
+  'Mit bloßen Händen erobert!': 'Conquered with bare hands!',
+  'Das war ein kräftiger Hieb.': 'That was a mighty blow.',
+  'Nur ein Kratzer.': 'Just a scratch.',
+  'Dann hack ich mich eben wieder nach oben.': 'Then I’ll chop my way back up.',
+  'Baum fällt!': 'Timber!',
+  'Holz vor der Hütte!': 'Wood stacked high!',
+  'Aus dem Wald gegen die Burg!': 'From the forest against the castle!',
+  'Das gibt heute Abend ein großes Feuer!': 'That calls for a big bonfire tonight!',
+  'Starke Arme helfen nicht immer. Gut gespielt!': 'Strong arms don’t always help. Well played!',
 
   // New characters
   'Leibwächter Ali': 'Ali the Bodyguard',

@@ -12,13 +12,17 @@ import 'game_screen.dart';
 class BotPersona {
   final String id, name, title, bio, greeting;
   final int elo, played, won;
+  /// Dukaten paid for the first win against this bot.
+  final int firstWinDukaten;
+  /// One of the court's own characters ("Ehrengäste"), shown first.
+  final bool featured;
   final String? openCode;
-  const BotPersona(this.id, this.name, this.title, this.bio, this.greeting, this.elo, this.played, this.won, this.openCode);
+  const BotPersona(this.id, this.name, this.title, this.bio, this.greeting, this.elo, this.played, this.won, this.firstWinDukaten, this.featured, this.openCode);
 
   factory BotPersona.from(Map m) => BotPersona(
         m['id'] as String, m['name'] as String, m['title'] as String? ?? '', m['bio'] as String? ?? '',
         m['greeting'] as String? ?? '', (m['elo'] as num?)?.toInt() ?? 1000, (m['played'] as num?)?.toInt() ?? 0,
-        (m['won'] as num?)?.toInt() ?? 0, m['openCode'] as String?,
+        (m['won'] as num?)?.toInt() ?? 0, (m['firstWinDukaten'] as num?)?.toInt() ?? 0, m['featured'] == true, m['openCode'] as String?,
       );
 
   /// Same groups as personaTier() on the web.
@@ -32,7 +36,9 @@ class DuelVariant {
 }
 
 const tiers = ['Anfänger', 'Fortgeschritten', 'Meister', 'Königlich'];
+const _featured = 'Ehrengäste';
 const _tierHint = {
+  _featured: 'Die Gesichter des Hofes – nach Stärke sortiert.',
   'Anfänger': 'Zum Warmwerden – sie machen noch Fehler.',
   'Fortgeschritten': 'Solide Spieler mit eigenem Stil.',
   'Meister': 'Zählen Karten und planen voraus.',
@@ -113,6 +119,11 @@ class _BotsScreenState extends State<BotsScreen> {
     if (mounted) _load();
   }
 
+  /// Bots of a strength group; the "Ehrengäste" strongest first.
+  List<BotPersona> _inGroup(String group) => group == _featured
+      ? (_bots.where((b) => b.featured).toList()..sort((a, b) => b.elo.compareTo(a.elo)))
+      : _bots.where((b) => b.tier == group).toList();
+
   @override
   Widget build(BuildContext context) {
     final beaten = _bots.where((b) => b.won > 0).length;
@@ -140,8 +151,8 @@ class _BotsScreenState extends State<BotsScreen> {
                     Align(alignment: Alignment.centerLeft, child: Pill('$beaten von ${_bots.length} besiegt', jicon: 'trophy', textColor: C.goldSoft)),
                     if (_error != null) EmptyNote(_error!, icon: Icons.wifi_off_rounded),
                     if (_starting) const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator(color: C.gold, backgroundColor: C.surface)),
-                    for (final tier in tiers)
-                      if (_bots.any((b) => b.tier == tier)) ...[
+                    for (final tier in [_featured, ...tiers])
+                      if (_inGroup(tier).isNotEmpty) ...[
                         SectionTitle(tier),
                         Transform.translate(offset: const Offset(0, -8), child: Text(_tierHint[tier]!, style: T.body(14, color: C.inkSoft))),
                         GridView.count(
@@ -152,7 +163,7 @@ class _BotsScreenState extends State<BotsScreen> {
                           crossAxisSpacing: 10,
                           childAspectRatio: .74,
                           children: [
-                            for (final (i, b) in _bots.where((b) => b.tier == tier).indexed)
+                            for (final (i, b) in _inGroup(tier).indexed)
                               _BotTile(bot: b, onTap: () => _open(b)).animate().fadeIn(delay: (i * 50).ms).scaleXY(begin: .94, end: 1),
                           ],
                         ),
@@ -238,6 +249,10 @@ class _BotSheetState extends State<_BotSheet> {
         ).animate(delay: 120.ms).fadeIn().slideY(begin: .15, end: 0),
         const SizedBox(height: 10),
         Text(bot.bio, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft, height: 1.35)),
+        if (bot.won == 0 && bot.firstWinDukaten > 0) ...[
+          const SizedBox(height: 8),
+          Center(child: Pill('Erster Sieg: +${bot.firstWinDukaten} Dukaten', jicon: 'coins', textColor: C.goldSoft)),
+        ],
         const SizedBox(height: 6),
         Text(
           bot.played == 0 ? 'Noch nie gegeneinander gespielt' : 'Deine Bilanz: ${bot.won} ${bot.won == 1 ? 'Sieg' : 'Siege'} aus ${bot.played} ${bot.played == 1 ? 'Duell' : 'Duellen'}',

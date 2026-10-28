@@ -4,6 +4,8 @@ import {
   type BotLevel, type GameAction, type GameState, type PrivateHand, type PublicState, type Secrets, type Settings,
 } from '@/lib/jakob/engine';
 import { berlinDay } from '@/lib/daily';
+import { PERSONA_BY_ID } from '@/lib/jakob/personas';
+import { botFirstWinDukaten, CAMPAIGN_STATION_DUKATEN, dailyDukaten } from '@/lib/rewards';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { isStale, LOBBY_IDLE_HOURS } from '@/lib/jakob/stale';
@@ -138,16 +140,21 @@ async function afterFinish(admin: AdminClient, gameId: string, state: GameState)
     if (data && Number.isInteger(level) && data.campaign_level < level) {
       // The day of the conquest locks the next new station until tomorrow.
       await admin.from('profiles').update({ campaign_level: level, campaign_won_on: berlinDay() }).eq('id', human.id);
+      await admin.rpc('grant_dukaten', { p_user: human.id, p_amount: CAMPAIGN_STATION_DUKATEN });
     }
   }
   if (state.mode === 'duel' && state.modeRef && state.history.length > 0) {
-    await admin.rpc('record_bot_duel', { p_user: human.id, p_persona: state.modeRef, p_won: place === 1 });
+    const { data: firstWin } = await admin.rpc('record_bot_duel', { p_user: human.id, p_persona: state.modeRef, p_won: place === 1 });
+    const persona = Object.hasOwn(PERSONA_BY_ID, state.modeRef) ? PERSONA_BY_ID[state.modeRef] : null;
+    if (firstWin && persona) await admin.rpc('grant_dukaten', { p_user: human.id, p_amount: botFirstWinDukaten(persona.elo) });
   }
   if (state.mode === 'daily' && state.modeRef) {
-    await admin.from('daily_results').upsert(
+    // Only a newly booked result earns Dukaten (ignoreDuplicates returns no row for a repeat).
+    const { data: booked } = await admin.from('daily_results').upsert(
       { day: state.modeRef, user_id: human.id, game_id: gameId, points: state.points[human.id] ?? 0, place },
       { onConflict: 'day,user_id', ignoreDuplicates: true },
-    );
+    ).select('day');
+    if (booked && booked.length > 0) await admin.rpc('grant_dukaten', { p_user: human.id, p_amount: dailyDukaten(place) });
   }
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DAILY_SETTINGS } from '@/lib/daily';
+import { dailyDukaten } from '@/lib/rewards';
 import { createGame, createSoloGame, joinGame, loadGame, loadGameByCode, performAction } from '@/server/game-service';
 import { addSpectator, canSpectate } from '@/server/spectate-service';
 import { respondFriendRequest, sendFriendRequest, listFriends } from '@/server/social-service';
@@ -38,6 +39,9 @@ describe('daily challenge', () => {
     await playOut(game.id, u.id);
     const { data: result } = await admin.from('daily_results').select('points, place').eq('day', day).eq('user_id', u.id).single();
     expect(result).not.toBeNull();
+    // The result pays Dukaten by place, once.
+    const { data: profile } = await admin.from('profiles').select('dukaten').eq('id', u.id).single();
+    expect(profile!.dukaten).toBe(dailyDukaten(result!.place));
     const { data: stats } = await u.client.from('player_stats').select('games_played').eq('user_id', u.id).single();
     expect(stats!.games_played).toBe(0);
   }, 120_000);

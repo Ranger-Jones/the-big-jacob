@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { botArtUrl } from '@/lib/bot-art';
+import { PERSONAS } from '@/lib/jakob/personas';
 import { FriendRequests } from '@/components/dashboard/friend-requests';
 import { FriendsOnline } from '@/components/dashboard/friends-online';
 import { HomeHero } from '@/components/dashboard/home-hero';
@@ -136,7 +137,7 @@ export default async function Home() {
             </span>
             <span>
               <span className="block font-display text-3xl font-bold">{t('Gegen Bots spielen')}</span>
-              <span className="block text-parchment/75">{t('17 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins')}</span>
+              <span className="block text-parchment/75">{t('{n} Charaktere vom Bauern bis zum König – im Duell, eins gegen eins', { n: PERSONAS.length })}</span>
             </span>
           </Card>
         </Link>

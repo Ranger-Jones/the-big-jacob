@@ -13,9 +13,13 @@ import { DUEL_VARIANTS } from '@/lib/jakob/duel';
 import { PERSONA_TIERS, personaTier, type Persona } from '@/lib/jakob/personas';
 import { startDuelAction } from '@/server/solo-actions';
 
-export type ArenaBot = Omit<Persona, 'quips'> & { greeting: string; played: number; won: number; openCode: string | null };
+export type ArenaBot = Omit<Persona, 'quips'> & { greeting: string; played: number; won: number; firstWinDukaten: number; openCode: string | null };
 
-const TIER_HINT: Record<(typeof PERSONA_TIERS)[number], string> = {
+/** The court's own characters, strongest first, above the strength groups. */
+const EHRENGAESTE = 'Ehrengäste' as const;
+
+const TIER_HINT: Record<(typeof PERSONA_TIERS)[number] | typeof EHRENGAESTE, string> = {
+  [EHRENGAESTE]: 'Die Gesichter des Hofes – nach Stärke sortiert.',
   'Anfänger': 'Zum Warmwerden – sie machen noch Fehler.',
   'Fortgeschritten': 'Solide Spieler mit eigenem Stil.',
   'Meister': 'Zählen Karten und planen voraus.',
@@ -87,6 +91,11 @@ export function BotArena({ bots }: { bots: ArenaBot[] }) {
                   „{t(bot.greeting)}“
                 </p>
                 <p className="text-ink-soft">{t(bot.bio)}</p>
+                {bot.won === 0 && (
+                  <p className="inline-flex items-center gap-1.5 rounded-full bg-gold/20 px-3 py-0.5 text-sm font-bold ring-1 ring-gold/60">
+                    <Icon name="coins" /> {t('Erster Sieg: +{n} Dukaten', { n: bot.firstWinDukaten })}
+                  </p>
+                )}
                 <p className="text-sm font-bold">
                   {bot.played === 0
                     ? t('Noch nie gegeneinander gespielt')
@@ -124,8 +133,10 @@ export function BotArena({ bots }: { bots: ArenaBot[] }) {
         </div>
 
         <div className="flex flex-col gap-6">
-          {PERSONA_TIERS.map((tier) => {
-            const members = bots.filter((b) => personaTier(b.elo) === tier);
+          {[EHRENGAESTE, ...PERSONA_TIERS].map((tier) => {
+            const members = tier === EHRENGAESTE
+              ? bots.filter((b) => b.featured).sort((a, b) => b.elo - a.elo)
+              : bots.filter((b) => personaTier(b.elo) === tier);
             if (members.length === 0) return null;
             return (
               <section key={tier} aria-labelledby={`tier-${tier}`}>

@@ -4,7 +4,7 @@ export const BOT_ART_IDS: Record<string, string> = {
   'Köchin Klara': 'bot-klara', 'Mönch Matthias': 'bot-matthias', 'Baronin Berta': 'bot-berta', 'Schäferin Sina': 'bot-sina',
   'Steinmetz Stefan': 'bot-stefan', 'Näherin Nora': 'bot-nora', 'Erzbischof Egon': 'bot-egon', 'Marschall Max': 'bot-max',
   'König Peschel': 'bot-peschel', 'Gräfin Charlotta': 'bot-charlotta', 'Hofmeister Paul': 'bot-paul',
-  'Wissenschaftlerin Maxi': 'bot-maxi', 'Leibwächter Ali': 'bot-ali',
+  'Wissenschaftlerin Maxi': 'bot-maxi', 'Leibwächter Ali': 'bot-ali', 'Hinterwäldler Nikita': 'bot-nikita',
 };
 
 /** Art id for a bot's (untranslated) name; extra bots get the generic courtier. */

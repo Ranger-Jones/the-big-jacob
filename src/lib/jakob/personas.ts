@@ -31,6 +31,8 @@ export interface Persona {
   bio: string;
   style: BotStyle;
   quips: Record<QuipMoment, string[]>;
+  /** Shown first in the bot gallery ("Ehrengäste"). */
+  featured?: boolean;
 }
 
 export const PERSONAS: Persona[] = [
@@ -203,7 +205,7 @@ export const PERSONAS: Persona[] = [
     },
   },
   {
-    id: 'ali', name: 'Leibwächter Ali', emoji: '💂', title: 'Leibwächter', elo: 1280,
+    id: 'ali', name: 'Leibwächter Ali', emoji: '💂', title: 'Leibwächter', elo: 1280, featured: true,
     bio: 'Steht wie eine Mauer. Wer an ihm vorbei will, braucht die richtigen Karten.',
     style: { skill: 0.86, blunder: 0.04, patience: 0.75, aggression: 0.8 },
     quips: {
@@ -217,7 +219,7 @@ export const PERSONAS: Persona[] = [
     },
   },
   {
-    id: 'maxi', name: 'Wissenschaftlerin Maxi', emoji: '🔭', title: 'Wissenschaftlerin', elo: 1290,
+    id: 'maxi', name: 'Wissenschaftlerin Maxi', emoji: '🔭', title: 'Wissenschaftlerin', elo: 1290, featured: true,
     bio: 'Rechnet Wahrscheinlichkeiten schneller aus, als du deine Karten sortierst.',
     style: { skill: 0.92, blunder: 0.03, patience: 0.6, aggression: 0.6 },
     quips: {
@@ -231,7 +233,7 @@ export const PERSONAS: Persona[] = [
     },
   },
   {
-    id: 'paul', name: 'Hofmeister Paul', emoji: '🗝️', title: 'Hofmeister', elo: 1310,
+    id: 'paul', name: 'Hofmeister Paul', emoji: '🗝️', title: 'Hofmeister', elo: 1310, featured: true,
     bio: 'Führt den Hof mit eiserner Ordnung – und seine Hand ebenso.',
     style: { skill: 0.95, blunder: 0.02, patience: 0.7, aggression: 0.65 },
     quips: {
@@ -245,7 +247,7 @@ export const PERSONAS: Persona[] = [
     },
   },
   {
-    id: 'charlotta', name: 'Gräfin Charlotta', emoji: '🪭', title: 'Gräfin', elo: 1330,
+    id: 'charlotta', name: 'Gräfin Charlotta', emoji: '🪭', title: 'Gräfin', elo: 1330, featured: true,
     bio: 'Lächelt freundlich, während sie dich in die Falle lockt. Die beste Strategin am Hof.',
     style: { skill: 0.97, blunder: 0.01, patience: 0.8, aggression: 0.6 },
     quips: {
@@ -259,7 +261,21 @@ export const PERSONAS: Persona[] = [
     },
   },
   {
-    id: 'peschel', name: 'König Peschel', emoji: '👑', title: 'König', elo: 1350,
+    id: 'nikita', name: 'Hinterwäldler Nikita', emoji: '🪓', title: 'Hinterwäldler', elo: 1280, featured: true,
+    bio: 'Kommt aus den tiefsten Wäldern, spaltet Holzklötze mit einer Hand – und Stiche mit der anderen.',
+    style: { skill: 0.88, blunder: 0.03, patience: 0.3, aggression: 0.95 },
+    quips: {
+      greet: ['Frisch aus dem Wald – und hungrig auf Stiche!', 'Ich hab Bäume gefällt, die größer waren als dein Blatt.'],
+      crown: ['Mit bloßen Händen erobert!', 'Das war ein kräftiger Hieb.'],
+      servant: ['Nur ein Kratzer.', 'Dann hack ich mich eben wieder nach oben.'],
+      bomb: ['Baum fällt!', 'Holz vor der Hütte!'],
+      revolution: ['Aus dem Wald gegen die Burg!'],
+      win: ['Das gibt heute Abend ein großes Feuer!'],
+      lose: ['Starke Arme helfen nicht immer. Gut gespielt!'],
+    },
+  },
+  {
+    id: 'peschel', name: 'König Peschel', emoji: '👑', title: 'König', elo: 1350, featured: true,
     bio: 'Der König selbst. Er hat jedes Spiel am Hof gewonnen – fast jedes.',
     style: { skill: 1, blunder: 0, patience: 0.75, aggression: 0.7 },
     quips: {

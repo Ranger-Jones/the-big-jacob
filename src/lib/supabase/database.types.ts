@@ -766,6 +766,9 @@ isOneToOne: false
 "commit_game":
 { Args: { "p_expected_version": number,"p_game_id": string,"p_hands": Json,"p_players": Json,"p_secret": Json,"p_state": Json }; Returns: number
                            },
+"grant_dukaten":
+{ Args: { "p_amount": number,"p_user": string }; Returns: undefined
+                           },
 "grant_loot_chests":
 { Args: { "p_cap": number,"p_count": number,"p_day": string,"p_user": string }; Returns: number
                            },
@@ -782,7 +785,7 @@ isOneToOne: false
 { Args: { "p_dupe_dukaten": number,"p_item": string,"p_user": string }; Returns: number
                            },
 "record_bot_duel":
-{ Args: { "p_persona": string,"p_user": string,"p_won": boolean }; Returns: undefined
+{ Args: { "p_persona": string,"p_user": string,"p_won": boolean }; Returns: boolean
                            },
 "register_apns_device":
 { Args: { "p_cap": number,"p_environment": string,"p_token": string,"p_user": string }; Returns: undefined

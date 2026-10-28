@@ -2,6 +2,7 @@ import { CAMPAIGN, CAMPAIGN_DAILY_LIMIT, campaignLockedToday, stageSettings } fr
 import { berlinDay, DAILY_BOTS, DAILY_SETTINGS, daySeed } from '@/lib/daily';
 import { DUEL_VARIANT_BY_ID, duelSettings } from '@/lib/jakob/duel';
 import { PERSONA_BY_ID, PERSONAS, type Persona } from '@/lib/jakob/personas';
+import { botFirstWinDukaten } from '@/lib/rewards';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { getDefaultDeckId } from './deck-service';
 import { createSoloGame, findOpenSoloGame } from './game-service';
@@ -57,6 +58,8 @@ export async function startDuel(admin: AdminClient, userId: string, personaId: s
 export interface BotEntry extends Persona {
   played: number;
   won: number;
+  /** Dukaten for the first win against this bot (paid once). */
+  firstWinDukaten: number;
   /** An unfinished duel against this bot (table code), to continue it. */
   openCode: string | null;
 }
@@ -74,6 +77,7 @@ export async function botRoster(admin: AdminClient, userId: string): Promise<Bot
     ...p,
     played: byPersona.get(p.id)?.played ?? 0,
     won: byPersona.get(p.id)?.won ?? 0,
+    firstWinDukaten: botFirstWinDukaten(p.elo),
     openCode: openBy.get(p.id) ?? null,
   }));
 }

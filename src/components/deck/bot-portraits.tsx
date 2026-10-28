@@ -358,6 +358,38 @@ const BOTS: Record<string, { art: ReactNode }> = {
       />
     ),
   },
+  'Hinterwäldler Nikita': {
+    art: (
+      <Portrait
+        id="bot-nikita" bg="#2f5a32" skin={SKIN.light} garment="#6b4226" brows="calm" smile="grin"
+        back={<g transform="rotate(-10 80 100)">
+          <path d="M80 100 L80 40" stroke={INK} strokeWidth="5.6" strokeLinecap="round" />
+          <path d="M80 100 L80 40" stroke="#a8743a" strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M77 38 H83 C85 36 88 33 91 32 C90 39 90 46 91 53 C88 52 85 49 83 47 H77 Z" fill="#9aa3ad" {...outline} />
+          <path d="M89 34.5 C88.4 40 88.4 45 89 50.5" fill="none" stroke="#e6ebf0" strokeWidth="1.6" strokeLinecap="round" />
+        </g>}
+        collar={<>
+          <path d="M2 104 C0 84 6 70 20 66 C30 64 37 62 41 57 L59 57 C63 62 70 64 80 66 C94 70 100 84 98 104 Z" fill={SKIN.light} {...outline} />
+          <path d="M33 104 C35 90 36 78 32 71 C28 64 13 63 8 72 C4 80 4 92 6 104 Z M67 104 C65 90 64 78 68 71 C72 64 87 63 92 72 C96 80 96 92 94 104 Z" fill={SKIN.light} {...outline} />
+          <path d="M10 82 C15 77 24 77 31 81 M90 82 C85 77 76 77 69 81" fill="none" stroke={INK} strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M32 70 C37 68 40 65 42 62 L58 62 C60 65 63 68 68 70 L66 104 H34 Z" fill="#e8dcc0" {...outline} />
+          <path d="M43 76 C46 79 49 79 50 77 C51 79 54 79 57 76" fill="none" stroke="#b8a47a" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M32 70 C37 68 40 65 42 62 L46.5 80 L45 104 H34 C36 92 36 80 32 70 Z" fill="#6b4226" {...outline} />
+          <path d="M68 70 C63 68 60 65 58 62 L53.5 80 L55 104 H66 C64 92 64 80 68 70 Z" fill="#6b4226" {...outline} />
+          <path d="M37 78 L42 77 M37 86 L44 85 M37 94 L44 93 M63 78 L58 77 M63 86 L56 85 M63 94 L56 93" stroke="#3e2614" strokeWidth="1" strokeLinecap="round" />
+          <path d="M47 84 L53 88 M53 84 L47 88 M47 92 L53 96 M53 92 L47 96" stroke="#a8743a" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M42.5 63 C41 60 41.5 57 42.5 55 L57.5 55 C58.5 57 59 60 57.5 63" fill={SKIN.light} {...outline} />
+        </>}
+        hair={<path d="M36.5 46 C33 34 38 27 44 28 L46 25 L50 28 L54 25 L56 28 C62 27 67 34 63.5 46 C61 39 58 36 54 37 L50 34 L46 37 C42 36 39 39 36.5 46 Z" fill="#e0622a" {...outline} />}
+        face={<>
+          <path d="M42 41.5 Q45 39.6 48 41.5 M52 41.5 Q55 39.6 58 41.5" fill="none" stroke="#b5411a" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M37.5 48 C37 64 63 64 62.5 48 C61 54 58 57 56 57 C55 59.5 45 59.5 44 57 C42 57 39 54 37.5 48 Z" fill="#d4561e" {...outline} />
+          <circle cx="41" cy="48.5" r="0.5" fill="#b5532a" /><circle cx="42.6" cy="49.4" r="0.5" fill="#b5532a" />
+          <circle cx="59" cy="48.5" r="0.5" fill="#b5532a" /><circle cx="57.4" cy="49.4" r="0.5" fill="#b5532a" />
+        </>}
+      />
+    ),
+  },
 };
 
 /** Generic courtier for extra bots beyond the named ones ("Höfling 9"). */
