@@ -3,9 +3,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
+import '../push.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'decks_screen.dart';
+import 'notifications.dart';
 import 'profile/profile_edit.dart';
 import 'profile/profile_widgets.dart';
 import '../widgets/jakob_icons.dart';
@@ -165,6 +167,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (yes != true) return;
+    // This iPhone should stop getting the account's notifications (best effort, never blocks signing out).
+    await Push.unregister().catchError((_) {});
     try {
       await Supabase.instance.client.auth.signOut();
     } catch (_) {
@@ -298,6 +302,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   List<Widget> _account() => [
+        const NotificationsPanel(),
+        const SizedBox(height: 14),
         SoftButton(label: 'Abmelden', icon: Icons.logout_rounded, danger: true, onPressed: _signOut),
       ];
 }

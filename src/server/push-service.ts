@@ -1,9 +1,11 @@
 import 'server-only';
 import webpush from 'web-push';
 import type { AdminClient } from '@/lib/supabase/admin';
+import { apnsEnabled, sendApns, type ApnsPayload } from './apns';
 import { fail, ok, type ServiceResult } from './result';
 
-export interface PushPayload { title: string; body: string; url: string; tag?: string }
+/** Title, body and the deep link (`url`, e.g. /spiel/CODE) – the same for browsers and the iOS app. */
+export type PushPayload = ApnsPayload;
 
 let ready: boolean | null = null;
 
@@ -21,8 +23,15 @@ export function pushEnabled(): boolean {
   return setup();
 }
 
+/** Notifies these users on every device: Web Push subscriptions and the iPhones with the app. */
 export async function sendPush(admin: AdminClient, userIds: string[], payload: PushPayload) {
-  if (!setup() || userIds.length === 0) return;
+  if (userIds.length === 0) return;
+  // One channel failing (or being switched off) never keeps the other from delivering.
+  await Promise.allSettled([sendWebPush(admin, userIds, payload), sendApns(admin, userIds, payload)]);
+}
+
+async function sendWebPush(admin: AdminClient, userIds: string[], payload: PushPayload) {
+  if (!setup()) return;
   const { data } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth').in('user_id', userIds);
   await Promise.all((data ?? []).map(async (sub) => {
     try {
@@ -81,4 +90,16 @@ export async function savePushSubscription(admin: AdminClient, userId: string, s
 
 export async function removePushSubscription(admin: AdminClient, userId: string, endpoint: string) {
   await admin.from('push_subscriptions').delete().eq('user_id', userId).eq('endpoint', endpoint);
+}
+
+const lastTest = new Map<string, number>();
+
+/** A sample notification to the caller's own devices; at most one every 30 seconds (best effort per server instance). */
+export async function sendTestPush(admin: AdminClient, userId: string): Promise<ServiceResult> {
+  if (!pushEnabled() && !apnsEnabled()) return fail('Benachrichtigungen sind auf dem Server noch nicht eingerichtet.');
+  const now = Date.now();
+  if (now - (lastTest.get(userId) ?? 0) < 30_000) return fail('Gerade erst gesendet – bitte einen Moment warten.');
+  lastTest.set(userId, now);
+  await sendPush(admin, [userId], { title: '👑 Der Große Jakob', body: 'So sehen deine Benachrichtigungen aus.', url: '/', tag: 'test' });
+  return ok(undefined);
 }

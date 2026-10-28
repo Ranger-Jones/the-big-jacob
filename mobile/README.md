@@ -40,6 +40,39 @@ cd mobile && flutter run --release
 cd mobile && flutter analyze && flutter test
 ```
 
+## Push-Benachrichtigungen (iOS, direkt über Apple – ohne Firebase)
+
+Die App bekommt dieselben Benachrichtigungen wie die Website („Du bist dran“, Einladungen an den Tisch,
+Freundschaftsanfragen). Ein Tipp darauf öffnet den passenden Tisch bzw. die Freunde. Der Server schickt sie
+selbst an Apple (APNs); solange die Variablen unten fehlen, ist Native-Push einfach aus – Web-Push läuft unabhängig davon.
+
+Einmalig (Inhaber des Entwicklerkontos):
+1. **APNs-Schlüssel anlegen:** [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list) →
+   **Certificates, IDs & Profiles → Keys → +** → Name z. B. „Jakob Push“, Haken bei **Apple Push Notifications
+   service (APNs)** → (Umgebung **Sandbox & Production**) → **Continue → Register → Download**. Die `.p8`-Datei
+   lässt sich nur **einmal** herunterladen – sicher aufbewahren, nie ins Repo legen. Die **Key ID** steht auf der Seite.
+2. **Variablen in Vercel** (Project → Settings → Environment Variables, Production), danach **Redeploy**:
+
+   | Variable | Wert |
+   |---|---|
+   | `APNS_KEY_ID` | Key ID des Schlüssels (10 Zeichen) |
+   | `APNS_TEAM_ID` | `YT3US95Z97` |
+   | `APNS_PRIVATE_KEY` | kompletter Inhalt der `.p8`-Datei inkl. `-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----` (geheim!) |
+   | `APNS_BUNDLE_ID` | optional, Standard `de.rangerjones.derGrosseJakob` |
+
+3. **Datenbank:** Die Migration `supabase/migrations/20261028203000_apns_devices.sql` (Tabelle `apns_devices`)
+   muss einmal live eingespielt werden: `pnpm exec supabase db push --linked`.
+
+Die Push-Fähigkeit steckt in `ios/Runner/Runner.entitlements`; die automatische Signierung nimmt sie ins Profil auf.
+Welcher Apple-Server zuständig ist, ergibt sich aus der Signierung: Builds aus Xcode/`flutter run` (auch
+`run_local.sh`) nutzen die Sandbox, TestFlight und Ad hoc die Produktion. Die App meldet das selbst mit, und der
+Server versucht bei einem „falschen“ Token einmal die andere Umgebung. Tokens, die Apple als ungültig meldet,
+werden automatisch gelöscht; beim Abmelden meldet die App das iPhone ab.
+
+In der App fragt der Hof nach der Anmeldung einmal nach, ob er Bescheid geben darf; später geht das im Profil unter
+**Benachrichtigungen** (dort gibt es auch **Testnachricht senden**). Im Vordergrund erscheint keine Meldung für den
+Tisch, der gerade offen ist.
+
 ## An Freunde verteilen über TestFlight (ohne Gerätekennungen)
 
 Die App kommt dabei nicht in den App Store – nur wer den Einladungslink hat, kann sie über Apples TestFlight-App installieren.

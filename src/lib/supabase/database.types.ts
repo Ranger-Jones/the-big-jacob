@@ -23,7 +23,39 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "bot_records": {
+            "apns_devices": {
+                  Row: {
+                    "created_at": string,"environment": string,"id": string,"token": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"environment": string,"id"?: string,"token": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"environment"?: string,"id"?: string,"token"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"bot_records": {
                   Row: {
                     "first_win_at": string | null,"persona": string,"played": number,"user_id": string,"won": number
                   }
@@ -751,6 +783,9 @@ isOneToOne: false
                            },
 "record_bot_duel":
 { Args: { "p_persona": string,"p_user": string,"p_won": boolean }; Returns: undefined
+                           },
+"register_apns_device":
+{ Args: { "p_cap": number,"p_environment": string,"p_token": string,"p_user": string }; Returns: undefined
                            }
           }
           Enums: {

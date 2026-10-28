@@ -26,7 +26,8 @@ import {
   isUsernameTaken, removeAvatar, renameUser, setAvatarUrl, USERNAME_RE,
 } from '../profile-service';
 import { buyChest, equipLoot, getLoot, openChest } from '../loot-service';
-import { sendPush } from '../push-service';
+import { registerApnsDevice, unregisterApnsDevice } from '../apns';
+import { sendPush, sendTestPush } from '../push-service';
 import { LOOT_ITEMS } from '@/lib/loot/catalog';
 import { getRatingLeaderboard, getRatingSummary } from '../rating-service';
 import { fail, ok, type ServiceResult } from '../result';
@@ -362,6 +363,16 @@ export const POST: Record<string, Handler> = {
       case 'open': return openChest(admin, user.id);
       case 'buy': return buyChest(admin, user.id);
       case 'equip': return equipLoot(admin, user.id, body.kind, body.id ?? null);
+      default: return fail('Ungültige Aktion.');
+    }
+  },
+
+  /** The app's APNs device token: register after the user allowed notifications, unregister on sign-out. */
+  async device({ admin, user, body }) {
+    switch (body.op) {
+      case 'register': return registerApnsDevice(admin, user.id, body.token, body.environment);
+      case 'unregister': return unregisterApnsDevice(admin, user.id, body.token);
+      case 'test': return sendTestPush(admin, user.id);
       default: return fail('Ungültige Aktion.');
     }
   },
