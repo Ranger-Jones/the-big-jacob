@@ -8,6 +8,7 @@ import '../../game/rules.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'chat_sheet.dart';
+import 'emoji_layer.dart';
 import 'hand_fan.dart';
 import 'seats.dart';
 import 'table_center.dart';
@@ -126,6 +127,7 @@ class _TableViewState extends State<TableView> {
             SeatsStrip(g: g),
             Expanded(
               child: FeltTable(
+                felt: g.profiles[g.me]?.lootFelt,
                 child: Stack(children: [
                   // Everything on the felt (trick, court order, round results) scales down to fit, never cut off.
                   Positioned.fill(
@@ -205,6 +207,7 @@ class _TableViewState extends State<TableView> {
           ]),
           if (_burst != null)
             Positioned.fill(child: Burst(key: ValueKey(_burst!.id), kind: _burst!.kind, who: _burst!.who)),
+          Positioned.fill(child: EmojiLayer(g: g)),
         ]);
       },
     );

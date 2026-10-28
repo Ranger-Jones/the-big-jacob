@@ -55,6 +55,8 @@ class Api {
     return u.replace(scheme: base.scheme, host: base.host, port: base.port).toString();
   }
 
+  static String lootUrl(String id) => '${Config.apiBase}/api/app/loot/$id';
+
   static String artUrl(String id, {int rank = 1, String bg = '#3d2361', bool full = true, bool numeral = true}) =>
       Uri.parse('${Config.apiBase}/api/app/art/$id').replace(queryParameters: {
         'rank': '$rank',

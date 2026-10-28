@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../api.dart';
 
 import '../../game/controller.dart';
 import '../../game/rules.dart';
@@ -77,7 +80,6 @@ class Seat extends StatelessWidget {
     final count = s.handCounts[id] ?? 0;
     final offline = p?.bot == null && !g.online.contains(id);
     final team = s.teams?[id];
-    final reactions = g.emojis.where((e) => e.from == id).toList();
 
     final avatar = Avatar(
       name: g.nameOf(id),
@@ -85,6 +87,7 @@ class Seat extends StatelessWidget {
       emoji: p?.bot?.emoji,
       size: 48,
       ring: turn ? C.gold : team == null ? null : (team == 0 ? C.azure : C.wax),
+      frame: g.profiles[id]?.lootFrame,
     );
 
     return Opacity(
@@ -102,18 +105,15 @@ class Seat extends StatelessWidget {
           if (idx >= 0) Positioned(top: -6, right: -6, child: RankBadge(idx, s.order.length)),
           if (offline) Positioned(bottom: 0, left: 0, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: C.inkMute, shape: BoxShape.circle, border: Border.all(color: C.night, width: 2)))),
           if (p?.autopilot == true) const Positioned(bottom: -4, left: -6, child: JIcon('bot', size: 20, color: C.goldSoft)),
-          for (final r in reactions)
-            Positioned(
-              top: -26,
-              child: Text(r.emoji, style: const TextStyle(fontSize: 30))
-                  .animate(key: ValueKey(r.id))
-                  .scaleXY(begin: .2, end: 1.2, duration: 300.ms, curve: Curves.easeOutBack)
-                  .moveY(begin: 0, end: -26, duration: 2200.ms)
-                  .fadeOut(delay: 1500.ms, duration: 700.ms),
-            ),
         ]),
         const SizedBox(height: 5),
-        Text(g.nameOf(id), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(13, color: turn ? C.goldSoft : C.ink)),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          if (g.profiles[id]?.lootEmblem case final emblem?) ...[
+            SvgPicture.network(Api.lootUrl(emblem), width: 15, height: 15),
+            const SizedBox(width: 3),
+          ],
+          Flexible(child: Text(g.nameOf(id), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(13, color: turn ? C.goldSoft : C.ink))),
+        ]),
         const SizedBox(height: 2),
         if (s.status == 'playing' && s.phase != 'draw')
           AnimatedSwitcher(

@@ -3,7 +3,7 @@ import { createAdminClient, type AdminClient } from '@/lib/supabase/admin';
 
 export interface AppUser {
   id: string; username: string; avatar_url: string | null; avatar_frame: string | null;
-  table_felt: string | null; xp: number; rating: number;
+  table_felt: string | null; xp: number; rating: number; loot_equipped: unknown;
 }
 
 /** The mobile app sends the Supabase access token as a bearer token (no cookies). */
@@ -14,6 +14,6 @@ export async function appUser(request: Request, admin: AdminClient = createAdmin
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) return null;
   const { data } = await admin.from('profiles')
-    .select('id, username, avatar_url, avatar_frame, table_felt, xp, rating').eq('id', user.id).maybeSingle();
+    .select('id, username, avatar_url, avatar_frame, table_felt, xp, rating, loot_equipped').eq('id', user.id).maybeSingle();
   return data;
 }

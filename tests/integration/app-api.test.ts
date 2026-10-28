@@ -6,7 +6,7 @@ import { admin, createTestUser } from './helpers';
 async function ctxFor(prefix: string) {
   const u = await createTestUser(prefix);
   const { data: user } = await admin.from('profiles')
-    .select('id, username, avatar_url, avatar_frame, table_felt, xp, rating').eq('id', u.id).single();
+    .select('id, username, avatar_url, avatar_frame, table_felt, xp, rating, loot_equipped').eq('id', u.id).single();
   return (params: string[] = [], body: Record<string, unknown> = {}, query = ''): Ctx =>
     ({ admin, user: user!, params, body, query: new URLSearchParams(query) });
 }

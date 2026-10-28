@@ -168,9 +168,18 @@ class Hand {
 class Profile {
   final String id, username;
   final String? avatarUrl, frame;
-  const Profile(this.id, this.username, this.avatarUrl, this.frame);
-  factory Profile.from(Map m) =>
-      Profile(m['id'] as String? ?? m['user_id'] as String? ?? '', m['username'] as String? ?? '?', m['avatar_url'] as String?, m['avatar_frame'] as String?);
+  /// Equipped loot cosmetics by kind (rahmen, wappen, rueckseite, filz).
+  final Map<String, String> loot;
+  const Profile(this.id, this.username, this.avatarUrl, this.frame, [this.loot = const {}]);
+  factory Profile.from(Map m) => Profile(
+        m['id'] as String? ?? m['user_id'] as String? ?? '', m['username'] as String? ?? '?', m['avatar_url'] as String?, m['avatar_frame'] as String?,
+        m['loot_equipped'] is Map ? (m['loot_equipped'] as Map).map((k, v) => MapEntry(k as String, v as String)) : const {},
+      );
+
+  String? get lootFrame => loot['rahmen'];
+  String? get lootEmblem => loot['wappen'];
+  String? get lootBack => loot['rueckseite'];
+  String? get lootFelt => loot['filz'];
 }
 
 class CardFace {

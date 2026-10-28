@@ -23,7 +23,9 @@ import {
   getMonthlyLeaderboard, getQuickEmojis, getRivalries, getStatsByUsername, listActiveGames,
   isUsernameTaken, removeAvatar, renameUser, setAvatarUrl, USERNAME_RE,
 } from '../profile-service';
+import { buyChest, equipLoot, getLoot, openChest } from '../loot-service';
 import { sendPush } from '../push-service';
+import { LOOT_ITEMS } from '@/lib/loot/catalog';
 import { getRatingLeaderboard, getRatingSummary } from '../rating-service';
 import { fail, ok, type ServiceResult } from '../result';
 import {
@@ -60,7 +62,7 @@ async function openGame({ admin, user, params }: Ctx) {
   const humanIds = game.state.players.filter((p) => !p.bot).map((p) => p.id);
   const deckIds = game.state.players.map((p) => p.deckId).filter((d): d is string => !!d);
   const [{ data: profiles }, friends, custom, myDecks, quickEmojis] = await Promise.all([
-    admin.from('profiles').select('id, username, avatar_url, avatar_frame').in('id', humanIds),
+    admin.from('profiles').select('id, username, avatar_url, avatar_frame, loot_equipped').in('id', humanIds),
     listFriends(admin, user.id),
     getDecksByIds(admin, deckIds),
     listDecks(admin, user.id),
@@ -90,7 +92,7 @@ export const GET: Record<string, Handler> = {
       listFriends(admin, user.id),
       listActiveGames(admin, user.id),
       listPendingInvites(admin, user.id),
-      admin.from('profiles').select('campaign_level').eq('id', user.id).maybeSingle(),
+      admin.from('profiles').select('campaign_level, chests').eq('id', user.id).maybeSingle(),
       admin.from('daily_results').select('points, place').eq('day', berlinDay()).eq('user_id', user.id).maybeSingle(),
       publicLobbyStats(admin),
       getRatingSummary(admin, user.id),
@@ -101,6 +103,7 @@ export const GET: Record<string, Handler> = {
     return ok({
       profile: user, rating, active, invites, king,
       friendRequests: friends.incoming.length,
+      chests: progress.data?.chests ?? 0,
       campaign: { level, title: campaignTitle(level), stages: CAMPAIGN.length },
       daily: daily.data ?? null,
       lobby,
@@ -160,6 +163,10 @@ export const GET: Record<string, Handler> = {
     const sort = query.get('sort') === 'neu' ? 'neu' : 'beliebt';
     const [decks, shared] = await Promise.all([listGallery(admin, user.id, sort), publicDeckIds(admin, user.id)]);
     return ok({ sort, decks: decks.filter((d) => d.ownerId !== user.id), shared });
+  },
+
+  async loot({ admin, user }) {
+    return ok({ ...(await getLoot(admin, user.id)), catalog: LOOT_ITEMS });
   },
 
   async courts({ admin, user }) {
@@ -292,6 +299,15 @@ export const POST: Record<string, Handler> = {
         return renameCourt(admin, user.id, id, input.data.name, input.data.crest);
       default:
         return fail('Ungültige Aktion.');
+    }
+  },
+
+  async loot({ admin, user, body }) {
+    switch (body.op) {
+      case 'open': return openChest(admin, user.id);
+      case 'buy': return buyChest(admin, user.id);
+      case 'equip': return equipLoot(admin, user.id, body.kind, body.id ?? null);
+      default: return fail('Ungültige Aktion.');
     }
   },
 

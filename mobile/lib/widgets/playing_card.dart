@@ -163,7 +163,9 @@ class _NameBanner extends StatelessWidget {
 class CardBack extends StatelessWidget {
   final Deck? deck;
   final double width;
-  const CardBack({super.key, this.deck, this.width = 40});
+  /// Equipped loot card back (item id); replaces the deck's back.
+  final String? loot;
+  const CardBack({super.key, this.deck, this.width = 40, this.loot});
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +183,9 @@ class CardBack extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .4), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       clipBehavior: Clip.antiAlias,
-      child: image != null
+      child: loot != null
+          ? SvgPicture.network(Api.lootUrl(loot!), fit: BoxFit.cover)
+          : image != null
           ? Image.network(Api.media(image), fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: a))
           : CustomPaint(
               painter: _PatternPainter(back['pattern'] as String? ?? 'rauten', a, b),

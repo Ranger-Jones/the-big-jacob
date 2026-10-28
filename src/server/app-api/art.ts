@@ -2,7 +2,9 @@ import 'server-only';
 import { createElement, Fragment, isValidElement, type ReactNode } from 'react';
 import { CardArt, FullCardArt, hasArt } from '@/components/deck/art';
 import { JesterWord } from '@/components/deck/jester-word';
+import { LootSvg } from '@/components/loot/loot-art';
 import { Icon, ICON_NAMES } from '@/components/ui/icons';
+import { LOOT_BY_ID } from '@/lib/loot/catalog';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -79,4 +81,10 @@ export function renderIcons(): Record<string, string> {
     name,
     renderSvg(createElement(Icon, { name })).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"').replace(/ class="[^"]*"/, ''),
   ]));
+}
+
+/** A loot cosmetic as a standalone SVG (frames, emblems, card backs, felts). */
+export function renderLoot(id: string): string | null {
+  if (!Object.hasOwn(LOOT_BY_ID, id)) return null;
+  return renderSvg(createElement(LootSvg, { id })).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"').replace(/ class="[^"]*"/, '');
 }

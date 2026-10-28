@@ -4,7 +4,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../api.dart';
 import '../../game/controller.dart';
 import '../../game/rules.dart';
 import '../../theme.dart';
@@ -15,7 +17,9 @@ import '../../widgets/jakob_icons.dart';
 /// The felt with its wooden rim; the trick lands in the middle.
 class FeltTable extends StatelessWidget {
   final Widget child;
-  const FeltTable({super.key, required this.child});
+  /// Equipped loot felt (item id) drawn over the green cloth.
+  final String? felt;
+  const FeltTable({super.key, required this.child, this.felt});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -32,7 +36,15 @@ class FeltTable extends StatelessWidget {
             gradient: const RadialGradient(center: Alignment(0, -.2), radius: 1, colors: [Color(0xFF2B7550), C.felt, C.feltDeep], stops: [0, .55, 1]),
             border: Border.all(color: C.gold.withValues(alpha: .35), width: 1.2),
           ),
-          child: ClipRRect(borderRadius: BorderRadius.circular(56), child: child),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(56),
+            child: felt == null
+                ? child
+                : Stack(fit: StackFit.expand, children: [
+                    SvgPicture.network(Api.lootUrl(felt!), fit: BoxFit.cover),
+                    child,
+                  ]),
+          ),
         ),
       );
 }
@@ -194,7 +206,7 @@ class _DrawPanelState extends State<DrawPanel> {
                     child: AnimatedSlide(
                       duration: const Duration(milliseconds: 220),
                       offset: Offset(0, _picked == i ? -.18 : 0),
-                      child: CardBack(deck: myDeck, width: 54),
+                      child: CardBack(deck: myDeck, width: 54, loot: g.profiles[g.me]?.lootBack),
                     ),
                   ),
                 ),
@@ -218,7 +230,7 @@ class _DrawPanelState extends State<DrawPanel> {
                   ? PlayingCard(rank: draws[p.id]!, deck: g.deckOf(p.id) ?? myDeck!, width: 46)
                       .animate(key: ValueKey('drawn-${p.id}'))
                       .flipH(begin: -1, end: 0, duration: 450.ms)
-                  : CardBack(deck: g.deckOf(p.id), width: 46),
+                  : CardBack(deck: g.deckOf(p.id), width: 46, loot: g.profiles[p.id]?.lootBack),
             ),
             const SizedBox(height: 4),
             SizedBox(width: 62, child: Text(g.nameOf(p.id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: T.label(12, color: p.id == winner ? C.goldSoft : C.ink))),

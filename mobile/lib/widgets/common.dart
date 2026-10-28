@@ -184,9 +184,12 @@ class Avatar extends StatelessWidget {
   final String? emoji;
   final double size;
   final Color? ring;
-  const Avatar({super.key, required this.name, this.url, this.emoji, this.size = 44, this.ring});
+  /// Loot frame (item id) drawn around the portrait.
+  final String? frame;
+  const Avatar({super.key, required this.name, this.url, this.emoji, this.size = 44, this.ring, this.frame});
 
-  factory Avatar.of(Profile? p, {double size = 44, Color? ring}) => Avatar(name: p?.username ?? '?', url: p?.avatarUrl, size: size, ring: ring);
+  factory Avatar.of(Profile? p, {double size = 44, Color? ring}) =>
+      Avatar(name: p?.username ?? '?', url: p?.avatarUrl, size: size, ring: ring, frame: p?.lootFrame);
 
   @override
   Widget build(BuildContext context) {
@@ -201,14 +204,25 @@ class Avatar extends StatelessWidget {
             : initials;
     // Bot portraits bring their own gold rim; others get a fine line unless a ring colour is asked for.
     final ringWidth = ring != null ? 2.5 : (isBot ? 0.0 : 1.0);
+    // Loot frames are drawn on a 100-unit canvas with the portrait inside radius 34, so they reach beyond it.
+    final frameSize = size * 100 / 68;
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(fit: StackFit.expand, children: [
+      child: Stack(fit: StackFit.expand, clipBehavior: Clip.none, children: [
         ClipOval(child: ColoredBox(color: isBot ? Colors.transparent : const Color(0xFFB4783A), child: picture)),
-        if (ringWidth > 0)
+        if (ringWidth > 0 && frame == null)
           IgnorePointer(
             child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ring ?? C.line, width: ringWidth))),
+          ),
+        if (frame != null)
+          Positioned(
+            left: (size - frameSize) / 2, top: (size - frameSize) / 2, width: frameSize, height: frameSize,
+            child: IgnorePointer(child: SvgPicture.network(Api.lootUrl(frame!), fit: BoxFit.contain)),
+          ),
+        if (frame != null && ring != null)
+          IgnorePointer(
+            child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ring!, width: 2))),
           ),
       ]),
     );

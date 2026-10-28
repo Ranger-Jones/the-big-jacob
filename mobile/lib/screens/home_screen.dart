@@ -14,6 +14,7 @@ import 'courts_screen.dart';
 import 'decks_screen.dart';
 import 'gallery_screen.dart';
 import 'game_screen.dart';
+import 'treasury_screen.dart';
 import 'tutorial_screen.dart';
 import '../widgets/jakob_icons.dart';
 
@@ -228,6 +229,19 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
             ),
             const SectionTitle('Am Hof'),
+            _ModeTile(
+              icon: 'gift',
+              title: 'Schatzkammer',
+              text: ((d?['chests'] as num?) ?? 0) > 0
+                  ? '${d!['chests']} ${d['chests'] == 1 ? 'Truhe wartet' : 'Truhen warten'} darauf, geöffnet zu werden!'
+                  : 'Rahmen, Wappen, Kartenrücken und Tischfilze sammeln.',
+              done: ((d?['chests'] as num?) ?? 0) > 0,
+              onTap: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const TreasuryScreen()));
+                _load();
+              },
+            ),
+            const SizedBox(height: 10),
             _ModeTile(
               icon: 'castle',
               title: 'Höfe',

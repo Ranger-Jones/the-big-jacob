@@ -8,6 +8,7 @@ import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { isStale, LOBBY_IDLE_HOURS } from '@/lib/jakob/stale';
 import { bookGameResults } from './rating-service';
+import { grantGameChests } from './loot-service';
 import { fail, ok, STALE, type ServiceResult } from './result';
 
 export const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -266,7 +267,10 @@ export async function performAction(
     const version = await commit(admin, gameId, game.version, game.state, res.state);
     if (version !== 'conflict') {
       if (action.type === 'removePlayer' && game.state.status === 'lobby') await notifyKicked(admin, gameId, action.playerId);
-      if (res.state.status === 'finished' && game.state.status !== 'finished') await afterFinish(admin, gameId, res.state);
+      if (res.state.status === 'finished' && game.state.status !== 'finished') {
+        await afterFinish(admin, gameId, res.state);
+        await grantGameChests(admin, res.state);
+      }
       return ok({ version, state: publicState(res.state), hand: privateHand(res.state, userId), previousTurn: game.state.phase === 'play' ? game.state.turn : null });
     }
     if (typeof expected === 'number') return fail(STALE);
