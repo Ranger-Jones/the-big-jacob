@@ -58,19 +58,24 @@ class HandFan extends StatelessWidget {
     required this.mode, this.trick, this.taxCount = 0, this.playable, this.received = const [], this.dealKey = 0,
   });
 
+  static double _cardWidth(double width) => math.min(70.0, width / 4.8);
+
+  /// The fan always takes the same height for a given width, so the table above never jumps.
+  static double heightFor(double width) => 26 + 18 + _cardWidth(width) * 1.4 + 28;
+
   @override
   Widget build(BuildContext context) {
     final groups = countBy(cards).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
-    if (groups.isEmpty) {
-      return SizedBox(
-        height: 120,
-        child: Center(child: Text('Keine Karten mehr – gut gemacht!', style: T.display(22, color: C.inkSoft))),
-      );
-    }
     return LayoutBuilder(builder: (context, box) {
+      if (groups.isEmpty) {
+        return SizedBox(
+          height: heightFor(box.maxWidth),
+          child: Center(child: Text('Keine Karten mehr – gut gemacht!', style: T.display(22, color: C.inkSoft))),
+        );
+      }
       final width = box.maxWidth;
       final n = groups.length;
-      final cardW = math.min(70.0, width / 4.8);
+      final cardW = _cardWidth(width);
       // Leave room at both ends for the tilt of the outer cards.
       final usable = width - 28;
       final step = n == 1 ? 0.0 : math.min(cardW + 8, (usable - cardW) / (n - 1));
@@ -79,7 +84,8 @@ class HandFan extends StatelessWidget {
       final mid = (n - 1) / 2;
       final curve = n > 6 ? .45 : 1.0;
       final maxDrop = math.pow(mid, 2) * curve;
-      final height = 26 + maxDrop + cardW * 1.4 + 28;
+      final height = heightFor(width);
+      assert(maxDrop <= 18.5);
       final receivedSet = received.toSet();
       return SizedBox(
         height: height,

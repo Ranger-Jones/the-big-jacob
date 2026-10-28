@@ -27,6 +27,9 @@ class _TableViewState extends State<TableView> {
   Selection _selection = {};
   String _selectionKey = '';
   int _logSeen = -1;
+  String? _prevPhase;
+  /// Round 1: after the last card was drawn the draws stay visible for a countdown.
+  bool _revealing = false;
   ({String kind, String who, int id})? _burst;
   int _burstId = 0;
 
@@ -37,6 +40,7 @@ class _TableViewState extends State<TableView> {
     super.initState();
     _logSeen = g.state?.log.length ?? 0;
     _selectionKey = _keyOf(g.state);
+    _prevPhase = g.state?.phase;
     g.addListener(_onChange);
   }
 
@@ -57,6 +61,8 @@ class _TableViewState extends State<TableView> {
       _selectionKey = key;
       _selection = {};
     }
+    if (_prevPhase == 'draw' && s.phase != 'draw' && s.round == 1) _revealing = true;
+    _prevPhase = s.phase;
     final log = s.log;
     if (_logSeen < 0 || _logSeen > log.length) _logSeen = log.length;
     for (final e in log.skip(_logSeen)) {
@@ -100,7 +106,7 @@ class _TableViewState extends State<TableView> {
         Widget center;
         switch (s.phase) {
           case 'draw':
-            center = DrawPanel(g: g);
+            center = DrawPanel(g: g, onDraw: () => _act({'type': 'draw'}, move: false));
           case 'court':
             center = CourtPanel(g: g);
           case 'tax':
@@ -110,6 +116,9 @@ class _TableViewState extends State<TableView> {
           default:
             center = TrickView(g: g);
         }
+        if (_revealing) {
+          center = DrawPanel(g: g, onDraw: () {}, reveal: true, onRevealDone: () => setState(() => _revealing = false));
+        }
 
         return Stack(children: [
           Column(children: [
@@ -118,22 +127,35 @@ class _TableViewState extends State<TableView> {
             Expanded(
               child: FeltTable(
                 child: Stack(children: [
-                  Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        child: KeyedSubtree(key: ValueKey('${s.phase}-${s.round}'), child: center),
-                      ),
+                  // Everything on the felt (trick, court order, round results) scales down to fit, never cut off.
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 34),
+                      child: LayoutBuilder(builder: (context, box) {
+                        return FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: SizedBox(
+                            width: box.maxWidth,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 350),
+                              child: KeyedSubtree(key: ValueKey(_revealing ? 'reveal' : '${s.phase}-${s.round}'), child: center),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ),
                   if (s.setting('tracker') && s.phase == 'play') Positioned(left: 0, right: 0, bottom: 10, child: _Tracker(played: s.played)),
                 ]),
               ),
             ),
-            const SizedBox(height: 10),
-            _StatusLine(text: statusLine(g), active: myTurn || myTax != null),
-            if (autopilot) Padding(padding: const EdgeInsets.fromLTRB(14, 8, 14, 0), child: AutopilotBanner(g: g)),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 42,
+              child: autopilot
+                  ? AutopilotBanner(g: g)
+                  : Center(child: _StatusLine(text: _revealing ? 'Gleich geht es los …' : statusLine(g), active: !_revealing && (myTurn || myTax != null))),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(children: [
@@ -146,10 +168,11 @@ class _TableViewState extends State<TableView> {
                 ],
               ]),
             ),
-            if (deck != null && s.phase != 'draw')
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: HandFan(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: SizedBox(
+                height: HandFan.heightFor(MediaQuery.sizeOf(context).width - 20),
+                child: deck == null || s.phase == 'draw' || _revealing ? null : HandFan(
                   cards: g.hand.cards,
                   deck: deck,
                   selection: _selection,
@@ -162,7 +185,10 @@ class _TableViewState extends State<TableView> {
                   dealKey: s.round,
                 ),
               ),
-            _ActionBar(
+            ),
+            SizedBox(
+              height: 62,
+              child: _revealing ? null : _ActionBar(
               g: g,
               myTurn: myTurn,
               myTax: myTax,
@@ -173,6 +199,7 @@ class _TableViewState extends State<TableView> {
               onReady: () => _act({'type': 'ready'}, move: false),
               onDraw: () => _act({'type': 'draw'}, move: false),
               onSpecial: (type) => _act({'type': type}, move: false),
+            ),
             ),
             SizedBox(height: MediaQuery.paddingOf(context).bottom + 6),
           ]),
@@ -263,26 +290,19 @@ class _ActionBar extends StatelessWidget {
     final s = g.state!;
     final me = g.me;
     Widget? bar;
-    if (s.phase == 'draw' && !s.draws.containsKey(me)) {
-      bar = GoldButton(label: 'Karte ziehen', icon: Icons.style_rounded, onPressed: onDraw, busy: g.busy);
-    } else if (s.phase == 'court' && !s.ready.contains(me)) {
+    if (s.phase == 'court' && !s.ready.contains(me)) {
       final jesters = g.hand.cards.where((c) => c == jester).length;
       final present = s.order.where((id) => s.player(id)?.left != true).toList();
       final canRevolt = s.setting('revolution') && s.revolution == null && jesters >= 2;
       final mercyUsed = (s.raw['mercyUsed'] as List?)?.contains(me) == true;
       final canMercy = s.setting('mercy') && present.isNotEmpty && present.last == me && !mercyUsed && s.raw['mercyRound'] != true && s.revolution == null && s.round > 1;
       final canAbdicate = s.setting('abdicate') && present.isNotEmpty && present.first == me && present.length >= 3 && s.raw['abdicated'] != true && s.revolution == null;
-      bar = Column(mainAxisSize: MainAxisSize.min, children: [
-        if (canRevolt || canMercy || canAbdicate)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(children: [
-              if (canRevolt) Expanded(child: SoftButton(label: 'Revolution!', icon: Icons.local_fire_department_rounded, danger: true, onPressed: () => onSpecial('revolution'))),
-              if (canMercy) Expanded(child: SoftButton(label: 'Um Gnade bitten', onPressed: () => onSpecial('mercy'))),
-              if (canAbdicate) Expanded(child: SoftButton(label: 'Abdanken', onPressed: () => onSpecial('abdicate'))),
-            ]),
-          ),
-        GoldButton(label: 'Bereit', icon: Icons.check_rounded, onPressed: onReady, busy: g.busy),
+      // One row only (the table above must keep its height): special moves sit next to "Bereit".
+      bar = Row(children: [
+        if (canRevolt) ...[Expanded(child: SoftButton(label: 'Revolution!', jicon: 'fist', danger: true, onPressed: () => onSpecial('revolution'))), const SizedBox(width: 8)],
+        if (canMercy) ...[Expanded(child: SoftButton(label: 'Gnade', jicon: 'dove', onPressed: () => onSpecial('mercy'))), const SizedBox(width: 8)],
+        if (canAbdicate) ...[Expanded(child: SoftButton(label: 'Abdanken', jicon: 'throne', onPressed: () => onSpecial('abdicate'))), const SizedBox(width: 8)],
+        Expanded(child: GoldButton(label: 'Bereit', jicon: 'check', onPressed: onReady, busy: g.busy)),
       ]);
     } else if (s.phase == 'roundEnd' && !s.ready.contains(me)) {
       bar = GoldButton(label: 'Nächste Runde', icon: Icons.arrow_forward_rounded, onPressed: onReady, busy: g.busy);
@@ -311,10 +331,9 @@ class _ActionBar extends StatelessWidget {
         ),
       ]);
     }
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      child: bar == null ? const SizedBox(height: 4) : Padding(padding: const EdgeInsets.fromLTRB(14, 4, 14, 0), child: bar),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: bar == null ? const SizedBox.shrink() : Padding(key: ValueKey(s.phase), padding: const EdgeInsets.fromLTRB(14, 4, 14, 0), child: bar),
     );
   }
 }

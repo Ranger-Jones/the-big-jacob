@@ -549,16 +549,48 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"profiles": {
+                },"loot_items": {
                   Row: {
-                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"created_at": string,"default_deck": string | null,"id": string,"peak_rating": number,"quick_emojis": (string)[] | null,"rated_games": number,"rating": number,"table_felt": string | null,"username": string,"xp": number
+                    "count": number,"first_at": string,"item_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id": string,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username": string,"xp"?: number
+                    "count"?: number,"first_at"?: string,"item_id": string,"user_id": string
                   }
                   Update: {
-                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"created_at"?: string,"default_deck"?: string | null,"id"?: string,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username"?: string,"xp"?: number
+                    "count"?: number,"first_at"?: string,"item_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "loot_items_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "loot_items_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "loot_items_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "avatar_frame": string | null,"avatar_url": string | null,"campaign_level": number,"campaign_won_on": string | null,"chests": number,"created_at": string,"default_deck": string | null,"dukaten": number,"id": string,"loot_equipped": NonNullable<Json>,"peak_rating": number,"quick_emojis": (string)[] | null,"rated_games": number,"rating": number,"table_felt": string | null,"username": string,"xp": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chests"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id": string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username": string,"xp"?: number
+                  }
+                  Update: {
+                    "avatar_frame"?: string | null,"avatar_url"?: string | null,"campaign_level"?: number,"campaign_won_on"?: string | null,"chests"?: number,"created_at"?: string,"default_deck"?: string | null,"dukaten"?: number,"id"?: string,"loot_equipped"?: NonNullable<Json>,"peak_rating"?: number,"quick_emojis"?: (string)[] | null,"rated_games"?: number,"rating"?: number,"table_felt"?: string | null,"username"?: string,"xp"?: number
                   }
                   Relationships: [
                     
@@ -658,6 +690,9 @@ isOneToOne: false
             "apply_game_results":
 { Args: { "p_entries": Json,"p_game_id": string }; Returns: undefined
                            },
+"buy_loot_chest":
+{ Args: { "p_cost": number,"p_user": string }; Returns: undefined
+                           },
 "can_read_online_channel":
 { Args: { "topic": string }; Returns: boolean
                            },
@@ -667,6 +702,9 @@ isOneToOne: false
 "commit_game":
 { Args: { "p_expected_version": number,"p_game_id": string,"p_hands": Json,"p_players": Json,"p_secret": Json,"p_state": Json }; Returns: number
                            },
+"grant_loot_chests":
+{ Args: { "p_count": number,"p_user": string }; Returns: undefined
+                           },
 "is_court_member":
 { Args: { "cid": string }; Returns: boolean
                            },
@@ -675,6 +713,9 @@ isOneToOne: false
                            },
 "is_game_spectator":
 { Args: { "gid": string }; Returns: boolean
+                           },
+"open_loot_chest":
+{ Args: { "p_dupe_dukaten": number,"p_item": string,"p_user": string }; Returns: number
                            }
           }
           Enums: {

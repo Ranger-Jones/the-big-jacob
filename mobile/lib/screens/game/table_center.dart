@@ -1,12 +1,13 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/controller.dart';
 import '../../game/rules.dart';
 import '../../theme.dart';
-import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
 import 'seats.dart';
 import '../../widgets/jakob_icons.dart';
@@ -20,18 +21,18 @@ class FeltTable extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(140),
+          borderRadius: BorderRadius.circular(64),
           gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8A5A2E), C.wood, Color(0xFF3E2512)]),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .55), blurRadius: 30, offset: const Offset(0, 14))],
         ),
         padding: const EdgeInsets.all(9),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(132),
+            borderRadius: BorderRadius.circular(56),
             gradient: const RadialGradient(center: Alignment(0, -.2), radius: 1, colors: [Color(0xFF2B7550), C.felt, C.feltDeep], stops: [0, .55, 1]),
             border: Border.all(color: C.gold.withValues(alpha: .35), width: 1.2),
           ),
-          child: ClipRRect(borderRadius: BorderRadius.circular(132), child: child),
+          child: ClipRRect(borderRadius: BorderRadius.circular(56), child: child),
         ),
       );
 }
@@ -102,33 +103,135 @@ class _Trick extends StatelessWidget {
   }
 }
 
-/// Draw phase: every player draws one card; the lowest becomes Great Jakob.
-class DrawPanel extends StatelessWidget {
+/// Draw phase: every player picks one face-down card; the lowest becomes Great Jakob.
+/// With [reveal] the drawn cards stay on the table for a countdown before the court ceremony begins.
+class DrawPanel extends StatefulWidget {
   final GameController g;
-  const DrawPanel({super.key, required this.g});
+  final VoidCallback onDraw;
+  final bool reveal;
+  final VoidCallback? onRevealDone;
+  const DrawPanel({super.key, required this.g, required this.onDraw, this.reveal = false, this.onRevealDone});
+
+  @override
+  State<DrawPanel> createState() => _DrawPanelState();
+}
+
+class _DrawPanelState extends State<DrawPanel> {
+  static const _countdown = 5;
+  int _left = _countdown;
+  int? _picked;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.reveal) _startCountdown();
+  }
+
+  @override
+  void didUpdateWidget(DrawPanel old) {
+    super.didUpdateWidget(old);
+    if (widget.reveal && !old.reveal) _startCountdown();
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    _left = _countdown;
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return t.cancel();
+      HapticFeedback.selectionClick();
+      if (_left <= 1) {
+        t.cancel();
+        widget.onRevealDone?.call();
+      } else {
+        setState(() => _left--);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final g = widget.g;
     final s = g.state!;
     final draws = s.draws;
     final players = s.players.where((p) => !p.left).toList();
+    final myDeck = g.deckOf(g.me);
+    final mustPick = !widget.reveal && s.phase == 'draw' && !draws.containsKey(g.me);
+    // Lowest card wins; ties go to whoever drew first (the order the server decided).
+    final winner = widget.reveal && s.order.isNotEmpty ? s.order.first : null;
+
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('Wer wird Großer Jakob?', style: T.display(24)),
+      Text(widget.reveal ? 'Die Karten liegen offen' : 'Wer wird Großer Jakob?', style: T.display(24)),
       const SizedBox(height: 4),
-      Text('Die kleinste Zahl sitzt ganz oben.', style: T.body(14, color: C.inkSoft)),
+      Text(
+        widget.reveal ? '${g.nameOf(winner ?? '', you: true)} ${winner == g.me ? 'sitzt' : 'sitzt'} ganz oben' : mustPick ? 'Tippe auf eine verdeckte Karte.' : 'Die kleinste Zahl sitzt ganz oben.',
+        style: T.body(14, color: widget.reveal ? C.goldSoft : C.inkSoft, weight: widget.reveal ? FontWeight.w800 : FontWeight.w500),
+      ),
       const SizedBox(height: 14),
-      Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
+      if (mustPick) ...[
+        SizedBox(
+          height: 108,
+          child: Stack(alignment: Alignment.bottomCenter, children: [
+            for (var i = 0; i < 7; i++)
+              Transform.translate(
+                offset: Offset((i - 3) * 30.0, (i - 3).abs() * 5.0),
+                child: Transform.rotate(
+                  angle: (i - 3) * .12,
+                  child: GestureDetector(
+                    onTap: _picked != null || g.busy
+                        ? null
+                        : () {
+                            HapticFeedback.mediumImpact();
+                            setState(() => _picked = i);
+                            widget.onDraw();
+                          },
+                    child: AnimatedSlide(
+                      duration: const Duration(milliseconds: 220),
+                      offset: Offset(0, _picked == i ? -.18 : 0),
+                      child: CardBack(deck: myDeck, width: 54),
+                    ),
+                  ),
+                ),
+              ).animate(delay: (i * 60).ms).fadeIn(duration: 250.ms).moveY(begin: 24, end: 0, curve: Curves.easeOutBack),
+          ]),
+        ),
+        const SizedBox(height: 16),
+      ],
+      Wrap(spacing: 10, runSpacing: 12, alignment: WrapAlignment.center, children: [
         for (final p in players)
           Column(mainAxisSize: MainAxisSize.min, children: [
-            draws[p.id] != null
-                ? PlayingCard(rank: draws[p.id]!, deck: g.deckOf(p.id) ?? g.deckOf(g.me)!, width: 44)
-                    .animate()
-                    .flipH(begin: -1, end: 0, duration: 450.ms)
-                : CardBack(deck: g.deckOf(p.id), width: 44),
+            SizedBox(
+              height: 22,
+              child: p.id == winner ? const JIcon('crown', size: 22, color: C.gold).animate().scaleXY(begin: 0, end: 1, curve: Curves.easeOutBack, duration: 450.ms) : null,
+            ),
+            Container(
+              decoration: p.id == winner
+                  ? BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .7), blurRadius: 18)])
+                  : null,
+              child: draws[p.id] != null
+                  ? PlayingCard(rank: draws[p.id]!, deck: g.deckOf(p.id) ?? myDeck!, width: 46)
+                      .animate(key: ValueKey('drawn-${p.id}'))
+                      .flipH(begin: -1, end: 0, duration: 450.ms)
+                  : CardBack(deck: g.deckOf(p.id), width: 46),
+            ),
             const SizedBox(height: 4),
-            SizedBox(width: 60, child: Text(g.nameOf(p.id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: T.label(12, color: C.ink))),
+            SizedBox(width: 62, child: Text(g.nameOf(p.id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: T.label(12, color: p.id == winner ? C.goldSoft : C.ink))),
           ]),
       ]),
+      if (widget.reveal) ...[
+        const SizedBox(height: 18),
+        Text('$_left', style: T.display(64, color: C.goldSoft))
+            .animate(key: ValueKey(_left))
+            .scaleXY(begin: 1.8, end: 1, duration: 380.ms, curve: Curves.easeOutBack)
+            .fadeIn(duration: 160.ms),
+        Text('Gleich beginnt die Hofzeremonie', style: T.body(13, color: C.inkSoft)),
+      ],
     ]);
   }
 }
@@ -322,14 +425,18 @@ class AutopilotBanner extends StatelessWidget {
   const AutopilotBanner({super.key, required this.g});
 
   @override
-  Widget build(BuildContext context) => Panel(
-        glow: true,
-        padding: const EdgeInsets.all(14),
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.only(left: 14, right: 4),
+        decoration: BoxDecoration(color: C.gold.withValues(alpha: .14), borderRadius: BorderRadius.circular(99), border: Border.all(color: C.gold.withValues(alpha: .6))),
         child: Row(children: [
-          const JIcon('bot', size: 28, color: C.goldSoft),
-          const SizedBox(width: 12),
-          Expanded(child: Text('Ein Bot spielt gerade für dich.', style: T.body(15))),
-          GoldButton(label: 'Zurück ins Spiel', expand: false, onPressed: () => g.dispatch({'type': 'resume'})),
+          const JIcon('bot', size: 22, color: C.goldSoft),
+          const SizedBox(width: 8),
+          Expanded(child: Text('Ein Bot spielt gerade für dich.', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(14, weight: FontWeight.w700))),
+          TextButton(
+            onPressed: () => g.dispatch({'type': 'resume'}),
+            child: Text('Zurück ins Spiel', style: T.body(14, color: C.goldSoft, weight: FontWeight.w800)),
+          ),
         ]),
       );
 }

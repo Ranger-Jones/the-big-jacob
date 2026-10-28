@@ -2,7 +2,7 @@ import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 import { after } from 'next/server';
 import { z } from 'zod';
-import { CAMPAIGN, campaignTitle } from '@/lib/campaign';
+import { CAMPAIGN, campaignLockedToday, campaignTitle } from '@/lib/campaign';
 import { berlinDay } from '@/lib/daily';
 import { PRESETS, resolveDeck } from '@/lib/decks';
 import { isCorrectGateAnswer } from '@/lib/gate';
@@ -113,10 +113,10 @@ export const GET: Record<string, Handler> = {
   },
 
   async campaign({ admin, user }) {
-    const { data } = await admin.from('profiles').select('campaign_level').eq('id', user.id).maybeSingle();
+    const { data } = await admin.from('profiles').select('campaign_level, campaign_won_on').eq('id', user.id).maybeSingle();
     const level = data?.campaign_level ?? 0;
     return ok({
-      level, title: campaignTitle(level),
+      level, title: campaignTitle(level), lockedToday: campaignLockedToday(data?.campaign_won_on, berlinDay()),
       stages: CAMPAIGN.map((s) => ({ level: s.level, place: s.place, title: s.title, emoji: s.emoji, story: s.story, twist: s.twist, bots: s.bots.length })),
     });
   },

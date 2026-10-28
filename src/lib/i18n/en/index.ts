@@ -1,4 +1,5 @@
 import { APP } from './app';
+import { CAMPAIGN_EN } from './campaign';
 import { DECKS } from './decks';
 import { GAME } from './game';
 import { MODES } from './modes';
@@ -13,4 +14,5 @@ export const EN: Record<string, string> = {
   ...GAME,
   ...DECKS,
   ...MODES,
+  ...CAMPAIGN_EN,
 };

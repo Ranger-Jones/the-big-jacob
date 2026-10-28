@@ -1,4 +1,4 @@
-import { CAMPAIGN, stageSettings } from '@/lib/campaign';
+import { CAMPAIGN, CAMPAIGN_DAILY_LIMIT, campaignLockedToday, stageSettings } from '@/lib/campaign';
 import { berlinDay, DAILY_BOTS, DAILY_SETTINGS, daySeed } from '@/lib/daily';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { getDefaultDeckId } from './deck-service';
@@ -9,10 +9,12 @@ import { fail, ok, type ServiceResult } from './result';
 export async function startCampaign(admin: AdminClient, userId: string, level: number): Promise<ServiceResult<{ code: string }>> {
   const stage = CAMPAIGN.find((s) => s.level === level);
   if (!stage) return fail('Diese Stufe gibt es nicht.');
-  const { data } = await admin.from('profiles').select('campaign_level').eq('id', userId).single();
-  if ((data?.campaign_level ?? 0) + 1 < level) return fail('Diese Stufe ist noch verschlossen.');
+  const { data } = await admin.from('profiles').select('campaign_level, campaign_won_on').eq('id', userId).single();
+  const won = data?.campaign_level ?? 0;
+  if (won + 1 < level) return fail('Diese Stufe ist noch verschlossen.');
   const open = await findOpenSoloGame(admin, userId, 'campaign', String(level));
   if (open) return ok({ code: open });
+  if (level > won && campaignLockedToday(data?.campaign_won_on, berlinDay())) return fail(CAMPAIGN_DAILY_LIMIT);
   return createSoloGame(admin, userId, {
     mode: 'campaign', ref: String(level), settings: stageSettings(stage), bots: stage.bots,
     deckId: await getDefaultDeckId(admin, userId),

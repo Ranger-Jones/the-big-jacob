@@ -504,6 +504,9 @@ export const BADGE_ICONS: Record<string, IconName> = {
 /** Campaign stations by level. */
 export const STAGE_ICONS: Record<number, IconName> = {
   1: 'wheat', 2: 'mug', 3: 'basket', 4: 'hammer', 5: 'shield', 6: 'church', 7: 'coronet', 8: 'crown',
+  9: 'lock', 10: 'coins', 11: 'bomb', 12: 'book', 13: 'sword', 14: 'jester', 15: 'target', 16: 'swap', 17: 'fox', 18: 'castle',
+  19: 'hourglass', 20: 'flame', 21: 'dove', 22: 'key', 23: 'sparkles', 24: 'friends', 25: 'flame', 26: 'eye', 27: 'hammer', 28: 'trophy',
+  29: 'scroll', 30: 'coins', 31: 'sword', 32: 'gift', 33: 'flip', 34: 'shield', 35: 'star', 36: 'church', 37: 'medal', 38: 'throne',
 };
 
 /** Icons in front of table log lines (the texts themselves come without emojis then). */

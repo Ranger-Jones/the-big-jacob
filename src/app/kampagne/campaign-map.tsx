@@ -9,8 +9,8 @@ import { useT } from '@/lib/i18n/client';
 import { startCampaignAction } from '@/server/solo-actions';
 import { Icon, STAGE_ICONS } from '@/components/ui/icons';
 
-/** "Vom Bauern zum König": a winding path of eight stages. */
-export function CampaignMap({ level }: { level: number }) {
+/** "Vom Bauern zum König": a winding path of stages; one new stage can be conquered per day. */
+export function CampaignMap({ level, lockedToday }: { level: number; lockedToday: boolean }) {
   const t = useT();
   const [pending, start] = useTransition();
   const [chosen, setChosen] = useState<number | null>(null);
@@ -29,7 +29,7 @@ export function CampaignMap({ level }: { level: number }) {
       <div>
         <h1 className="gold-text text-6xl font-bold">{t('Vom Bauern zum König')}</h1>
         <p className="mt-1 text-parchment/80">
-          {t('Acht Stationen gegen immer gerissenere Bots. Gewinne eine Station, um die nächste freizuschalten.')}
+          {t('{n} Stationen gegen immer gerissenere Bots. Gewinne eine Station, um die nächste freizuschalten – eine neue Station pro Tag.', { n: CAMPAIGN.length })}
         </p>
         <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-velvet-deep/70 px-4 py-1.5 font-bold ring-2 ring-gold/40">
           {t('Dein Titel:')} <span className="text-gold-soft">{t(campaignTitle(level))}</span> · {level}/{CAMPAIGN.length}
@@ -65,7 +65,9 @@ export function CampaignMap({ level }: { level: number }) {
                 <h2 className="text-3xl font-bold">{t(stage.place)}</h2>
                 <p className="text-sm">{open ? t(stage.story) : t('Gewinne die vorige Station, um weiterzukommen.')}</p>
                 <p className="mt-1 text-xs text-ink-soft">{t('{n} Gegner · Titel: {title}', { n: stage.bots.length, title: t(stage.title) })}</p>
-                {open && (
+                {current && lockedToday ? (
+                  <p className="mt-3 inline-flex items-center gap-2 rounded-xl bg-velvet-deep/40 px-3 py-1.5 text-sm font-bold"><Icon name="hourglass" /> {t('Diese Station öffnet morgen.')}</p>
+                ) : open && (
                   <Button size="sm" className="mt-3" onClick={() => play(stage.level)} disabled={pending}>
                     {pending && chosen === stage.level ? t('Tisch wird gedeckt …') : done ? t('Nochmal spielen') : t('Herausfordern')}
                   </Button>

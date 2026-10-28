@@ -23,6 +23,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
   final _scroll = ScrollController();
   List<Stage> _stages = const [];
   int _level = 0;
+  bool _lockedToday = false;
   String _title = '';
   String? _error;
   int? _starting;
@@ -53,6 +54,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
       final d = res.data as Map;
       _level = (d['level'] as num?)?.toInt() ?? 0;
       _title = d['title'] as String? ?? '';
+      _lockedToday = d['lockedToday'] == true;
       _stages = ((d['stages'] as List?) ?? const []).whereType<Map>().map(Stage.from).toList()
         ..sort((a, b) => a.level.compareTo(b.level));
       _error = null;
@@ -76,7 +78,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
 
   Future<void> _openStage(Stage stage) async {
     final state = stageState(stage.level, _level);
-    final go = await showStageSheet(context, stage: stage, state: state, total: _stages.length);
+    final go = await showStageSheet(context, stage: stage, state: state, total: _stages.length, lockedToday: _lockedToday);
     if (go == true && mounted) _start(stage.level);
   }
 

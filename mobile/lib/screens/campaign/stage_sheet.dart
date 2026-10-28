@@ -4,21 +4,24 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'campaign_path.dart';
+import '../../widgets/jakob_icons.dart';
 
 /// Details of one station; resolves to true when the player wants to compete.
-Future<bool?> showStageSheet(BuildContext context, {required Stage stage, required StageState state, required int total}) =>
+Future<bool?> showStageSheet(BuildContext context, {required Stage stage, required StageState state, required int total, bool lockedToday = false}) =>
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (ctx) => _StageSheet(stage: stage, state: state, total: total),
+      builder: (ctx) => _StageSheet(stage: stage, state: state, total: total, lockedToday: lockedToday),
     );
 
 class _StageSheet extends StatelessWidget {
   final Stage stage;
   final StageState state;
   final int total;
-  const _StageSheet({required this.stage, required this.state, required this.total});
+  /// A station was already conquered today: the next new one opens tomorrow.
+  final bool lockedToday;
+  const _StageSheet({required this.stage, required this.state, required this.total, this.lockedToday = false});
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +61,25 @@ class _StageSheet extends StatelessWidget {
           Panel(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(children: [
-              const Icon(Icons.lock_rounded, color: C.inkMute),
+              const JIcon('lock', color: C.inkMute),
               const SizedBox(width: 10),
               Expanded(child: Text('Gewinne zuerst Station ${stage.level - 1}, um hier anzutreten.', style: T.body(15, color: C.inkSoft))),
+            ]),
+          )
+        else if (lockedToday && state == StageState.next)
+          Panel(
+            glow: true,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(children: [
+              const JIcon('hourglass', color: C.goldSoft),
+              const SizedBox(width: 10),
+              Expanded(child: Text('Heute hast du schon eine Station erobert. Diese wartet ab morgen auf dich.', style: T.body(15, color: C.ink))),
             ]),
           )
         else
           GoldButton(
             label: state == StageState.won ? 'Erneut antreten' : 'Antreten',
-            icon: Icons.play_arrow_rounded,
+            jicon: 'play',
             large: true,
             onPressed: () => Navigator.pop(context, true),
           ),

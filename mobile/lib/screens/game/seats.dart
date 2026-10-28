@@ -43,7 +43,7 @@ class SeatsStrip extends StatelessWidget {
     ].where((id) => id != g.me).toList();
     final present = s.players.where((p) => !p.left).map((p) => p.id).toSet();
     return SizedBox(
-      height: 104,
+      height: 118,
       child: LayoutBuilder(builder: (context, box) {
         final w = math.max(64.0, math.min(84.0, box.maxWidth / math.max(1, others.length)));
         return ListView(
@@ -90,6 +90,8 @@ class Seat extends StatelessWidget {
     return Opacity(
       opacity: passed || out ? .45 : 1,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Room above the avatar for the rank badge and flying reactions.
+        const SizedBox(height: 12),
         Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
           if (turn)
             Container(width: 60, height: 60, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: C.gold.withValues(alpha: .55), blurRadius: 18)]))

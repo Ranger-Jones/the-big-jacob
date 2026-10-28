@@ -3,6 +3,7 @@ import {
   applyAction, createGameState, createRematchState, fromParts, placements, privateHand, publicState, secretsOf,
   type BotLevel, type GameAction, type GameState, type PrivateHand, type PublicState, type Secrets, type Settings,
 } from '@/lib/jakob/engine';
+import { berlinDay } from '@/lib/daily';
 import { EMPTY_STATS } from '@/lib/jakob/types';
 import type { AdminClient } from '@/lib/supabase/admin';
 import { isStale, LOBBY_IDLE_HOURS } from '@/lib/jakob/stale';
@@ -134,7 +135,8 @@ async function afterFinish(admin: AdminClient, gameId: string, state: GameState)
     const level = Number(state.modeRef);
     const { data } = await admin.from('profiles').select('campaign_level').eq('id', human.id).maybeSingle();
     if (data && Number.isInteger(level) && data.campaign_level < level) {
-      await admin.from('profiles').update({ campaign_level: level }).eq('id', human.id);
+      // The day of the conquest locks the next new station until tomorrow.
+      await admin.from('profiles').update({ campaign_level: level, campaign_won_on: berlinDay() }).eq('id', human.id);
     }
   }
   if (state.mode === 'daily' && state.modeRef) {
