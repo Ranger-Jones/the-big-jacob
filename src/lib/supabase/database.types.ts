@@ -23,7 +23,39 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "court_members": {
+            "apns_devices": {
+                  Row: {
+                    "created_at": string,"environment": string,"id": string,"token": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"environment": string,"id"?: string,"token": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"environment"?: string,"id"?: string,"token"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "leaderboard"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "player_stats"
+      referencedColumns: ["user_id"]
+    },{
+      foreignKeyName: "apns_devices_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"court_members": {
                   Row: {
                     "court_id": string,"joined_at": string,"user_id": string
                   }
@@ -716,6 +748,9 @@ isOneToOne: false
                            },
 "open_loot_chest":
 { Args: { "p_dupe_dukaten": number,"p_item": string,"p_user": string }; Returns: number
+                           },
+"register_apns_device":
+{ Args: { "p_cap": number,"p_environment": string,"p_token": string,"p_user": string }; Returns: undefined
                            }
           }
           Enums: {

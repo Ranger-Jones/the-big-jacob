@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/supabase/server';
-import { removePushSubscription, savePushSubscription, sendPush } from './push-service';
+import { removePushSubscription, savePushSubscription, sendTestPush } from './push-service';
 import { fail } from './result';
 
 const subscription = z.object({
@@ -23,13 +23,8 @@ export async function removePushSubscriptionAction(endpoint: string) {
   await removePushSubscription(createAdminClient(), user.id, endpoint);
 }
 
-const lastTest = new Map<string, number>();
-
 export async function testPushAction() {
   const user = await requireUser();
-  // Best effort per server instance; a test push only ever reaches the caller's own devices.
-  const now = Date.now();
-  if (now - (lastTest.get(user.id) ?? 0) < 30_000) return;
-  lastTest.set(user.id, now);
-  await sendPush(createAdminClient(), [user.id], { title: '👑 Der Große Jakob', body: 'So sehen deine Benachrichtigungen aus.', url: '/', tag: 'test' });
+  // A test push only ever reaches the caller's own devices (rate limited in sendTestPush).
+  await sendTestPush(createAdminClient(), user.id);
 }

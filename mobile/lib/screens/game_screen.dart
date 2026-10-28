@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../game/controller.dart';
+import '../push.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'game/lobby_view.dart';
@@ -30,8 +31,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Pushes about this very table are not shown as banners while it is open.
+    Push.setActive(_link);
     _open();
   }
+
+  String get _link => '/spiel/${widget.code.toUpperCase()}';
 
   Future<void> _open() async {
     final error = await _g.open(widget.code);
@@ -51,6 +56,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    Push.clearActive(_link);
     _g.dispose();
     super.dispose();
   }

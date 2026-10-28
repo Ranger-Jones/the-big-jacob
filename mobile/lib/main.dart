@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'push.dart';
 import 'screens/auth_screen.dart';
 import 'screens/gate_screen.dart';
 import 'screens/shell.dart';
@@ -15,6 +18,8 @@ Future<void> main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent));
   await Supabase.initialize(url: Config.supabaseUrl, publishableKey: Config.supabaseKey);
+  // Listens for notification taps from the start, so one that launched the app is not lost.
+  unawaited(Push.start());
   final prefs = await SharedPreferences.getInstance();
   if (Config.devEmail.isNotEmpty && Supabase.instance.client.auth.currentSession == null) {
     await prefs.setBool('gate_open', true);

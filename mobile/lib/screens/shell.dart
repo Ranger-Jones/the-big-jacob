@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../push.dart';
 import '../theme.dart';
 import 'friends_screen.dart';
+import 'game_screen.dart';
 import 'home_screen.dart';
 import 'leaderboard_screen.dart';
+import 'notifications.dart';
 import 'profile_screen.dart';
 import '../widgets/jakob_icons.dart';
 
@@ -24,6 +27,54 @@ class _ShellState extends State<Shell> {
 
   void _setRequests(int n) {
     if (n != _requests && mounted) setState(() => _requests = n);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Push.opened.addListener(_onPushOpened);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onPushOpened();
+      _setUpPush();
+    });
+  }
+
+  @override
+  void dispose() {
+    Push.opened.removeListener(_onPushOpened);
+    super.dispose();
+  }
+
+  /// Signed in: keep this iPhone's token fresh, or explain notifications once and let iOS ask.
+  Future<void> _setUpPush() async {
+    await Push.sync();
+    // A moment after arriving at court, not on top of the sign-in animation.
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    if (!mounted || !await Push.shouldAsk() || !mounted) return;
+    // Not while a notification tap or the player already opened something else.
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
+    await showPushPrompt(context);
+  }
+
+  /// A tapped notification: open the table, the friends tab or the profile it is about.
+  void _onPushOpened() {
+    final url = Push.opened.value;
+    if (url == null || !mounted) return;
+    Push.opened.value = null;
+    final nav = Navigator.of(context);
+    switch (PushTarget.parse(url)) {
+      case GameTarget(:final code):
+        if (Push.active == '/spiel/$code') return;
+        openTable(context, code);
+      case ProfileTarget(:final username):
+        nav.push(MaterialPageRoute(builder: (_) => ProfileScreen(username: username, isMe: false)));
+      case FriendsTarget():
+        nav.popUntil((r) => r.isFirst);
+        setState(() => _tab = 1);
+      case HomeTarget():
+        nav.popUntil((r) => r.isFirst);
+        setState(() => _tab = 0);
+    }
   }
 
   @override
