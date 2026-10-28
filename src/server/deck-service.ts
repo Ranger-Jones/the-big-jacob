@@ -49,7 +49,7 @@ function isDeckArtUrl(raw: string): boolean {
   }
   const origin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin;
   return url.origin === origin && !raw.includes('%') && !url.search && !url.hash
-    && /^\/storage\/v1\/object\/public\/deck-art\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[A-Za-z0-9_-]+\.(webp|jpg)$/.test(url.pathname);
+    && /^\/storage\/v1\/object\/public\/deck-art\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[A-Za-z0-9_-]+\.(webp|jpg|png)$/.test(url.pathname);
 }
 
 function validate(name: unknown, design: unknown): ServiceResult<{ name: string; design: DeckDesign }> {
@@ -105,6 +105,39 @@ export async function deleteDeck(admin: AdminClient, userId: string, id: string)
   if (error) throw error;
   await cleanArt(admin, userId, id, null);
   return ok(undefined);
+}
+
+/** Same limit as the deck-art bucket. */
+export const MAX_ART_BYTES = 2 * 1024 * 1024;
+
+/** The real image type from the file's first bytes; anything else is refused. */
+function artType(bytes: Uint8Array): { ext: 'jpg' | 'png' | 'webp'; contentType: string } | null {
+  const at = (i: number, ...sig: number[]) => sig.every((b, j) => bytes[i + j] === b);
+  if (at(0, 0xff, 0xd8, 0xff)) return { ext: 'jpg', contentType: 'image/jpeg' };
+  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return { ext: 'png', contentType: 'image/png' };
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return { ext: 'webp', contentType: 'image/webp' };
+  return null;
+}
+
+/**
+ * Stores a card photo (slot 1–13) or the back photo of an own deck in the deck-art bucket, for clients
+ * that do not upload to storage themselves (the app). Returns the public URL to put into the design;
+ * the file is only kept if a later save uses it (see cleanArt).
+ */
+export async function uploadDeckArt(
+  admin: AdminClient, userId: string, deckId: string, slot: unknown, bytes: Uint8Array,
+): Promise<ServiceResult<{ url: string }>> {
+  if (!(await ownDeck(admin, userId, deckId))) return fail('Deck nicht gefunden.');
+  const rank = Number(slot);
+  if (slot !== 'back' && !(Number.isInteger(rank) && rank >= 1 && rank <= 13)) return fail('Ungültige Karte.');
+  if (bytes.length === 0 || bytes.length > MAX_ART_BYTES) return fail('Das Bild ist zu groß (höchstens 2 MB).');
+  const type = artType(bytes);
+  if (!type) return fail('Bitte ein JPEG-, PNG- oder WebP-Bild wählen.');
+  const path = `${userId}/${deckId}/${slot === 'back' ? 'back' : `r${rank}`}-${Date.now()}.${type.ext}`;
+  const bucket = admin.storage.from('deck-art');
+  const { error } = await bucket.upload(path, bytes, { contentType: type.contentType });
+  if (error) throw error;
+  return ok({ url: bucket.getPublicUrl(path).data.publicUrl });
 }
 
 export async function copyDeck(admin: AdminClient, userId: string, sourceId: string): Promise<ServiceResult<{ id: string }>> {

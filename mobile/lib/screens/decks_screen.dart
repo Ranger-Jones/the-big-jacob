@@ -6,10 +6,12 @@ import '../api.dart';
 import '../game/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'decks/deck_draft.dart';
+import 'decks/deck_editor.dart';
 import 'decks/deck_fan.dart';
 import 'decks/deck_sheet.dart';
-
-const _webDecks = 'the-big-jacob.vercel.app/decks';
+import 'decks/editor_controls.dart';
+import 'decks/new_deck_sheet.dart';
 
 /// The player's deck chest: own decks and presets, pick the one you bring to the table.
 class DecksScreen extends StatefulWidget {
@@ -22,7 +24,8 @@ class DecksScreen extends StatefulWidget {
 class _DecksScreenState extends State<DecksScreen> {
   List<Deck> _presets = const [], _mine = const [];
   String? _defaultId, _error, _saving;
-  bool _loaded = false;
+  List<ArtGroup> _art = const [];
+  bool _loaded = false, _creating = false;
 
   @override
   void initState() {
@@ -44,6 +47,7 @@ class _DecksScreenState extends State<DecksScreen> {
       _presets = parse(d['presets']);
       _mine = parse(d['mine']);
       _defaultId = d['defaultId'] as String?;
+      _art = ArtGroup.parse(d['art']);
       _error = null;
     });
   }
@@ -63,12 +67,75 @@ class _DecksScreenState extends State<DecksScreen> {
     return true;
   }
 
+  /// Opens the editor for an own deck and reloads afterwards (it may have been changed or deleted).
+  Future<void> _edit(Deck deck) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DeckEditorScreen(deck: deck, art: _art, isDefault: deck.id == _defaultId)),
+    );
+    if (mounted) await _load();
+  }
+
+  static String? _newId(ApiResult<dynamic> res) {
+    final data = res.data;
+    return data is Map ? data['id'] as String? : null;
+  }
+
+  /// Loads the list and opens the deck with [id] (just created) in the editor.
+  Future<void> _editNew(String id) async {
+    await _load();
+    if (!mounted) return;
+    final deck = _mine.where((d) => d.id == id).firstOrNull;
+    if (deck != null) await _edit(deck);
+  }
+
+  Future<void> _create() async {
+    final choice = await showNewDeckSheet(context, presets: _presets);
+    if (choice == null || !mounted) return;
+    setState(() => _creating = true);
+    final res = choice == 'blank'
+        ? await Api.post('deck', {'op': 'create', 'name': 'Mein Deck', 'design': blankDesign()})
+        : await Api.post('deck', {'op': 'copy', 'id': choice});
+    if (!mounted) return;
+    setState(() => _creating = false);
+    final id = _newId(res);
+    if (id == null) return toast(context, res.error ?? 'Das Deck konnte nicht angelegt werden.', error: true);
+    await _editNew(id);
+  }
+
+  Future<void> _copy(Deck deck) async {
+    final res = await Api.post('deck', {'op': 'copy', 'id': deck.id});
+    if (!mounted) return;
+    final id = _newId(res);
+    if (id == null) return toast(context, res.error ?? 'Das Deck konnte nicht kopiert werden.', error: true);
+    toast(context, 'Kopie von „${deck.name}“ angelegt.');
+    await _editNew(id);
+  }
+
+  Future<void> _delete(Deck deck) async {
+    final ok = await confirmSheet(context,
+        title: 'Deck löschen?', text: '„${deck.name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', confirm: 'Löschen');
+    if (!ok || !mounted) return;
+    final res = await Api.post('deck', {'op': 'delete', 'id': deck.id});
+    if (!mounted) return;
+    if (!res.ok) return toast(context, res.error!, error: true);
+    toast(context, 'Deck gelöscht');
+    await _load();
+  }
+
   void _open(Deck deck, {required bool own}) => showDeckSheet(
         context,
         deck: deck,
         own: own,
         isDefault: deck.id == _defaultId,
         onMakeDefault: () => _makeDefault(deck),
+        actions: own
+            ? [
+                (label: 'Bearbeiten', icon: 'pencil', danger: false, onTap: () => _edit(deck)),
+                (label: 'Duplizieren', icon: 'cards', danger: false, onTap: () => _copy(deck)),
+                (label: 'Löschen', icon: 'close', danger: true, onTap: () => _delete(deck)),
+              ]
+            : [(label: 'Als Vorlage nutzen', icon: 'pencil', danger: false, onTap: () => _copy(deck))],
       );
 
   @override
@@ -106,16 +173,19 @@ class _DecksScreenState extends State<DecksScreen> {
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(context).bottom + 32),
                   children: [
-                    Text('Wähle, mit welchem Deck du an den Tisch kommst. Tippe ein Deck an, um alle Karten zu sehen.',
+                    Text('Wähle, mit welchem Deck du an den Tisch kommst, oder gestalte dein eigenes. Tippe ein Deck an, um alle Karten zu sehen.',
                         style: T.body(15, color: C.inkSoft)),
                     if (_error != null) EmptyNote(_error!, icon: Icons.wifi_off_rounded),
                     if (_error == null || _presets.isNotEmpty) ...[
                       const SectionTitle('Meine Decks'),
                       if (_mine.isEmpty)
-                        const EmptyNote('Noch keine eigenen Decks. Gestalte dein erstes im Browser.', icon: Icons.style_rounded)
+                        const EmptyNote('Noch keine eigenen Decks. Leg eins an – leer oder aus einer Vorlage.', icon: Icons.style_rounded)
                       else
                         for (final d in _mine) tile(d, true),
-                      const _WebHint(),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: GoldButton(label: 'Neues Deck gestalten', jicon: 'plus', busy: _creating, onPressed: _creating ? null : _create),
+                      ),
                       const SectionTitle('Vorlagen'),
                       for (final d in _presets) tile(d, false),
                     ],
@@ -206,36 +276,6 @@ class _SmallAction extends StatelessWidget {
               Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(13.5, color: C.goldSoft))),
             ]),
           ),
-        ),
-      );
-}
-
-/// Deck editing lives on the web; tap copies the address.
-class _WebHint extends StatelessWidget {
-  const _WebHint();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Panel(
-          color: C.velvet,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          onTap: () async {
-            await Clipboard.setData(const ClipboardData(text: 'https://$_webDecks'));
-            if (context.mounted) toast(context, 'Link kopiert.');
-          },
-          child: Row(children: [
-            const Icon(Icons.brush_rounded, color: C.gold),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text.rich(TextSpan(style: T.body(14.5, color: C.inkSoft), children: [
-                const TextSpan(text: 'Eigene Decks gestaltest du im Browser unter '),
-                TextSpan(text: _webDecks, style: T.body(14.5, color: C.goldSoft, weight: FontWeight.w700)),
-              ])),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.copy_rounded, size: 18, color: C.inkMute),
-          ]),
         ),
       );
 }

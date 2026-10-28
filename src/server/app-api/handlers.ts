@@ -15,6 +15,8 @@ import { createCourt, getCourt, joinCourt, leaveCourt, listMyCourts, removeCourt
 import {
   copyDeck, getDecksByIds, getDefaultDeckId, listDecks, listGallery, publicDeckIds, setDeckPublic, setDefaultDeck, toggleDeckLike,
 } from '../deck-service';
+import { ART_GROUPS } from '@/components/deck/art';
+import { createDeck, deleteDeck, MAX_ART_BYTES, MAX_DECKS, updateDeck, uploadDeckArt } from '../deck-service';
 import { runGameAction, uuid } from '../game-commands';
 import { createGame, joinGame, loadGameByCode, requestRematch, toView } from '../game-service';
 import { findOrCreatePublicLobby, publicLobbyStats } from '../matchmaking-service';
@@ -156,7 +158,8 @@ export const GET: Record<string, Handler> = {
 
   async decks({ admin, user }) {
     const [mine, defaultId] = await Promise.all([listDecks(admin, user.id), getDefaultDeckId(admin, user.id)]);
-    return ok({ presets: PRESETS, mine, defaultId: defaultId ?? PRESETS[0].id });
+    // `art`: the drawn illustrations the editor offers (ids for /api/app/art/<id>), grouped like on the web.
+    return ok({ presets: PRESETS, mine, defaultId: defaultId ?? PRESETS[0].id, art: ART_GROUPS, maxDecks: MAX_DECKS });
   },
 
   async gallery({ admin, user, query }) {
@@ -264,6 +267,8 @@ export const POST: Record<string, Handler> = {
   },
 
   async deck({ admin, user, body }) {
+    // Name and design are validated by the deck service exactly as for the web editor.
+    if (body.op === 'create') return createDeck(admin, user.id, body.name, body.design);
     const id = body.id === null ? null : String(body.id ?? '');
     if (id !== null && (id.length < 1 || id.length > 64)) return fail('Deck nicht gefunden.');
     switch (body.op ?? 'default') {
@@ -271,8 +276,18 @@ export const POST: Record<string, Handler> = {
       case 'copy': return id ? copyDeck(admin, user.id, id) : fail('Deck nicht gefunden.');
       case 'like': return uuid.safeParse(id).success ? toggleDeckLike(admin, user.id, id!) : fail('Deck nicht gefunden.');
       case 'public': return uuid.safeParse(id).success ? setDeckPublic(admin, user.id, id!, body.public === true) : fail('Deck nicht gefunden.');
+      case 'update': return uuid.safeParse(id).success ? updateDeck(admin, user.id, id!, body.name, body.design) : fail('Deck nicht gefunden.');
+      case 'delete': return uuid.safeParse(id).success ? deleteDeck(admin, user.id, id!) : fail('Deck nicht gefunden.');
       default: return fail('Ungültige Aktion.');
     }
+  },
+
+  /** Card or back photo for an own deck: { id, slot: 1–13 | 'back', data: base64 }. */
+  async deckImage({ admin, user, body }) {
+    const id = String(body.id ?? '');
+    if (!uuid.safeParse(id).success) return fail('Deck nicht gefunden.');
+    if (typeof body.data !== 'string' || body.data.length > Math.ceil(MAX_ART_BYTES / 3) * 4) return fail('Das Bild ist zu groß (höchstens 2 MB).');
+    return uploadDeckArt(admin, user.id, id, body.slot, Buffer.from(body.data, 'base64'));
   },
 
   async court({ admin, user, body }) {

@@ -9,6 +9,7 @@ import '../game/models.dart';
 import '../game/rules.dart';
 import '../theme.dart';
 import '../widgets/jakob_icons.dart';
+import 'card_layout.dart';
 
 Color hexColor(String hex, [Color fallback = C.surface]) {
   final h = hex.replaceFirst('#', '');
@@ -51,7 +52,9 @@ class PlayingCard extends StatelessWidget {
     final full = deck.photoFit == 'vollbild' && (face.image != null || face.art != null);
 
     Widget body;
-    if (full && face.image != null) {
+    if (face.layout != null) {
+      body = LayoutFace(deck: deck, face: face, rank: rank, layout: face.layout!, width: width, small: width < 56);
+    } else if (full && face.image != null) {
       body = Stack(fit: StackFit.expand, children: [
         Image.network(Api.media(face.image!), fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: frame)),
         const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xAA000000)]))),
@@ -105,7 +108,7 @@ class PlayingCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(fit: StackFit.expand, children: [
         body,
-        if (width >= 56) Positioned(left: 0, right: 0, bottom: 5 * s, child: _NameBanner(name: face.name, deck: deck, scale: s)),
+        if (width >= 56 && face.layout == null) Positioned(left: 0, right: 0, bottom: 5 * s, child: _NameBanner(name: face.name, deck: deck, scale: s)),
         if (marked)
           Positioned(right: 4 * s, top: 4 * s, child: Container(
             padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 2 * s),
@@ -186,7 +189,16 @@ class CardBack extends StatelessWidget {
       child: loot != null
           ? SvgPicture.network(Api.lootUrl(loot!), fit: BoxFit.cover)
           : image != null
-          ? Image.network(Api.media(image), fit: BoxFit.cover, errorBuilder: (_, _, _) => ColoredBox(color: a))
+          // Crop chosen in the editor: offset in percent of the card, then zoom.
+          ? ClipRect(
+              child: Transform.translate(
+                offset: Offset(lnum(back['panX']) / 200 * width, lnum(back['panY']) / 200 * width * 1.4),
+                child: Transform.scale(
+                  scale: lnum(back['zoom'], 1),
+                  child: Image.network(Api.media(image), fit: BoxFit.cover, width: width, height: width * 1.4, errorBuilder: (_, _, _) => ColoredBox(color: a)),
+                ),
+              ),
+            )
           : CustomPaint(
               painter: _PatternPainter(back['pattern'] as String? ?? 'rauten', a, b),
               child: Center(
