@@ -48,8 +48,13 @@ class _AuthScreenState extends State<AuthScreen> {
     } else {
       try {
         await auth.signInWithPassword(email: _email.text.trim(), password: _password.text);
-      } on AuthException {
-        error = 'E-Mail oder Passwort falsch.';
+      } on AuthException catch (e) {
+        error = switch (e.code) {
+          'invalid_credentials' => 'E-Mail oder Passwort falsch.',
+          'email_not_confirmed' => 'Bitte bestätige zuerst deine E-Mail-Adresse.',
+          'over_request_rate_limit' || 'over_email_send_rate_limit' => 'Zu viele Versuche. Warte ein paar Minuten und versuch es dann nochmal.',
+          _ => 'Anmeldung fehlgeschlagen: ${e.message}',
+        };
       } catch (_) {
         error = 'Keine Verbindung zum Hof. Bitte nochmal versuchen.';
       }
