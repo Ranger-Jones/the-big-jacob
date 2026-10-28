@@ -15,7 +15,9 @@ import 'decks/new_deck_sheet.dart';
 
 /// The player's deck chest: own decks and presets, pick the one you bring to the table.
 class DecksScreen extends StatefulWidget {
-  const DecksScreen({super.key});
+  /// Opens the "new deck" sheet right away (from the gallery's "Eigenes Deck gestalten").
+  final bool startCreating;
+  const DecksScreen({super.key, this.startCreating = false});
 
   @override
   State<DecksScreen> createState() => _DecksScreenState();
@@ -25,7 +27,7 @@ class _DecksScreenState extends State<DecksScreen> {
   List<Deck> _presets = const [], _mine = const [];
   String? _defaultId, _error, _saving;
   List<ArtGroup> _art = const [];
-  bool _loaded = false, _creating = false;
+  bool _loaded = false, _creating = false, _startedCreating = false;
 
   @override
   void initState() {
@@ -50,6 +52,10 @@ class _DecksScreenState extends State<DecksScreen> {
       _art = ArtGroup.parse(d['art']);
       _error = null;
     });
+    if (widget.startCreating && !_startedCreating && res.ok && mounted) {
+      _startedCreating = true;
+      _create();
+    }
   }
 
   /// Makes [deck] the default; returns whether it worked.

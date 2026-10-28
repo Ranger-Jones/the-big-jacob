@@ -12,6 +12,8 @@ import 'gallery/gallery_sheet.dart';
 import 'gallery/gallery_tile.dart';
 import 'gallery/share_section.dart';
 import 'gallery/sort_toggle.dart';
+import 'decks_screen.dart';
+import '../widgets/jakob_icons.dart';
 
 /// Decks other players shared: browse, like, copy; and share your own.
 class GalleryScreen extends StatefulWidget {
@@ -156,6 +158,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
           title: Text('Deck-Galerie', style: T.display(30)),
+          actions: [
+            TextButton.icon(
+              onPressed: () => _openDecks(),
+              icon: const JIcon('cards', size: 18, color: C.goldSoft),
+              label: Text('Meine Decks', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 6),
+          ],
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator(color: C.gold))
@@ -170,6 +180,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       'Decks, die andere Spieler geteilt haben. Gefällt dir eins, kopiere es und mach es zu deinem.',
                       style: T.body(15, color: C.inkSoft),
                     ),
+                    const SizedBox(height: 14),
+                    GoldButton(label: 'Eigenes Deck gestalten', jicon: 'plus', onPressed: () => _openDecks(create: true)),
                     const SizedBox(height: 18),
                     Row(
                       children: [
@@ -190,6 +202,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
       ),
     );
+  }
+
+  /// Own decks (and the editor); afterwards the share list may have changed.
+  Future<void> _openDecks({bool create = false}) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => DecksScreen(startCreating: create)));
+    if (mounted) _loadAll();
   }
 
   Widget _galleryBody() {

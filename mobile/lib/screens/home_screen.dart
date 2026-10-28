@@ -272,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _ModeTile(
               icon: 'cards',
               title: 'Deine Decks',
-              text: 'Wähle, mit welchem Deck du an den Tisch kommst.',
+              text: 'Eigene Decks gestalten und wählen, mit welchem du an den Tisch kommst.',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
             ),
             const SectionTitle('Am Hof'),
