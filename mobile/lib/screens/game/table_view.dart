@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/controller.dart';
+import '../../game/log_cursor.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
 import '../../theme.dart';
@@ -28,7 +29,7 @@ class TableView extends StatefulWidget {
 class _TableViewState extends State<TableView> {
   Selection _selection = {};
   String _selectionKey = '';
-  int _logSeen = -1;
+  final _log = LogCursor();
   String? _prevPhase;
   /// Round 1: after the last card was drawn the draws stay visible for a countdown.
   bool _revealing = false;
@@ -40,7 +41,7 @@ class _TableViewState extends State<TableView> {
   @override
   void initState() {
     super.initState();
-    _logSeen = g.state?.log.length ?? 0;
+    _log.skip(g.state?.log ?? const []);
     _selectionKey = _keyOf(g.state);
     _prevPhase = g.state?.phase;
     g.addListener(_onChange);
@@ -65,9 +66,7 @@ class _TableViewState extends State<TableView> {
     }
     if (_prevPhase == 'draw' && s.phase != 'draw' && s.round == 1) _revealing = true;
     _prevPhase = s.phase;
-    final log = s.log;
-    if (_logSeen < 0 || _logSeen > log.length) _logSeen = log.length;
-    for (final e in log.skip(_logSeen)) {
+    for (final e in _log.take(s.log)) {
       final kind = e['kind'] as String?;
       if (kind != null && Burst.kinds.contains(kind)) {
         final who = kind == 'snap' ? g.nameOf(e['to'] as String? ?? '', you: true) : g.nameOf(e['by'] as String? ?? '', you: true);
@@ -76,7 +75,6 @@ class _TableViewState extends State<TableView> {
       }
       if (kind == 'clear' && e['by'] == g.me) HapticFeedback.selectionClick();
     }
-    _logSeen = log.length;
     if (s.phase == 'play' && s.turn == g.me) HapticFeedback.lightImpact();
   }
 
