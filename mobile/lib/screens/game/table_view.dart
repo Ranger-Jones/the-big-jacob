@@ -187,6 +187,7 @@ class _TableViewState extends State<TableView> {
                   onChanged: (sel) => setState(() => _selection = sel),
                   mode: mode,
                   trick: s.trick,
+                  ctx: s.ctx,
                   taxCount: myTax?.count ?? 0,
                   playable: playable,
                   received: s.phase == 'tax' || s.phase == 'play' ? g.hand.received : const [],

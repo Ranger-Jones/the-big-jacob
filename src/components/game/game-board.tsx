@@ -224,6 +224,7 @@ export function GameBoard({ emojiBar, chat, chatButton }: { emojiBar: ReactNode;
               taxCount={pendingTax?.count}
               playable={myTurn ? playable : null}
               received={state.phase === 'tax' || state.phase === 'play' ? g.hand.received : []}
+              ctx={ctx}
             />
             <div className="flex items-center gap-2">
               {picked.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelection({})}>{t('Abwählen')}</Button>}

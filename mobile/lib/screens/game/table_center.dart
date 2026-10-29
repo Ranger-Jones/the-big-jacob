@@ -198,11 +198,14 @@ class _DrawPanelState extends State<DrawPanel> {
           width: area.width,
           child: Stack(alignment: Alignment.bottomCenter, children: [
             for (var i = 0; i < 7; i++)
+              // The translate must be the outermost widget: wrappers around it (like the entry animation)
+              // keep the untranslated box for hit tests, so only the middle card could be tapped.
               Transform.translate(
                 offset: Offset((i - 3) * fanW * .55, (i - 3).abs() * fanW * .09),
                 child: Transform.rotate(
                   angle: (i - 3) * .12,
                   child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: _picked != null || g.busy
                         ? null
                         : () {
@@ -214,10 +217,10 @@ class _DrawPanelState extends State<DrawPanel> {
                       duration: const Duration(milliseconds: 220),
                       offset: Offset(0, _picked == i ? -.18 : 0),
                       child: CardBack(deck: myDeck, width: fanW, loot: g.profiles[g.me]?.lootBack),
-                    ),
+                    ).animate(delay: (i * 60).ms).fadeIn(duration: 250.ms).moveY(begin: 24, end: 0, curve: Curves.easeOutBack),
                   ),
                 ),
-              ).animate(delay: (i * 60).ms).fadeIn(duration: 250.ms).moveY(begin: 24, end: 0, curve: Curves.easeOutBack),
+              ),
           ]),
         ),
         // The rotated outer cards reach below the stack's box.
@@ -284,7 +287,8 @@ class DrawResults extends StatelessWidget {
       final n = math.max(1, players.length);
       final rows = n <= 4 ? 1 : n <= 8 ? 2 : 3;
       final perRow = (n / rows).ceil();
-      final byWidth = (box.maxWidth - (perRow - 1) * 8) / perRow - 6;
+      // Every seat takes the card plus 6 (name box) plus 8 (padding left and right).
+      final byWidth = box.maxWidth / perRow - 14;
       final byHeight = (box.maxHeight - rows * 26 - (rows - 1) * 6) / (rows * 1.4);
       final cardW = math.min(byWidth, byHeight).clamp(30.0, 92.0);
       Widget seat(Player p) => SizedBox(

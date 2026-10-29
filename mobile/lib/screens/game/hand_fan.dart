@@ -16,9 +16,11 @@ List<int> selectedCards(Selection sel) => [for (final e in sel.entries) ...List.
 
 enum HandMode { play, tax, view }
 
-/// Same tap rules as the web hand: tapping a rank selects as many copies as the trick needs
-/// (jesters top up), tapping again removes one; in tax mode cards are picked one by one.
-Selection tapRank(Selection selection, int rank, int count, {required HandMode mode, TrickInfo? trick, int taxCount = 0}) {
+/// Same tap rules as the web hand (src/lib/jakob/selection.ts): tapping a rank selects as many copies as
+/// the trick needs (jesters top up), tapping again removes one; in tax mode cards are picked one by one.
+/// With "Bombe" a stack of four or more can be laid whole: the second tap takes all of them, and a rank
+/// that cannot beat the trick normally takes all of them on the first tap.
+Selection tapRank(Selection selection, int rank, int count, {required HandMode mode, TrickInfo? trick, int taxCount = 0, RuleCtx? ctx}) {
   final cur = selection[rank] ?? 0;
   final next = Map<int, int>.from(selection);
   final total = selection.values.fold(0, (a, b) => a + b);
@@ -31,9 +33,16 @@ Selection tapRank(Selection selection, int rank, int count, {required HandMode m
     return next..removeWhere((_, v) => v == 0);
   }
   next.removeWhere((k, _) => k != jester && k != rank);
+  final bombable = trick != null && ctx != null && ctx.bomb && count >= 4;
+  final beats = trick != null && ctx != null && better(rank, trick.rank, ctx);
+  // A bomb is jesters-free: the whole stack, nothing else.
+  Selection bomb() => {rank: count};
+  final needed = trick == null ? count : math.min(count, math.max(1, trick.count - (next[jester] ?? 0)));
   if (cur == 0) {
-    final jesters = next[jester] ?? 0;
-    next[rank] = trick != null ? math.min(count, math.max(1, trick.count - jesters)) : count;
+    if (bombable && !beats) return bomb();
+    next[rank] = needed;
+  } else if (bombable && cur < count && cur == needed) {
+    return bomb();
   } else {
     next[rank] = cur - 1;
   }
@@ -48,6 +57,8 @@ class HandFan extends StatelessWidget {
   final ValueChanged<Selection> onChanged;
   final HandMode mode;
   final TrickInfo? trick;
+  /// Rules of the round (bombs let a stack of four or more be laid whole).
+  final RuleCtx? ctx;
   final int taxCount;
   final Set<int>? playable;
   final List<int> received;
@@ -55,7 +66,7 @@ class HandFan extends StatelessWidget {
 
   const HandFan({
     super.key, required this.cards, required this.deck, required this.selection, required this.onChanged,
-    required this.mode, this.trick, this.taxCount = 0, this.playable, this.received = const [], this.dealKey = 0,
+    required this.mode, this.trick, this.ctx, this.taxCount = 0, this.playable, this.received = const [], this.dealKey = 0,
   });
 
   static double _cardWidth(double width) => math.min(70.0, width / 4.8);
@@ -122,7 +133,7 @@ class HandFan extends StatelessWidget {
             ? null
             : () {
                 HapticFeedback.selectionClick();
-                onChanged(tapRank(selection, rank, count, mode: mode, trick: trick, taxCount: taxCount));
+                onChanged(tapRank(selection, rank, count, mode: mode, trick: trick, taxCount: taxCount, ctx: ctx));
               },
         child: Transform.rotate(
           angle: angle,

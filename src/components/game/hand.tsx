@@ -5,6 +5,8 @@ import { cx } from '@/lib/cx';
 import { useT } from '@/lib/i18n/client';
 import type { DeckEntry } from '@/lib/decks';
 import { countBy, JESTER, rankWord } from '@/lib/jakob/cards';
+import type { RuleContext } from '@/lib/jakob/rules';
+import { tapSelection } from '@/lib/jakob/selection';
 import type { Trick } from '@/lib/jakob/types';
 
 export type Selection = Record<number, number>;
@@ -26,34 +28,18 @@ interface Props {
   playable?: Set<number> | null;
   /** Ranks that just arrived as tax. */
   received?: number[];
+  /** Rules of the round (for bombs: a stack of four or more can be laid whole). */
+  ctx?: RuleContext;
 }
 
 /** Your hand as one stack per rank – compact on phones, quick to select with one tap. */
-export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount = 0, playable, received = [] }: Props) {
+export function Hand({ cards, deck, selection, onChange, mode, trick, taxCount = 0, playable, received = [], ctx }: Props) {
   const t = useT();
   const groups = [...countBy(cards)].sort((a, b) => a[0] - b[0]);
   const receivedSet = new Set(received);
-  const total = Object.values(selection).reduce((a, b) => a + b, 0);
 
   function tap(rank: number, count: number) {
-    const cur = selection[rank] ?? 0;
-    const next: Selection = { ...selection };
-    if (mode === 'tax') {
-      if (cur < count && total < taxCount) next[rank] = cur + 1;
-      else next[rank] = 0;
-      return onChange(next);
-    }
-    if (rank === JESTER) {
-      next[rank] = cur >= count ? 0 : cur + 1;
-      return onChange(next);
-    }
-    // Only one natural rank per play: picking another rank replaces it, jesters stay.
-    for (const key of Object.keys(next)) if (Number(key) !== JESTER && Number(key) !== rank) next[Number(key)] = 0;
-    if (cur === 0) {
-      const jesters = next[JESTER] ?? 0;
-      next[rank] = trick ? Math.min(count, Math.max(1, trick.count - jesters)) : count;
-    } else next[rank] = cur - 1;
-    onChange(next);
+    onChange(tapSelection(selection, rank, count, { mode, trick, taxCount, ctx }));
   }
 
   return (
