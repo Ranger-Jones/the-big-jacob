@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../api.dart';
 import '../game/models.dart';
 import '../game/rules.dart';
+import '../i18n/i18n.dart';
 import 'playing_card.dart';
 
 /// Free card layouts from the card editor (port of the web's card-layout.tsx). Positions are percent of
@@ -169,7 +170,7 @@ class LayoutFace extends StatelessWidget {
       final band = nameStyle == 'band';
       final size = lnum(name['size'], 8.5);
       final text = Text(
-        face.name,
+        t(face.name),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
@@ -197,7 +198,7 @@ class LayoutFace extends StatelessWidget {
       final color = number['color'] is String ? hexColor(number['color'] as String) : accent;
       final x = lnum(number['x'], 13), y = lnum(number['y'], 9);
       if (numberStyle == 'gross') {
-        final label = rank == jester ? 'Narr' : '$rank';
+        final label = rank == jester ? t('Narr') : '$rank';
         final px = (rank == jester ? size * .55 : size) * s;
         children.add(at(x, y, el('number', _Outlined(
           text: label,

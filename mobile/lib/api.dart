@@ -4,8 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'i18n/i18n.dart';
 
-/// Result of an API call: either data or a German error message for the user.
+/// Result of an API call: either data or an error message for the user (the server's German, translated with t).
 class ApiResult<T> {
   final T? data;
   final String? error;
@@ -39,9 +40,9 @@ class Api {
       }
       final body = jsonDecode(utf8.decode(res.bodyBytes));
       if (body is Map && body['ok'] == true) return ApiResult.ok(body['data']);
-      return ApiResult.fail(body is Map && body['error'] is String ? body['error'] as String : 'Unbekannter Fehler.');
+      return ApiResult.fail(body is Map && body['error'] is String ? t(body['error'] as String) : t('Unbekannter Fehler.'));
     } catch (_) {
-      return const ApiResult.fail('Keine Verbindung zum Hof. Bitte nochmal versuchen.');
+      return ApiResult.fail(t('Keine Verbindung zum Hof. Bitte nochmal versuchen.'));
     }
   }
 

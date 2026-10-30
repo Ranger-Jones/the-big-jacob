@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../api.dart';
 import '../../game/controller.dart' show allowedEmojis;
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -215,7 +216,7 @@ class ColorField extends StatelessWidget {
           child: Row(children: [
             Expanded(child: Text(label, style: T.body(16, weight: FontWeight.w700))),
             if (onReset != null)
-              TextButton(onPressed: onReset, child: Text('Standard', style: T.label(14, color: C.goldSoft))),
+              TextButton(onPressed: onReset, child: Text(t('Standard'), style: T.label(14, color: C.goldSoft))),
             Text(value.toUpperCase(), style: T.label(13, color: C.inkMute)),
             const SizedBox(width: 10),
             Container(
@@ -330,13 +331,13 @@ class _ColorSheetState extends State<_ColorSheet> {
             ),
           ),
           const SizedBox(height: 4),
-          slider('Farbton', _hsv.hue, 360, [for (var h = 0; h <= 360; h += 60) HSVColor.fromAHSV(1, h.toDouble(), 1, 1).toColor()],
+          slider(t('Farbton'), _hsv.hue, 360, [for (var h = 0; h <= 360; h += 60) HSVColor.fromAHSV(1, h.toDouble(), 1, 1).toColor()],
               (v) => _set(_hsv.withHue(v))),
-          slider('Sättigung', _hsv.saturation, 1, [_hsv.withSaturation(0).toColor(), _hsv.withSaturation(1).toColor()],
+          slider(t('Sättigung'), _hsv.saturation, 1, [_hsv.withSaturation(0).toColor(), _hsv.withSaturation(1).toColor()],
               (v) => _set(_hsv.withSaturation(v))),
-          slider('Helligkeit', _hsv.value, 1, [Colors.black, _hsv.withValue(1).toColor()], (v) => _set(_hsv.withValue(v))),
+          slider(t('Helligkeit'), _hsv.value, 1, [Colors.black, _hsv.withValue(1).toColor()], (v) => _set(_hsv.withValue(v))),
           const SizedBox(height: 14),
-          GoldButton(label: 'Fertig', jicon: 'check', onPressed: () => Navigator.pop(context)),
+          GoldButton(label: t('Fertig'), jicon: 'check', onPressed: () => Navigator.pop(context)),
         ]),
       ),
     );
@@ -482,9 +483,9 @@ Future<String?> showArtPicker(BuildContext context, {required String title, requ
           padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(ctx).bottom + 20),
           children: [
             Text(title, style: T.display(28)),
-            if (groups.isEmpty) const EmptyNote('Die Grafiken konnten nicht geladen werden.'),
+            if (groups.isEmpty) EmptyNote(t('Die Grafiken konnten nicht geladen werden.')),
             for (final g in groups) ...[
-              Padding(padding: const EdgeInsets.only(top: 16, bottom: 8), child: Text(g.label, style: T.display(22, color: C.goldSoft))),
+              Padding(padding: const EdgeInsets.only(top: 16, bottom: 8), child: Text(t(g.label), style: T.display(22, color: C.goldSoft))),
               GridView.count(
                 crossAxisCount: 5,
                 shrinkWrap: true,
@@ -536,11 +537,11 @@ Future<PhotoPick> pickDeckPhoto(BuildContext context, {required bool tall}) asyn
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Foto einsetzen', style: T.display(30)),
+          Text(t('Foto einsetzen'), style: T.display(30)),
           const SizedBox(height: 14),
-          ToolButton(icon: 'camera', label: 'Foto aufnehmen', onTap: () => Navigator.pop(ctx, ImageSource.camera)),
+          ToolButton(icon: 'camera', label: t('Foto aufnehmen'), onTap: () => Navigator.pop(ctx, ImageSource.camera)),
           const SizedBox(height: 10),
-          ToolButton(icon: 'image', label: 'Aus Fotos wählen', onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
+          ToolButton(icon: 'image', label: t('Aus Fotos wählen'), onTap: () => Navigator.pop(ctx, ImageSource.gallery)),
         ]),
       ),
     ),
@@ -555,16 +556,16 @@ Future<PhotoPick> pickDeckPhoto(BuildContext context, {required bool tall}) asyn
     );
     if (file == null) return const PhotoCancelled();
     final bytes = await file.readAsBytes();
-    return bytes.isEmpty ? const PhotoFailed('Das Bild konnte nicht gelesen werden.') : PhotoBytes(bytes);
+    return bytes.isEmpty ? PhotoFailed(t('Das Bild konnte nicht gelesen werden.')) : PhotoBytes(bytes);
   } on PlatformException catch (e) {
     if (e.code.contains('access_denied')) {
       return PhotoFailed(source == ImageSource.camera
-          ? 'Kein Zugriff auf die Kamera. Bitte in den Einstellungen erlauben.'
-          : 'Kein Zugriff auf deine Fotos. Bitte in den Einstellungen erlauben.');
+          ? t('Kein Zugriff auf die Kamera. Bitte in den Einstellungen erlauben.')
+          : t('Kein Zugriff auf deine Fotos. Bitte in den Einstellungen erlauben.'));
     }
-    return const PhotoFailed('Das Bild konnte nicht gelesen werden.');
+    return PhotoFailed(t('Das Bild konnte nicht gelesen werden.'));
   } catch (_) {
-    return const PhotoFailed('Das Bild konnte nicht gelesen werden.');
+    return PhotoFailed(t('Das Bild konnte nicht gelesen werden.'));
   }
 }
 
@@ -582,7 +583,7 @@ Future<bool> confirmSheet(BuildContext context, {required String title, required
             const SizedBox(height: 18),
             SoftButton(label: confirm, jicon: danger ? 'close' : 'check', danger: danger, onPressed: () => Navigator.pop(ctx, true)),
             const SizedBox(height: 10),
-            GoldButton(label: 'Abbrechen', onPressed: () => Navigator.pop(ctx, false)),
+            GoldButton(label: t('Abbrechen'), onPressed: () => Navigator.pop(ctx, false)),
           ]),
         ),
       ),
@@ -590,11 +591,11 @@ Future<bool> confirmSheet(BuildContext context, {required String title, required
     true;
 
 /// Sheet with one text field (deck name). Resolves to the trimmed text, or null.
-Future<String?> showNameSheet(BuildContext context, {required String title, required String initial, String action = 'Übernehmen'}) =>
+Future<String?> showNameSheet(BuildContext context, {required String title, required String initial, String? action}) =>
     showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _NameSheet(title: title, initial: initial, action: action),
+      builder: (_) => _NameSheet(title: title, initial: initial, action: action ?? t('Übernehmen')),
     );
 
 class _NameSheet extends StatefulWidget {
@@ -633,7 +634,7 @@ class _NameSheetState extends State<_NameSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.done,
                 style: T.body(18, weight: FontWeight.w700),
-                decoration: InputDecoration(labelText: 'Name des Decks', counterStyle: T.label(12, color: C.inkMute)),
+                decoration: InputDecoration(labelText: t('Name des Decks'), counterStyle: T.label(12, color: C.inkMute)),
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _valid ? Navigator.pop(context, _value) : null,
               ),

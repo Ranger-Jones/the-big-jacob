@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../game/models.dart';
 import '../../game/progress.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/charts.dart';
 import '../../widgets/common.dart';
@@ -17,18 +18,21 @@ int asInt(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
 double asDouble(dynamic v) => v is num ? v.toDouble() : double.tryParse('$v') ?? 0;
 List<int> asIntList(dynamic v) => v is List ? v.map(asInt).toList() : const [];
 
-/// German decimal comma, trailing ",0" dropped.
+/// One decimal, trailing ",0" dropped; a decimal comma in German, a point in English.
 String deNum(double v, [int digits = 1]) {
   final s = v.toStringAsFixed(digits);
-  return (s.endsWith('.0') ? s.substring(0, s.length - 2) : s).replaceAll('.', ',');
+  final short = s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  return I18n.english ? short : short.replaceAll('.', ',');
 }
 
 const _months = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+const _monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/// "3. Okt., 14:05" in German, "3 Oct, 14:05" in English.
 String deDate(String iso, {bool time = true}) {
   final d = DateTime.tryParse(iso)?.toLocal();
   if (d == null) return '';
-  final date = '${d.day}. ${_months[d.month - 1]}';
+  final date = I18n.english ? '${d.day} ${_monthsEn[d.month - 1]}' : '${d.day}. ${_months[d.month - 1]}';
   if (!time) return date;
   return '$date, ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
@@ -125,7 +129,7 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(width: 40),
           Flexible(child: Text(name, style: T.display(42), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
           IconButton(
-            tooltip: 'Benutzername ändern',
+            tooltip: t('Benutzername ändern'),
             onPressed: onRename,
             style: IconButton.styleFrom(fixedSize: const Size(40, 40), backgroundColor: C.surface.withValues(alpha: .7)),
             icon: const Icon(Icons.edit_rounded, size: 18, color: C.goldSoft),
@@ -134,8 +138,8 @@ class ProfileHeader extends StatelessWidget {
       const SizedBox(height: 4),
       Text(
         [
-          crowns > 0 ? '$crowns× Großer Jakob gewesen' : 'Noch nie auf dem Thron gesessen',
-          if (servant > 0) '$servant× Großer Knecht',
+          crowns > 0 ? t('{count}× Großer Jakob gewesen', {'count': crowns}) : t('Noch nie auf dem Thron gesessen'),
+          if (servant > 0) t('{count}× Großer Knecht', {'count': servant}),
         ].join(' · '),
         style: T.body(15, color: C.inkSoft),
         textAlign: TextAlign.center,
@@ -143,7 +147,7 @@ class ProfileHeader extends StatelessWidget {
       if (titles.isNotEmpty) ...[
         const SizedBox(height: 12),
         Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
-          for (final t in titles) Pill(t, jicon: 'crown', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
+          for (final title in titles) Pill(t(title), jicon: 'crown', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
         ]),
       ],
     ]);
@@ -154,7 +158,7 @@ class ProfileHeader extends StatelessWidget {
     if (onAvatarTap == null) return avatar;
     return Semantics(
       button: true,
-      label: 'Profilbild ändern',
+      label: t('Profilbild ändern'),
       child: GestureDetector(
         onTap: avatarBusy ? null : onAvatarTap,
         child: Stack(alignment: Alignment.center, children: [
@@ -200,28 +204,28 @@ class RatingPanel extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('$elo${provisional ? '?' : ''}', style: T.display(38)),
-              Text('${tier.name} · Elo', style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
+              Text('${t(tier.name)} · Elo', style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
             ]),
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('Bestwert $peak', style: T.label(13)),
+            Text(t('Bestwert {n}', {'n': peak}), style: T.label(13)),
             const SizedBox(height: 2),
-            Text(rated == 1 ? '1 Partie' : '$rated Partien', style: T.body(13, color: C.inkMute)),
+            Text(rated == 1 ? t('1 Partie') : t('{n} Partien', {'n': rated}), style: T.body(13, color: C.inkMute)),
           ]),
         ]),
         if (next != null || provisional) ...[
           const SizedBox(height: 10),
           Text(
             [
-              if (provisional) 'Vorläufig, bis 5 Partien gewertet sind',
-              if (next != null) 'Noch ${next.min - elo} bis ${next.name}',
+              if (provisional) t('Vorläufig, bis 5 Partien gewertet sind'),
+              if (next != null) t('Noch {n} bis {tier}', {'n': next.min - elo, 'tier': t(next.name)}),
             ].join(' · '),
             style: T.body(13, color: C.inkMute),
           ),
         ],
         const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Divider(height: 1, color: C.line)),
         Row(children: [
-          Expanded(child: Text('Stufe $level · ${levelTitle(level)}', style: T.body(16, weight: FontWeight.w800, color: C.goldSoft))),
+          Expanded(child: Text(t('Stufe {level} · {title}', {'level': level, 'title': t(levelTitle(level))}), style: T.body(16, weight: FontWeight.w800, color: C.goldSoft))),
           Text('$current / $needed XP', style: T.label(13)),
         ]),
         const SizedBox(height: 8),
@@ -244,7 +248,7 @@ class RatingPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text('Noch ${needed - current} XP bis Stufe ${level + 1} · $xp XP insgesamt', style: T.body(13, color: C.inkMute)),
+        Text(t('Noch {n} XP bis Stufe {level} · {xp} XP insgesamt', {'n': needed - current, 'level': level + 1, 'xp': xp}), style: T.body(13, color: C.inkMute)),
       ]),
     );
   }
@@ -261,7 +265,7 @@ class StatTiles extends StatelessWidget {
     final tiles = [
       ('cards', '$games', 'Spiele'),
       ('trophy', '$wins', 'Siege'),
-      ('target', games == 0 ? '–' : '${(wins * 100 / games).round()} %', 'Siegquote'),
+      ('target', games == 0 ? '–' : '${(wins * 100 / games).round()}${I18n.english ? '' : ' '}%', 'Siegquote'),
       ('crown', '${asInt(stats['crowns'])}', 'Kronen'),
       ('ladder', games == 0 ? '–' : deNum(asDouble(stats['avg_place'])), 'Ø Platz'),
       ('fist', '${asInt(stats['revolutions']) + asInt(stats['grand_revolutions'])}', 'Revolutionen'),
@@ -277,7 +281,7 @@ class StatTiles extends StatelessWidget {
             const SizedBox(height: 4),
             FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: T.display(30, color: C.goldSoft))),
             const SizedBox(height: 2),
-            Text(label, style: T.label(12), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(t(label), style: T.label(12), maxLines: 1, overflow: TextOverflow.ellipsis),
           ]),
         ).animate(delay: (i * 50).ms).fadeIn(duration: 300.ms).moveY(begin: 10, end: 0),
       );
@@ -316,10 +320,10 @@ class DetailedStatsBlock extends StatelessWidget {
     final recentAvg = recent.isEmpty ? 0.0 : recent.map((p) => asInt(p['place'])).fold(0, (a, b) => a + b) / recent.length;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Statistik'),
+      SectionTitle(t('Statistik')),
       Panel(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          PanelTitle('Platzierungen', subtitle: '${(podium * 100 / total).round()} % auf dem Treppchen, aus $total ${total == 1 ? 'Spiel' : 'Spielen'}'),
+          PanelTitle(t('Platzierungen'), subtitle: total == 1 ? t('{pct} % auf dem Treppchen, aus {n} Spiel', {'pct': (podium * 100 / total).round(), 'n': total}) : t('{pct} % auf dem Treppchen, aus {n} Spielen', {'pct': (podium * 100 / total).round(), 'n': total})),
           const SizedBox(height: 14),
           BarChart(values: places, labels: [for (var i = 0; i < places.length; i++) '${i + 1}.']),
         ]),
@@ -328,14 +332,14 @@ class DetailedStatsBlock extends StatelessWidget {
         const SizedBox(height: 12),
         Panel(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            PanelTitle('Formkurve', subtitle: 'Punkte in den letzten ${trend.length} Spielen · zuletzt im Schnitt Platz ${deNum(recentAvg)}'),
+            PanelTitle(t('Formkurve'), subtitle: t('Punkte in den letzten {n} Spielen · zuletzt im Schnitt Platz {avg}', {'n': trend.length, 'avg': deNum(recentAvg)})),
             const SizedBox(height: 14),
             LineChart(values: [for (final p in trend) asInt(p['points'])]),
             const SizedBox(height: 6),
             Row(children: [
               Text(deDate(trend.first['finishedAt'] as String? ?? '', time: false), style: T.label(12, color: C.inkMute)),
               const Spacer(),
-              Text('zuletzt', style: T.label(12, color: C.inkMute)),
+              Text(t('zuletzt'), style: T.label(12, color: C.inkMute)),
             ]),
           ]),
         ),
@@ -348,12 +352,14 @@ class DetailedStatsBlock extends StatelessWidget {
             const SizedBox(width: 18),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('LIEBLINGSKARTE', style: T.label(12, color: C.inkMute).copyWith(letterSpacing: 1.4)),
+                Text(t('Lieblingskarte').toUpperCase(), style: T.label(12, color: C.inkMute).copyWith(letterSpacing: 1.4)),
                 const SizedBox(height: 4),
-                Text(rankNames[fav + 1] ?? '${fav + 1}', style: T.display(30, color: C.goldSoft)),
+                Text(rankNames[fav + 1] != null ? t(rankNames[fav + 1]!) : '${fav + 1}', style: T.display(30, color: C.goldSoft)),
                 const SizedBox(height: 6),
                 Text(
-                  '${byRank[fav]}× gelegt, ${(byRank[fav] * 100 / played).round()} % ${isMe ? 'deiner' : 'aller'} Karten',
+                  isMe
+                      ? t('{count}× gelegt, {pct} % deiner Karten', {'count': byRank[fav], 'pct': (byRank[fav] * 100 / played).round()})
+                      : t('{count}× gelegt, {pct} % aller Karten', {'count': byRank[fav], 'pct': (byRank[fav] * 100 / played).round()}),
                   style: T.body(14, color: C.inkSoft),
                 ),
               ]),
@@ -406,9 +412,9 @@ class BadgeGrid extends StatelessWidget {
             Icon(earned ? Icons.check_circle_rounded : Icons.lock_outline_rounded, size: 18, color: earned ? C.gold : C.inkMute),
           ]),
           const SizedBox(height: 8),
-          Text(b['title'] as String? ?? '', style: T.body(16, weight: FontWeight.w800, color: earned ? C.ink : C.inkSoft)),
+          Text(t(b['title'] as String? ?? ''), style: T.body(16, weight: FontWeight.w800, color: earned ? C.ink : C.inkSoft)),
           const SizedBox(height: 2),
-          Text(b['hint'] as String? ?? '', style: T.body(13, color: C.inkSoft, height: 1.2)),
+          Text(t(b['hint'] as String? ?? ''), style: T.body(13, color: C.inkSoft, height: 1.2)),
         ]),
       ),
     ).animate(delay: (i * 40).ms).fadeIn(duration: 300.ms);
@@ -427,7 +433,7 @@ class RivalList extends StatelessWidget {
           _row(r),
           const SizedBox(height: 8),
         ],
-        Text('Gezählt wird, wer im gemeinsamen Spiel vor dem anderen landete.', style: T.body(13, color: C.inkMute)),
+        Text(t('Gezählt wird, wer im gemeinsamen Spiel vor dem anderen landete.'), style: T.body(13, color: C.inkMute)),
       ]);
 
   Widget _row(Map r) {
@@ -444,7 +450,7 @@ class RivalList extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p.username, style: T.body(17, weight: FontWeight.w800), overflow: TextOverflow.ellipsis),
-            Text(games == 1 ? '1 Spiel zusammen' : '$games Spiele zusammen', style: T.body(13, color: C.inkSoft)),
+            Text(games == 1 ? t('1 Spiel zusammen') : t('{count} Spiele zusammen', {'count': games}), style: T.body(13, color: C.inkSoft)),
           ]),
         ),
         Container(
@@ -504,7 +510,7 @@ class _HistoryTileState extends State<_HistoryTile> {
           left: p['left'] == true, self: (p['profile'] as Map?)?['id'] == widget.userId,
         ),
       for (final b in (g['bots'] as List? ?? const []).whereType<Map>())
-        _Seat(b['name'] as String? ?? 'Bot', null, b['emoji'] as String? ?? '🤖', asInt(b['place']), asInt(b['points']), bot: true),
+        _Seat(t(b['name'] as String? ?? 'Bot'), null, b['emoji'] as String? ?? '🤖', asInt(b['place']), asInt(b['points']), bot: true),
     ]..sort((a, b) => (a.place ?? 99).compareTo(b.place ?? 99));
     final me = seats.where((s) => s.self).firstOrNull;
     final rounds = asInt(g['rounds']);
@@ -528,10 +534,14 @@ class _HistoryTileState extends State<_HistoryTile> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
-                  me?.place != null ? 'Platz ${me!.place} von ${seats.length}' : (me?.left ?? false) ? 'Vorzeitig gegangen' : '${seats.length} am Tisch',
+                  me?.place != null
+                      ? t('Platz {place} von {players}', {'place': me!.place, 'players': seats.length})
+                      : (me?.left ?? false)
+                          ? t('Vorzeitig gegangen')
+                          : t('{count} am Tisch', {'count': seats.length}),
                   style: T.body(16, weight: FontWeight.w800),
                 ),
-                Text('${deDate(g['finishedAt'] as String? ?? '')} · ${rounds == 1 ? '1 Runde' : '$rounds Runden'}', style: T.body(13, color: C.inkSoft)),
+                Text('${deDate(g['finishedAt'] as String? ?? '')} · ${rounds == 1 ? t('1 Runde') : t('{count} Runden', {'count': rounds})}', style: T.body(13, color: C.inkSoft)),
               ]),
             ),
             if (me != null) ...[
@@ -561,7 +571,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                       const SizedBox(width: 8),
                       Avatar(name: s.name, url: s.avatarUrl, emoji: s.emoji, size: 30),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(s.name, style: T.body(15, weight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
+                      Expanded(child: Text(s.bot ? t(s.name) : s.name, style: T.body(15, weight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
                       Text('${s.points}', style: T.display(20)),
                     ]),
                   ),

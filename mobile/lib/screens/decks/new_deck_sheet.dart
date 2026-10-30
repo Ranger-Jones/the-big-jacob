@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -19,7 +20,7 @@ Future<String?> showNewDeckSheet(BuildContext context, {required List<Deck> pres
         minChildSize: .5,
         maxChildSize: .95,
         builder: (ctx, scroll) {
-          final blank = Deck.fromDesign('blank', 'Leeres Deck', blankDesign());
+          final blank = Deck.fromDesign('blank', t('Leeres Deck'), blankDesign());
           var i = 0;
           Widget option(Deck deck, String value, String subtitle) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -31,7 +32,7 @@ Future<String?> showNewDeckSheet(BuildContext context, {required List<Deck> pres
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(deck.name, style: T.display(22), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(t(deck.name), style: T.display(22), maxLines: 1, overflow: TextOverflow.ellipsis),
                         Text(subtitle, style: T.body(14, color: C.inkSoft)),
                       ]),
                     ),
@@ -43,13 +44,13 @@ Future<String?> showNewDeckSheet(BuildContext context, {required List<Deck> pres
             controller: scroll,
             padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(ctx).bottom + 24),
             children: [
-              Text('Neues Deck', style: T.display(32)),
+              Text(t('Neues Deck'), style: T.display(32)),
               const SizedBox(height: 4),
-              Text('Fang mit einem leeren Deck an oder nimm eine Vorlage und mach sie zu deiner.', style: T.body(15, color: C.inkSoft)),
+              Text(t('Fang mit einem leeren Deck an oder nimm eine Vorlage und mach sie zu deiner.'), style: T.body(15, color: C.inkSoft)),
               const SizedBox(height: 16),
-              option(blank, 'blank', 'Schlichtes Pergament, alles selbst gestalten'),
-              const SectionTitle('Aus einer Vorlage'),
-              for (final p in presets) option(p, p.id, 'Vorlage'),
+              option(blank, 'blank', t('Schlichtes Pergament, alles selbst gestalten')),
+              SectionTitle(t('Aus einer Vorlage')),
+              for (final p in presets) option(p, p.id, t('Vorlage')),
             ],
           );
         },

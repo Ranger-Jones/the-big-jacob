@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/card_layout.dart';
 import '../../widgets/common.dart';
@@ -286,15 +287,15 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('Layout auf alle Karten übertragen?', style: T.display(28)),
+              Text(t('Layout auf alle Karten übertragen?'), style: T.display(28)),
               const SizedBox(height: 6),
-              Text('Position und Stil von Bild, Zahl und Name dieser Karte gelten dann für alle 13 Karten. Bilder, Namen und Grafiken der Karten bleiben erhalten.',
+              Text(t('Position und Stil von Bild, Zahl und Name dieser Karte gelten dann für alle 13 Karten. Bilder, Namen und Grafiken der Karten bleiben erhalten.'),
                   style: T.body(15, color: C.inkSoft)),
-              SwitchRow(label: 'Sticker mitkopieren', value: withStickers, onChanged: (v) => set(() => withStickers = v)),
+              SwitchRow(label: t('Sticker mitkopieren'), value: withStickers, onChanged: (v) => set(() => withStickers = v)),
               const SizedBox(height: 10),
-              GoldButton(label: 'Übertragen', jicon: 'cards', onPressed: () => Navigator.pop(ctx, true)),
+              GoldButton(label: t('Übertragen'), jicon: 'cards', onPressed: () => Navigator.pop(ctx, true)),
               const SizedBox(height: 8),
-              SoftButton(label: 'Abbrechen', onPressed: () => Navigator.pop(ctx, false)),
+              SoftButton(label: t('Abbrechen'), onPressed: () => Navigator.pop(ctx, false)),
             ]),
           ),
         ),
@@ -316,7 +317,7 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
         };
       }
     });
-    if (mounted) toast(context, 'Layout auf alle 13 Karten übertragen.');
+    if (mounted) toast(context, t('Layout auf alle 13 Karten übertragen.'));
   }
 
   void _resetLayout() {
@@ -336,9 +337,9 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
     final full = stickers.length >= maxStickers;
 
     String chipLabel(String key) {
-      if (key == 'picture') return lmap(layout['picture'])['visible'] == false ? 'Bild (aus)' : 'Bild';
-      if (key == 'number') return lmap(layout['number'])['style'] == 'aus' ? 'Zahl (aus)' : 'Zahl';
-      if (key == 'name') return lmap(layout['name'])['style'] == 'aus' ? 'Name (aus)' : 'Name';
+      if (key == 'picture') return lmap(layout['picture'])['visible'] == false ? t('Bild (aus)') : t('Bild');
+      if (key == 'number') return lmap(layout['number'])['style'] == 'aus' ? t('Zahl (aus)') : t('Zahl');
+      if (key == 'name') return lmap(layout['name'])['style'] == 'aus' ? t('Name (aus)') : t('Name');
       final s = _sticker(layout, key);
       final value = s?['value'] as String? ?? '';
       return value.length > 10 ? value.substring(0, 10) : value;
@@ -354,10 +355,10 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text(rank == jester ? 'Narr gestalten' : 'Karte $rank gestalten', style: T.display(26)),
+          title: Text(rank == jester ? t('Narr gestalten') : t('Karte {rank} gestalten', {'rank': rank}), style: T.display(26)),
           actions: [
-            IconButton(tooltip: 'Rückgängig', onPressed: draft.canUndo ? draft.undo : null, icon: JIcon('undo', color: draft.canUndo ? C.ink : C.inkMute)),
-            IconButton(tooltip: 'Wiederholen', onPressed: draft.canRedo ? draft.redo : null, icon: JIcon('redo', color: draft.canRedo ? C.ink : C.inkMute)),
+            IconButton(tooltip: t('Rückgängig'), onPressed: draft.canUndo ? draft.undo : null, icon: JIcon('undo', color: draft.canUndo ? C.ink : C.inkMute)),
+            IconButton(tooltip: t('Wiederholen'), onPressed: draft.canRedo ? draft.redo : null, icon: JIcon('redo', color: draft.canRedo ? C.ink : C.inkMute)),
             const SizedBox(width: 6),
           ],
         ),
@@ -371,12 +372,12 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
                 height: 44,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 child: ListView(scrollDirection: Axis.horizontal, children: [
-                  ToolButton(icon: 'star', label: 'Sticker', onTap: full ? null : () => _addSticker('emoji')),
+                  ToolButton(icon: 'star', label: t('Sticker'), onTap: full ? null : () => _addSticker('emoji')),
                   const SizedBox(width: 8),
-                  ToolButton(icon: 'pencil', label: 'Text', onTap: full ? null : () => _addSticker('text')),
+                  ToolButton(icon: 'pencil', label: t('Text'), onTap: full ? null : () => _addSticker('text')),
                   const SizedBox(width: 8),
-                  ToolButton(icon: 'cards', label: 'Auf alle Karten', onTap: _copyToAll),
-                  if (custom) ...[const SizedBox(width: 8), ToolButton(icon: 'undo', label: 'Standard-Layout', onTap: _resetLayout)],
+                  ToolButton(icon: 'cards', label: t('Auf alle Karten'), onTap: _copyToAll),
+                  if (custom) ...[const SizedBox(width: 8), ToolButton(icon: 'undo', label: t('Standard-Layout'), onTap: _resetLayout)],
                 ]),
               ),
               const SizedBox(height: 16),
@@ -389,7 +390,7 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
                     ToolButton(icon: chipIcon(key), label: chipLabel(key), active: _selected == key, onTap: () => setState(() => _selected = key)),
                     const SizedBox(width: 8),
                   ],
-                  if (_selected != null) ToolButton(icon: 'close', label: 'Auswahl aufheben', onTap: () => setState(() => _selected = null)),
+                  if (_selected != null) ToolButton(icon: 'close', label: t('Auswahl aufheben'), onTap: () => setState(() => _selected = null)),
                 ]),
               ),
               const SizedBox(height: 12),
@@ -446,38 +447,38 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
       final fill = p['fill'] == true;
       void set(String field, Object value, {bool push = false}) =>
           _setLayout((l) => (l['picture'] as Map)[field] = value, key: push ? null : 'picture-$field');
-      return EditorGroup(title: 'Bild', children: [
+      return EditorGroup(title: t('Bild'), children: [
         Wrap(spacing: 8, runSpacing: 8, children: [
-          ToolButton(icon: 'camera', label: hasPhoto ? 'Foto ändern' : 'Foto', busy: widget.isUploading(rank), onTap: () => widget.onUploadPhoto(rank)),
-          ToolButton(icon: 'palette', label: 'Grafik', onTap: () => widget.onPickArt(rank)),
+          ToolButton(icon: 'camera', label: hasPhoto ? t('Foto ändern') : t('Foto'), busy: widget.isUploading(rank), onTap: () => widget.onUploadPhoto(rank)),
+          ToolButton(icon: 'palette', label: t('Grafik'), onTap: () => widget.onPickArt(rank)),
         ]),
-        SwitchRow(label: 'Ganze Karte füllen', hint: 'Das Bild bedeckt die komplette Vorderseite.', value: fill, onChanged: (v) => set('fill', v, push: true)),
+        SwitchRow(label: t('Ganze Karte füllen'), hint: t('Das Bild bedeckt die komplette Vorderseite.'), value: fill, onChanged: (v) => set('fill', v, push: true)),
         if (!fill) ...[
-          ChoiceRow(label: 'Form', value: p['shape'] as String? ?? 'kreis', options: [for (final e in pictureShapeLabels.entries) (e.key, e.value)],
+          ChoiceRow(label: t('Form'), value: p['shape'] as String? ?? 'kreis', options: [for (final e in pictureShapeLabels.entries) (e.key, t(e.value))],
               onChanged: (v) => set('shape', v, push: true)),
-          LabeledSlider(label: 'Größe', value: lnum(p['size'], 62), min: 10, max: 160, unit: ' %', onChanged: (v) => set('size', v.roundToDouble())),
-          LabeledSlider(label: 'Drehung', value: lnum(p['rotate']), min: -180, max: 180, unit: '°', onChanged: (v) => set('rotate', v.roundToDouble())),
+          LabeledSlider(label: t('Größe'), value: lnum(p['size'], 62), min: 10, max: 160, unit: ' %', onChanged: (v) => set('size', v.roundToDouble())),
+          LabeledSlider(label: t('Drehung'), value: lnum(p['rotate']), min: -180, max: 180, unit: '°', onChanged: (v) => set('rotate', v.roundToDouble())),
         ],
         if (hasPhoto || fill) ...[
-          LabeledSlider(label: 'Zoom', value: lnum(p['zoom'], 1) * 100, min: 100, max: 500, unit: ' %', onChanged: (v) => set('zoom', (v / 100 * 100).round() / 100)),
-          LabeledSlider(label: 'Ausschnitt waagerecht', value: lnum(p['panX']), min: -100, max: 100, onChanged: (v) => set('panX', v.roundToDouble())),
-          LabeledSlider(label: 'Ausschnitt senkrecht', value: lnum(p['panY']), min: -100, max: 100, onChanged: (v) => set('panY', v.roundToDouble())),
+          LabeledSlider(label: t('Zoom'), value: lnum(p['zoom'], 1) * 100, min: 100, max: 500, unit: ' %', onChanged: (v) => set('zoom', (v / 100 * 100).round() / 100)),
+          LabeledSlider(label: t('Ausschnitt waagerecht'), value: lnum(p['panX']), min: -100, max: 100, onChanged: (v) => set('panX', v.roundToDouble())),
+          LabeledSlider(label: t('Ausschnitt senkrecht'), value: lnum(p['panY']), min: -100, max: 100, onChanged: (v) => set('panY', v.roundToDouble())),
           if (!fill && !drawn)
-            SwitchRow(label: 'Ausschnitt mit dem Finger verschieben', hint: 'Ziehen verschiebt dann das Foto im Rahmen statt den Rahmen.',
+            SwitchRow(label: t('Ausschnitt mit dem Finger verschieben'), hint: t('Ziehen verschiebt dann das Foto im Rahmen statt den Rahmen.'),
                 value: _panMode, onChanged: (v) => setState(() => _panMode = v)),
         ],
-        SwitchRow(label: 'Bild anzeigen', value: p['visible'] != false, onChanged: (v) => set('visible', v, push: true)),
+        SwitchRow(label: t('Bild anzeigen'), value: p['visible'] != false, onChanged: (v) => set('visible', v, push: true)),
       ]);
     }
 
     if (sel == 'number') {
       final n = lmap(layout['number']);
       final style = n['style'] as String? ?? 'ecken';
-      return EditorGroup(title: 'Zahl', children: [
+      return EditorGroup(title: t('Zahl'), children: [
         ChoiceRow(
-          label: 'Darstellung',
+          label: t('Darstellung'),
           value: style,
-          options: [for (final e in numberStyleLabels.entries) (e.key, e.value)],
+          options: [for (final e in numberStyleLabels.entries) (e.key, t(e.value))],
           onChanged: (v) => _setLayout((l) {
             final m = l['number'] as Map..['style'] = v;
             if (v == 'gross') m.addAll(<String, dynamic>{'x': 50, 'y': 22, 'size': 40});
@@ -485,16 +486,16 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
           }),
         ),
         if (style != 'aus') ...[
-          LabeledSlider(label: 'Größe', value: lnum(n['size'], 19), min: 6, max: 80, unit: ' %',
+          LabeledSlider(label: t('Größe'), value: lnum(n['size'], 19), min: 6, max: 80, unit: ' %',
               onChanged: (v) => _setLayout((l) => (l['number'] as Map)['size'] = v.roundToDouble(), key: 'number-size')),
           ColorField(
-            label: 'Farbe',
+            label: t('Farbe'),
             value: n['color'] as String? ?? accent,
             onChanged: (c) => _setLayout((l) => (l['number'] as Map)['color'] = c, key: 'number-color'),
             onReset: n['color'] is String ? () => _setLayout((l) => (l['number'] as Map)['color'] = null) : null,
           ),
         ],
-        if (style == 'ecken') Text('Die Zahl unten rechts spiegelt die obere automatisch.', style: T.body(14, color: C.inkSoft)),
+        if (style == 'ecken') Text(t('Die Zahl unten rechts spiegelt die obere automatisch.'), style: T.body(14, color: C.inkSoft)),
         const SizedBox(height: 6),
       ]);
     }
@@ -502,15 +503,15 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
     if (sel == 'name') {
       final n = lmap(layout['name']);
       final style = n['style'] as String? ?? 'band';
-      return EditorGroup(title: 'Name', children: [
-        DraftTextField(label: 'Text', value: draft.card(rank)['name'] as String? ?? '', maxLength: 24,
+      return EditorGroup(title: t('Name'), children: [
+        DraftTextField(label: t('Text'), value: draft.card(rank)['name'] as String? ?? '', maxLength: 24,
             onChanged: (v) => draft.setCard(rank, 'name', v, key: '$rank-name')),
-        ChoiceRow(label: 'Stil', value: style, options: [for (final e in nameStyleLabels.entries) (e.key, e.value)],
+        ChoiceRow(label: t('Stil'), value: style, options: [for (final e in nameStyleLabels.entries) (e.key, t(e.value))],
             onChanged: (v) => _setLayout((l) => (l['name'] as Map)['style'] = v)),
         if (style != 'aus') ...[
-          LabeledSlider(label: 'Schriftgröße', value: lnum(n['size'], 8.5), min: 3, max: 20, unit: ' %',
+          LabeledSlider(label: t('Schriftgröße'), value: lnum(n['size'], 8.5), min: 3, max: 20, unit: ' %',
               onChanged: (v) => _setLayout((l) => (l['name'] as Map)['size'] = (v * 2).round() / 2, key: 'name-size')),
-          LabeledSlider(label: 'Breite', value: lnum(n['width'], 92), min: 20, max: 100, unit: ' %',
+          LabeledSlider(label: t('Breite'), value: lnum(n['width'], 92), min: 20, max: 100, unit: ' %',
               onChanged: (v) => _setLayout((l) => (l['name'] as Map)['width'] = v.roundToDouble(), key: 'name-width')),
         ],
       ]);
@@ -520,23 +521,23 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
     if (sel != null && sticker != null) {
       final emoji = sticker['kind'] == 'emoji';
       final stickers = layout['stickers'] as List;
-      return EditorGroup(title: emoji ? 'Sticker' : 'Text', children: [
+      return EditorGroup(title: emoji ? t('Sticker') : t('Text'), children: [
         if (emoji)
-          SymbolField(label: 'Emoji', value: sticker['value'] as String? ?? '', maxLength: 24,
+          SymbolField(label: t('Emoji'), value: sticker['value'] as String? ?? '', maxLength: 24,
               onChanged: (v) => v.trim().isEmpty ? null : _updateSticker(sel, 'value', v))
         else
-          DraftTextField(label: 'Text', value: sticker['value'] as String? ?? '', maxLength: 24,
+          DraftTextField(label: t('Text'), value: sticker['value'] as String? ?? '', maxLength: 24,
               onChanged: (v) => v.trim().isEmpty ? null : _updateSticker(sel, 'value', v)),
-        LabeledSlider(label: 'Größe', value: lnum(sticker['size'], 16), min: 3, max: 90, unit: ' %', onChanged: (v) => _updateSticker(sel, 'size', v.roundToDouble())),
-        LabeledSlider(label: 'Drehung', value: lnum(sticker['rotate']), min: -180, max: 180, unit: '°', onChanged: (v) => _updateSticker(sel, 'rotate', v.roundToDouble())),
-        if (!emoji) ColorField(label: 'Farbe', value: sticker['color'] as String? ?? '#000000', onChanged: (c) => _updateSticker(sel, 'color', c)),
+        LabeledSlider(label: t('Größe'), value: lnum(sticker['size'], 16), min: 3, max: 90, unit: ' %', onChanged: (v) => _updateSticker(sel, 'size', v.roundToDouble())),
+        LabeledSlider(label: t('Drehung'), value: lnum(sticker['rotate']), min: -180, max: 180, unit: '°', onChanged: (v) => _updateSticker(sel, 'rotate', v.roundToDouble())),
+        if (!emoji) ColorField(label: t('Farbe'), value: sticker['color'] as String? ?? '#000000', onChanged: (c) => _updateSticker(sel, 'color', c)),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          ToolButton(icon: 'redo', label: 'Nach vorne', onTap: () => _reorder(sel, 1)),
-          ToolButton(icon: 'undo', label: 'Nach hinten', onTap: () => _reorder(sel, -1)),
+          ToolButton(icon: 'redo', label: t('Nach vorne'), onTap: () => _reorder(sel, 1)),
+          ToolButton(icon: 'undo', label: t('Nach hinten'), onTap: () => _reorder(sel, -1)),
           ToolButton(
             icon: 'plus',
-            label: 'Duplizieren',
+            label: t('Duplizieren'),
             onTap: stickers.length >= maxStickers
                 ? null
                 : () {
@@ -547,29 +548,29 @@ class _CardStudioScreenState extends State<CardStudioScreen> {
                     setState(() => _selected = 'sticker:$id');
                   },
           ),
-          ToolButton(icon: 'close', label: 'Löschen', danger: true, onTap: () => _removeSticker(sel)),
+          ToolButton(icon: 'close', label: t('Löschen'), danger: true, onTap: () => _removeSticker(sel)),
         ]),
         const SizedBox(height: 8),
       ]);
     }
 
     return EditorGroup(
-      title: rank == jester ? 'Narr' : 'Karte $rank',
-      hint: 'Tippe ein Element auf der Karte oder unten bei den Ebenen an. Ziehen verschiebt, mit zwei Fingern zoomst und drehst du.',
+      title: rank == jester ? t('Narr') : t('Karte {rank}', {'rank': rank}),
+      hint: t('Tippe ein Element auf der Karte oder unten bei den Ebenen an. Ziehen verschiebt, mit zwei Fingern zoomst und drehst du.'),
       children: [
         ColorField(
-          label: 'Hintergrund',
+          label: t('Hintergrund'),
           value: layout['background'] as String? ?? paper,
           onChanged: (c) => _setLayout((l) => l['background'] = c, key: 'background'),
           onReset: layout['background'] is String ? () => _setLayout((l) => l['background'] = null) : null,
         ),
-        SwitchRow(label: 'Zierrahmen', hint: 'Goldene Innenlinie mit Eck-Rauten.', value: layout['frame'] != false,
+        SwitchRow(label: t('Zierrahmen'), hint: t('Goldene Innenlinie mit Eck-Rauten.'), value: layout['frame'] != false,
             onChanged: (v) => _setLayout((l) => l['frame'] = v)),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          ToolButton(icon: 'image', label: 'Bild', onTap: () => setState(() => _selected = 'picture')),
-          ToolButton(icon: 'hash', label: 'Zahl', onTap: () => setState(() => _selected = 'number')),
-          ToolButton(icon: 'tag', label: 'Name', onTap: () => setState(() => _selected = 'name')),
+          ToolButton(icon: 'image', label: t('Bild'), onTap: () => setState(() => _selected = 'picture')),
+          ToolButton(icon: 'hash', label: t('Zahl'), onTap: () => setState(() => _selected = 'number')),
+          ToolButton(icon: 'tag', label: t('Name'), onTap: () => setState(() => _selected = 'name')),
         ]),
         const SizedBox(height: 8),
       ],

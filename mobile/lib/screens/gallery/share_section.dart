@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
@@ -17,14 +18,14 @@ class ShareSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SectionTitle('Deine Decks teilen'),
-      Text('Geteilte Decks sehen alle in der Galerie. Du kannst sie jederzeit wieder privat stellen.', style: T.body(15, color: C.inkSoft)),
+      SectionTitle(t('Deine Decks teilen')),
+      Text(t('Geteilte Decks sehen alle in der Galerie. Du kannst sie jederzeit wieder privat stellen.'), style: T.body(15, color: C.inkSoft)),
       const SizedBox(height: 12),
       if (error != null)
-        EmptyNote(error!, icon: Icons.wifi_off_rounded)
+        EmptyNote(t(error!), icon: Icons.wifi_off_rounded)
       else if (decks.isEmpty)
-        const EmptyNote(
-          'Du hast noch keine eigenen Decks. Kopiere eins aus der Galerie oder gestalte eins im Browser.',
+        EmptyNote(
+          t('Du hast noch keine eigenen Decks. Kopiere eins aus der Galerie oder gestalte eins im Browser.'),
           icon: Icons.style_rounded,
         )
       else
@@ -72,7 +73,7 @@ class _ShareRow extends StatelessWidget {
                     children: [
                       Icon(public ? Icons.public_rounded : Icons.lock_outline_rounded, size: 15, color: public ? C.gold : C.inkMute),
                       const SizedBox(width: 5),
-                      Text(public ? 'In der Galerie' : 'Privat', style: T.body(14, color: public ? C.goldSoft : C.inkMute)),
+                      Text(public ? t('In der Galerie') : t('Privat'), style: T.body(14, color: public ? C.goldSoft : C.inkMute)),
                     ],
                   ),
                 ),

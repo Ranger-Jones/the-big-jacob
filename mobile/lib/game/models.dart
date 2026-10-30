@@ -1,3 +1,4 @@
+import '../i18n/i18n.dart';
 import 'rules.dart';
 
 List<int> _ints(dynamic v) => v is List ? v.map((e) => (e as num).toInt()).toList() : <int>[];
@@ -224,5 +225,5 @@ class Deck {
       );
 
   CardFace face(int rank) =>
-      rank >= 1 && rank <= cards.length ? cards[rank - 1] : CardFace(rankNames[rank] ?? '$rank', '🃏', null, null);
+      rank >= 1 && rank <= cards.length ? cards[rank - 1] : CardFace(rankNames[rank] != null ? t(rankNames[rank]!) : '$rank', '🃏', null, null);
 }

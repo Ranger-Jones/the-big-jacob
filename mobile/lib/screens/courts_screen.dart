@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'courts/court_detail_screen.dart';
@@ -60,7 +61,7 @@ class _CourtsScreenState extends State<CourtsScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Höfe', style: T.display(30)),
+          title: Text(t('Höfe'), style: T.display(30)),
         ),
         body: RefreshIndicator(
           color: C.gold,
@@ -72,8 +73,7 @@ class _CourtsScreenState extends State<CourtsScreen> {
             padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(context).bottom + 32),
             children: [
               Text(
-                'Ein Hof ist deine feste Runde: WG, Wache, Stammtisch. Er bekommt ein Wappen und eine eigene Tabelle, '
-                'in die jedes Spiel zählt, an dem mindestens zwei Mitglieder teilnehmen.',
+                t('Ein Hof ist deine feste Runde: WG, Wache, Stammtisch. Er bekommt ein Wappen und eine eigene Tabelle, in die jedes Spiel zählt, an dem mindestens zwei Mitglieder teilnehmen.'),
                 style: T.body(16, color: C.inkSoft, height: 1.4),
               ).animate().fadeIn(duration: 320.ms),
               if (courts == null && _error == null)
@@ -82,7 +82,7 @@ class _CourtsScreenState extends State<CourtsScreen> {
                 Padding(padding: const EdgeInsets.only(top: 18), child: EmptyNote(_error!, icon: Icons.wifi_off_rounded))
               else ...[
                 if (courts.isNotEmpty) ...[
-                  SectionTitle('Deine Höfe', trailing: Text('${courts.length} / $maxCourts', style: T.display(22, color: C.gold))),
+                  SectionTitle(t('Deine Höfe'), trailing: Text('${courts.length} / $maxCourts', style: T.display(22, color: C.gold))),
                   for (var i = 0; i < courts.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -103,7 +103,7 @@ class _CourtsScreenState extends State<CourtsScreen> {
                 ] else
                   Panel(
                     child: EmptyNote(
-                      'Du bist in $maxCourts Höfen, mehr geht nicht. Verlasse einen, um einem neuen beizutreten oder einen zu gründen.',
+                      t('Du bist in {n} Höfen, mehr geht nicht. Verlasse einen, um einem neuen beizutreten oder einen zu gründen.', {'n': maxCourts}),
                       icon: Icons.shield_outlined,
                     ),
                   ).animate().fadeIn(duration: 320.ms),
@@ -123,7 +123,7 @@ class _CourtTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final members = plural(court.members, 'Mitglied', 'Mitglieder');
+    final members = memberCount(court.members);
     return Panel(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
@@ -139,7 +139,7 @@ class _CourtTile extends StatelessWidget {
                 TextSpan(text: members),
                 if (court.owner) ...[
                   const TextSpan(text: ' · '),
-                  TextSpan(text: 'du bist Hofherr', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+                  TextSpan(text: t('du bist Hofherr'), style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
                 ],
               ]),
               style: T.body(15, color: C.inkSoft),

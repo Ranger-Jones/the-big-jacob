@@ -4,12 +4,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../api.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
 /// Same rule as the server (src/lib/username.ts).
 final usernamePattern = RegExp(r'^[A-Za-z0-9_]{3,20}$');
 
+/// German like the server's messages; toast() translates it.
 const uploadFailed = 'Das Bild konnte nicht hochgeladen werden. Versuch ein anderes.';
 
 enum AvatarChoice { camera, gallery, remove }
@@ -22,14 +24,14 @@ Future<AvatarChoice?> showAvatarSheet(BuildContext context, {required bool hasAv
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Profilbild', style: T.display(30)),
+          Text(t('Profilbild'), style: T.display(30)),
           const SizedBox(height: 4),
-          Text('So sieht dich der Hof an jedem Tisch.', style: T.body(15, color: C.inkSoft)),
+          Text(t('So sieht dich der Hof an jedem Tisch.'), style: T.body(15, color: C.inkSoft)),
           const SizedBox(height: 16),
-          _SheetItem(icon: Icons.photo_camera_rounded, label: 'Foto aufnehmen', onTap: () => Navigator.pop(ctx, AvatarChoice.camera)),
-          _SheetItem(icon: Icons.photo_library_rounded, label: 'Aus Fotos wählen', onTap: () => Navigator.pop(ctx, AvatarChoice.gallery)),
+          _SheetItem(icon: Icons.photo_camera_rounded, label: t('Foto aufnehmen'), onTap: () => Navigator.pop(ctx, AvatarChoice.camera)),
+          _SheetItem(icon: Icons.photo_library_rounded, label: t('Aus Fotos wählen'), onTap: () => Navigator.pop(ctx, AvatarChoice.gallery)),
           if (hasAvatar)
-            _SheetItem(icon: Icons.delete_outline_rounded, label: 'Profilbild entfernen', danger: true, onTap: () => Navigator.pop(ctx, AvatarChoice.remove)),
+            _SheetItem(icon: Icons.delete_outline_rounded, label: t('Profilbild entfernen'), danger: true, onTap: () => Navigator.pop(ctx, AvatarChoice.remove)),
         ]),
       ),
     ),
@@ -96,8 +98,8 @@ Future<AvatarUpload> pickAndUploadAvatar(ImageSource source, {VoidCallback? onPi
   } on PlatformException catch (e) {
     if (e.code.contains('access_denied')) {
       return AvatarFailed(source == ImageSource.camera
-          ? 'Kein Zugriff auf die Kamera. Bitte in den Einstellungen erlauben.'
-          : 'Kein Zugriff auf deine Fotos. Bitte in den Einstellungen erlauben.');
+          ? t('Kein Zugriff auf die Kamera. Bitte in den Einstellungen erlauben.')
+          : t('Kein Zugriff auf deine Fotos. Bitte in den Einstellungen erlauben.'));
     }
     return const AvatarFailed(uploadFailed);
   } catch (_) {
@@ -173,16 +175,16 @@ class _RenameSheetState extends State<_RenameSheet> {
   Widget build(BuildContext context) {
     final inset = MediaQuery.viewInsetsOf(context).bottom;
     final value = _value;
-    final hint = value.isNotEmpty && !usernamePattern.hasMatch(value) ? '3–20 Zeichen, nur Buchstaben, Zahlen und _.' : null;
+    final hint = value.isNotEmpty && !usernamePattern.hasMatch(value) ? t('3–20 Zeichen, nur Buchstaben, Zahlen und _.') : null;
     return Padding(
       padding: EdgeInsets.only(bottom: inset),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Benutzername ändern', style: T.display(30)),
+            Text(t('Benutzername ändern'), style: T.display(30)),
             const SizedBox(height: 4),
-            Text('Unter diesem Namen kennt dich der Hof. Deine Spiele und Abzeichen bleiben erhalten.', style: T.body(15, color: C.inkSoft)),
+            Text(t('Unter diesem Namen kennt dich der Hof. Deine Spiele und Abzeichen bleiben erhalten.'), style: T.body(15, color: C.inkSoft)),
             const SizedBox(height: 18),
             TextField(
               controller: _controller,
@@ -195,7 +197,7 @@ class _RenameSheetState extends State<_RenameSheet> {
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9_]'))],
               style: T.body(18, weight: FontWeight.w700),
               decoration: InputDecoration(
-                labelText: 'Benutzername',
+                labelText: t('Benutzername'),
                 prefixIcon: const Icon(Icons.alternate_email_rounded, color: C.inkMute),
                 errorText: _error ?? hint,
                 counterStyle: T.label(12, color: C.inkMute),
@@ -204,7 +206,7 @@ class _RenameSheetState extends State<_RenameSheet> {
               onSubmitted: (_) => _save(),
             ),
             const SizedBox(height: 12),
-            GoldButton(label: 'Speichern', icon: Icons.check_rounded, busy: _busy, onPressed: _valid ? _save : null),
+            GoldButton(label: t('Speichern'), icon: Icons.check_rounded, busy: _busy, onPressed: _valid ? _save : null),
           ]),
         ),
       ),

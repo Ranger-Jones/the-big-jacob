@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'campaign/campaign_path.dart';
@@ -60,7 +61,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
       _error = null;
     });
     if (!res.ok) return;
-    if (before != null && _level > before) toast(context, 'Neuer Titel: $_title!');
+    if (before != null && _level > before) toast(context, t('Neuer Titel: {title}!', {'title': t(_title)}));
     if (!_scrolled) {
       _scrolled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToNext());
@@ -106,7 +107,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Kampagne', style: T.display(30)),
+          title: Text(t('Kampagne'), style: T.display(30)),
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator(color: C.gold))
@@ -116,7 +117,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
                   child: _Header(title: _title, won: won, total: total),
                 ).animate().fadeIn(duration: 300.ms).slideY(begin: -.1, end: 0),
                 if (_error != null)
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: EmptyNote(_error!, icon: Icons.wifi_off_rounded)),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: EmptyNote(t(_error!), icon: Icons.wifi_off_rounded)),
                 Expanded(
                   child: RefreshIndicator(
                     color: C.gold,
@@ -168,14 +169,14 @@ class _Header extends StatelessWidget {
         glow: total > 0 && won >= total,
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Vom Bauern zum König', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+          Text(t('Vom Bauern zum König'), style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
           const SizedBox(height: 4),
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Expanded(
               child: Text.rich(
                 TextSpan(children: [
-                  TextSpan(text: 'Dein Titel: ', style: T.body(16, color: C.inkSoft)),
-                  TextSpan(text: title, style: T.display(30, color: C.ink)),
+                  TextSpan(text: '${t('Dein Titel:')} ', style: T.body(16, color: C.inkSoft)),
+                  TextSpan(text: t(title), style: T.display(30, color: C.ink)),
                 ]),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -207,7 +208,7 @@ class _StartCap extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 3, height: 20, color: C.gold.withValues(alpha: .5)),
           const SizedBox(height: 6),
-          Text('Hier beginnt dein Weg', style: T.label(13, color: C.inkMute)),
+          Text(t('Hier beginnt dein Weg'), style: T.label(13, color: C.inkMute)),
         ]),
       );
 }
@@ -227,8 +228,8 @@ class _ThroneCap extends StatelessWidget {
             ? crown.animate(onPlay: (c) => c.repeat(reverse: true)).moveY(begin: -3, end: 3, duration: 1600.ms, curve: Curves.easeInOut)
             : Opacity(opacity: .5, child: crown),
         const SizedBox(height: 4),
-        Text('Der Thron', style: T.display(28, color: reached ? C.gold : C.inkSoft)),
-        Text(reached ? 'Er gehört dir, Großer Jakob.' : 'Ganz oben wartet die Krone.', style: T.body(14, color: C.inkMute)),
+        Text(t('Der Thron'), style: T.display(28, color: reached ? C.gold : C.inkSoft)),
+        Text(reached ? t('Er gehört dir, Großer Jakob.') : t('Ganz oben wartet die Krone.'), style: T.body(14, color: C.inkMute)),
       ]),
     );
   }

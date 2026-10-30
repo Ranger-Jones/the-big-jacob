@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
 import '../game/progress.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'profile/profile_widgets.dart';
@@ -14,16 +15,16 @@ import '../widgets/jakob_icons.dart';
 enum _Tab { gesamt, monat, elo }
 
 extension on _Tab {
-  String get label => switch (this) { _Tab.gesamt => 'Gesamt', _Tab.monat => 'Monat', _Tab.elo => 'Elo' };
+  String get label => switch (this) { _Tab.gesamt => t('Gesamt'), _Tab.monat => t('Monat'), _Tab.elo => t('Elo') };
   String get explain => switch (this) {
-        _Tab.gesamt => 'Sortiert nach Siegen, dann nach Kronen. Kampagne und Tagesaufgabe zählen nicht mit.',
-        _Tab.monat => 'Die Saison läuft bis Monatsende. Wer dann vorne liegt, trägt den Titel einen Monat lang.',
-        _Tab.elo => 'Elo steigt, wenn du vor stärkeren Spielern landest, und fällt, wenn schwächere dich überholen.',
+        _Tab.gesamt => t('Sortiert nach Siegen, dann nach Kronen. Kampagne und Tagesaufgabe zählen nicht mit.'),
+        _Tab.monat => t('Die Saison läuft bis Monatsende. Wer dann vorne liegt, trägt den Titel einen Monat lang.'),
+        _Tab.elo => t('Elo steigt, wenn du vor stärkeren Spielern landest, und fällt, wenn schwächere dich überholen.'),
       };
   String get empty => switch (this) {
-        _Tab.gesamt => 'Noch keine beendeten Spiele. Das erste Spiel bringt dich auf Platz 1.',
-        _Tab.monat => 'Diesen Monat wurde noch kein Spiel beendet. Die Krone ist noch zu haben!',
-        _Tab.elo => 'Noch keine gewerteten Partien. Spiel online, um in die Wertung zu kommen.',
+        _Tab.gesamt => t('Noch keine beendeten Spiele. Das erste Spiel bringt dich auf Platz 1.'),
+        _Tab.monat => t('Diesen Monat wurde noch kein Spiel beendet. Die Krone ist noch zu haben!'),
+        _Tab.elo => t('Noch keine gewerteten Partien. Spiel online, um in die Wertung zu kommen.'),
       };
 }
 
@@ -38,19 +39,19 @@ class _Row {
 
   factory _Row.from(_Tab tab, Map m) {
     final id = m['user_id'] as String? ?? '', name = m['username'] as String? ?? '?', url = m['avatar_url'] as String?;
+    String crowns() => t('{n} Kronen', {'n': asInt(m['crowns'])});
+    String games(int n) => n == 1 ? t('{n} Spiel', {'n': 1}) : t('{n} Spiele', {'n': n});
     switch (tab) {
       case _Tab.gesamt:
-        final games = asInt(m['games_played']);
-        return _Row(id, name, url, asInt(m['wins']), 'Siege',
-            '${asInt(m['crowns'])} Kronen · ${games == 1 ? '1 Spiel' : '$games Spiele'} · Ø ${deNum(asDouble(m['avg_place']))}');
+        return _Row(id, name, url, asInt(m['wins']), t('Siege'),
+            '${crowns()} · ${games(asInt(m['games_played']))} · Ø ${deNum(asDouble(m['avg_place']))}');
       case _Tab.monat:
-        final games = asInt(m['games']);
-        return _Row(id, name, url, asInt(m['wins']), 'Siege',
-            '${asInt(m['crowns'])} Kronen · ${games == 1 ? '1 Spiel' : '$games Spiele'} · ${asInt(m['points'])} Punkte');
+        return _Row(id, name, url, asInt(m['wins']), t('Siege'),
+            '${crowns()} · ${games(asInt(m['games']))} · ${t('{n} Punkte', {'n': asInt(m['points'])})}');
       case _Tab.elo:
         final rating = asInt(m['rating']), rated = asInt(m['rated_games']);
-        return _Row(id, name, url, rating, 'Elo',
-            'Stufe ${levelFromXp(asInt(m['xp']))} · ${rated == 1 ? '1 Partie' : '$rated Partien'} · Bestwert ${asInt(m['peak_rating'])}',
+        return _Row(id, name, url, rating, t('Elo'),
+            '${t('Stufe {level}', {'level': levelFromXp(asInt(m['xp']))})} · ${rated == 1 ? t('1 Partie') : t('{n} Partien', {'n': rated})} · ${t('Bestwert {n}', {'n': asInt(m['peak_rating'])})}',
             badge: tierFor(rating).icon);
     }
   }
@@ -86,7 +87,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         if (tab == _Tab.monat) _monthTitle = data['title'] as String?;
         _errors.remove(tab);
       } else {
-        _errors[tab] = res.error ?? 'Unbekannter Fehler.';
+        _errors[tab] = res.error ?? t('Unbekannter Fehler.');
       }
     });
   }
@@ -119,8 +120,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           padding: EdgeInsets.fromLTRB(18, top + 14, 18, 120),
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Expanded(child: Text('Bestenliste', style: T.display(40))),
-              if (myIndex >= 0) Pill('Du: Platz ${myIndex + 1}', jicon: 'user', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
+              Expanded(child: Text(t('Bestenliste'), style: T.display(40))),
+              if (myIndex >= 0) Pill(t('Du: Platz {place}', {'place': myIndex + 1}), jicon: 'user', color: C.gold.withValues(alpha: .2), textColor: C.goldSoft),
             ]),
             const SizedBox(height: 16),
             _Segmented(value: _tab, onChanged: _select),
@@ -128,13 +129,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             if (_tab == _Tab.monat && _monthTitle != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text('Es geht um den Titel „$_monthTitle“', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+                child: Text(t('Es geht um den Titel „{title}“', {'title': t(_monthTitle!)}), style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
               ),
             Text(_tab.explain, style: T.body(14, color: C.inkSoft)),
             const SizedBox(height: 8),
             if (rows == null && error != null) ...[
               EmptyNote(error, icon: Icons.wifi_off_rounded),
-              SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: () => _load(_tab)),
+              SoftButton(label: t('Nochmal versuchen'), icon: Icons.refresh_rounded, onPressed: () => _load(_tab)),
             ] else if (rows == null)
               const Padding(padding: EdgeInsets.only(top: 80), child: Center(child: CircularProgressIndicator(color: C.gold)))
             else if (rows.isEmpty)
@@ -190,19 +191,19 @@ class _Segmented extends StatelessWidget {
           ),
         ),
         Row(children: [
-          for (final t in tabs)
+          for (final tab in tabs)
             Expanded(
               child: Semantics(
-                selected: t == value,
+                selected: tab == value,
                 button: true,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => onChanged(t),
+                  onTap: () => onChanged(tab),
                   child: Center(
                     child: AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 200),
-                      style: T.body(16, weight: FontWeight.w800, color: t == value ? C.onGold : C.inkSoft),
-                      child: Text(t.label),
+                      style: T.body(16, weight: FontWeight.w800, color: tab == value ? C.onGold : C.inkSoft),
+                      child: Text(tab.label),
                     ),
                   ),
                 ),
@@ -281,7 +282,7 @@ class _Pedestal extends StatelessWidget {
             child: Avatar(name: row.username, url: row.avatarUrl, size: avatar, ring: metal),
           ),
           const SizedBox(height: 8),
-          Text(mine ? 'Du' : row.username, style: T.body(first ? 17 : 15, weight: FontWeight.w800, color: mine ? C.goldSoft : C.ink), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(mine ? t('Du') : row.username, style: T.body(first ? 17 : 15, weight: FontWeight.w800, color: mine ? C.goldSoft : C.ink), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 6),
           Container(
             height: height,
@@ -332,7 +333,7 @@ class _RankRow extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Flexible(child: Text(row.username, style: T.body(17, weight: FontWeight.w800), overflow: TextOverflow.ellipsis)),
-                if (mine) ...[const SizedBox(width: 6), const Pill('Du', color: C.gold, textColor: C.onGold)],
+                if (mine) ...[const SizedBox(width: 6), Pill(t('Du'), color: C.gold, textColor: C.onGold)],
               ]),
               Text(row.detail, style: T.body(13, color: C.inkSoft), maxLines: 1, overflow: TextOverflow.ellipsis),
             ]),

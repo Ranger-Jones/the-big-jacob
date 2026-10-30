@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../api.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'court_models.dart';
@@ -33,7 +34,7 @@ class _DangerButton extends StatelessWidget {
 }
 
 /// Asks before a destructive step; resolves to true only on an explicit confirm.
-Future<bool> confirmDanger(BuildContext context, {required String title, required String message, required String confirm, String cancel = 'Abbrechen'}) async {
+Future<bool> confirmDanger(BuildContext context, {required String title, required String message, required String confirm, String? cancel}) async {
   final yes = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -42,7 +43,7 @@ Future<bool> confirmDanger(BuildContext context, {required String title, require
       actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       actions: [
         Row(children: [
-          Expanded(child: SoftButton(label: cancel, onPressed: () => Navigator.pop(ctx, false))),
+          Expanded(child: SoftButton(label: cancel ?? t('Abbrechen'), onPressed: () => Navigator.pop(ctx, false))),
           const SizedBox(width: 10),
           Expanded(child: _DangerButton(label: confirm, onPressed: () => Navigator.pop(ctx, true))),
         ]),
@@ -97,7 +98,7 @@ class _EditCourtSheetState extends State<_EditCourtSheet> {
       padding: EdgeInsets.fromLTRB(22, 0, 22, MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom + 22),
       child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Hof bearbeiten', style: T.display(30)),
+          Text(t('Hof bearbeiten'), style: T.display(30)),
           const SizedBox(height: 16),
           Row(children: [
             AnimatedSwitcher(
@@ -112,18 +113,18 @@ class _EditCourtSheetState extends State<_EditCourtSheet> {
                 maxLength: 40,
                 textCapitalization: TextCapitalization.sentences,
                 style: T.body(17),
-                decoration: const InputDecoration(labelText: 'Name', counterText: ''),
+                decoration: InputDecoration(labelText: t('Name'), counterText: ''),
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _save(),
               ),
             ),
           ]),
           const SizedBox(height: 16),
-          Text('Wappen', style: T.label(15)),
+          Text(t('Wappen'), style: T.label(15)),
           const SizedBox(height: 8),
           CrestPicker(crests: widget.court.crests, value: _crest, onChanged: (id) => setState(() => _crest = id)),
           const SizedBox(height: 18),
-          GoldButton(label: 'Speichern', icon: Icons.check_rounded, busy: _busy, onPressed: _name.text.trim().length >= 2 ? _save : null),
+          GoldButton(label: t('Speichern'), icon: Icons.check_rounded, busy: _busy, onPressed: _name.text.trim().length >= 2 ? _save : null),
         ]),
       ),
     );

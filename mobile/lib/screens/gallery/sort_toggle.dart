@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 
 /// Two-way pill "Beliebt · Neu" with a gold thumb that glides between the halves.
@@ -68,7 +69,7 @@ class SortToggle extends StatelessWidget {
                               AnimatedDefaultTextStyle(
                                 duration: const Duration(milliseconds: 200),
                                 style: T.label(15.5, color: i == index ? C.onGold : C.inkSoft),
-                                child: Text(_options[i].$2),
+                                child: Text(t(_options[i].$2)),
                               ),
                             ],
                           ),

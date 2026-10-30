@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../api.dart';
 import '../../game/controller.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -58,13 +59,13 @@ class _ResultsViewState extends State<ResultsView> {
       ListView(
         padding: EdgeInsets.fromLTRB(18, MediaQuery.paddingOf(context).top + 18, 18, MediaQuery.paddingOf(context).bottom + 30),
         children: [
-          Center(child: Text(mine == 1 ? 'Du bist der Große Jakob!' : 'Platz $mine', textAlign: TextAlign.center, style: T.display(40, color: mine == 1 ? C.goldSoft : C.ink))
+          Center(child: Text(mine == 1 ? t('Du bist der Große Jakob!') : t('Platz {place}', {'place': mine}), textAlign: TextAlign.center, style: T.display(40, color: mine == 1 ? C.goldSoft : C.ink))
               .animate().scaleXY(begin: .7, end: 1, curve: Curves.easeOutBack, duration: 600.ms)),
           if (s.throneWinner != null)
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               const JIcon('castle', size: 18, color: C.goldSoft),
               const SizedBox(width: 6),
-              Text('Thronfolge von ${g.nameOf(s.throneWinner!, you: true)}', style: T.body(16, color: C.goldSoft)),
+              Text(t('Thronfolge von {name}', {'name': g.nameOf(s.throneWinner!, you: true)}), style: T.body(16, color: C.goldSoft)),
             ]),
           const SizedBox(height: 24),
           SizedBox(
@@ -75,7 +76,7 @@ class _ResultsViewState extends State<ResultsView> {
                   Expanded(
                     child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
                       if (i == 0) const JIcon('crown', size: 36, color: C.gold).animate(delay: 900.ms).moveY(begin: -40, end: 0, curve: Curves.bounceOut, duration: 700.ms).fadeIn(),
-                      Avatar(name: g.nameOf(podium[i].id), url: g.profiles[podium[i].id]?.avatarUrl, emoji: podium[i].bot?.emoji, size: i == 0 ? 64 : 50, ring: i == 0 ? C.gold : C.line),
+                      Avatar(name: podium[i].bot?.name ?? g.nameOf(podium[i].id), url: g.profiles[podium[i].id]?.avatarUrl, emoji: podium[i].bot?.emoji, size: i == 0 ? 64 : 50, ring: i == 0 ? C.gold : C.line),
                       const SizedBox(height: 6),
                       Text(g.nameOf(podium[i].id, you: true), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(14, color: C.ink)),
                       const SizedBox(height: 6),
@@ -102,7 +103,7 @@ class _ResultsViewState extends State<ResultsView> {
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(children: [
                     SizedBox(width: 34, child: Text('${places[p.id]}.', style: T.display(20, color: p.id == g.me ? C.goldSoft : C.inkSoft))),
-                    Avatar(name: g.nameOf(p.id), url: g.profiles[p.id]?.avatarUrl, emoji: p.bot?.emoji, size: 34),
+                    Avatar(name: p.bot?.name ?? g.nameOf(p.id), url: g.profiles[p.id]?.avatarUrl, emoji: p.bot?.emoji, size: 34),
                     const SizedBox(width: 10),
                     Expanded(child: Text(g.nameOf(p.id, you: true), style: T.body(16, weight: FontWeight.w700))),
                     if (missions?[p.id] is Map)
@@ -121,9 +122,9 @@ class _ResultsViewState extends State<ResultsView> {
           ),
           const SizedBox(height: 22),
           if (s.mode == 'normal' || s.mode == 'public')
-            GoldButton(label: g.game!.rematchGameId != null ? 'Zur Revanche' : 'Revanche', icon: Icons.replay_rounded, busy: _busy, onPressed: _rematch),
+            GoldButton(label: g.game!.rematchGameId != null ? t('Zur Revanche') : t('Revanche'), icon: Icons.replay_rounded, busy: _busy, onPressed: _rematch),
           const SizedBox(height: 10),
-          SoftButton(label: 'Zurück zum Hof', icon: Icons.castle_rounded, onPressed: widget.onLeave),
+          SoftButton(label: t('Zurück zum Hof'), icon: Icons.castle_rounded, onPressed: widget.onLeave),
         ],
       ),
       Align(

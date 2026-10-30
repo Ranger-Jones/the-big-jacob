@@ -8,6 +8,7 @@ import '../../api.dart';
 
 import '../../game/controller.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -82,7 +83,7 @@ class Seat extends StatelessWidget {
     final team = s.teams?[id];
 
     final avatar = Avatar(
-      name: g.nameOf(id),
+      name: p?.bot?.name ?? g.nameOf(id),
       url: g.profiles[id]?.avatarUrl,
       emoji: p?.bot?.emoji,
       size: 48,
@@ -123,7 +124,7 @@ class Seat extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!passed) ...[JIcon(out ? 'check' : 'cards', size: 14, color: out ? C.vert : C.inkSoft), const SizedBox(width: 3)],
-                Text(out ? 'fertig' : passed ? 'passt' : '$count', style: T.label(12, color: out ? C.vert : C.inkSoft)),
+                Text(out ? t('fertig') : passed ? t('passt') : '$count', style: T.label(12, color: out ? C.vert : C.inkSoft)),
               ],
             ),
           ),
@@ -163,21 +164,21 @@ String statusLine(GameController g) {
   final s = g.state!;
   switch (s.phase) {
     case 'draw':
-      return s.draws.containsKey(g.me) ? 'Warte, bis alle gezogen haben …' : 'Zieh eine Karte um deinen Platz';
+      return s.draws.containsKey(g.me) ? t('Warte, bis alle gezogen haben …') : t('Zieh eine Karte um deinen Platz');
     case 'court':
-      return 'Hofzeremonie: Bereit für die Steuern?';
+      return t('Hofzeremonie: Bereit für die Steuern?');
     case 'tax':
       final mine = s.tax.where((t) => t.to == g.me && !t.done).firstOrNull;
-      if (mine != null) return 'Gib ${mine.count} ${mine.count == 1 ? 'Karte' : 'Karten'} zurück';
-      return 'Die Steuern werden gezahlt …';
+      if (mine != null) return mine.count == 1 ? t('Gib 1 Karte zurück') : t('Gib {n} Karten zurück', {'n': mine.count});
+      return t('Die Steuern werden gezahlt …');
     case 'play':
       if (s.turn == g.me) {
-        final t = s.trick;
-        return t == null ? 'Du spielst aus' : 'Du bist dran: schlag ${describeCards(t.cards)} oder passe';
+        final trick = s.trick;
+        return trick == null ? t('Du spielst aus') : t('Du bist dran: schlag {cards} oder passe', {'cards': describeCards(trick.cards)});
       }
-      return s.turn == null ? '…' : '${g.nameOf(s.turn!)} ist dran';
+      return s.turn == null ? '…' : t('{name} ist dran', {'name': g.nameOf(s.turn!)});
     case 'roundEnd':
-      return 'Runde ${s.round} ist vorbei';
+      return t('Runde {round} ist vorbei', {'round': s.round});
   }
   return '';
 }

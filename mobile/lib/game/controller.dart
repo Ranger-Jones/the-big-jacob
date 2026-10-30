@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
 import 'models.dart';
 import 'rules.dart';
 
@@ -62,9 +63,10 @@ class GameController extends ChangeNotifier {
   GameState? get state => game?.state;
 
   String nameOf(String id, {bool you = false}) {
-    if (you && id == me) return 'Du';
+    if (you && id == me) return t('Du');
     final p = state?.player(id);
-    return p?.bot?.name ?? profiles[id]?.username ?? '…';
+    final bot = p?.bot?.name;
+    return bot != null ? t(bot) : profiles[id]?.username ?? '…';
   }
 
   Deck? deckOf(String id) => decks[id];

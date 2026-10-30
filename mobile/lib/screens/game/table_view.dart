@@ -6,6 +6,7 @@ import '../../game/controller.dart';
 import '../../game/log_cursor.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'chat_sheet.dart';
@@ -151,7 +152,7 @@ class _TableViewState extends State<TableView> {
                   ),
                   if (s.setting('tracker') && s.phase == 'play') Positioned(left: 0, right: 0, bottom: 10, child: _Tracker(played: s.played)),
                   // Duel: the face-down reserve that whoever passes draws from.
-                  if (s.setting('duel') && s.phase == 'play') Positioned(top: 10, right: 14, child: Pill('Hofstapel ${s.reserveCount}', jicon: 'cards', color: Colors.black38, textColor: C.goldSoft)),
+                  if (s.setting('duel') && s.phase == 'play') Positioned(top: 10, right: 14, child: Pill(t('Hofstapel {n}', {'n': s.reserveCount}), jicon: 'cards', color: Colors.black38, textColor: C.goldSoft)),
                 ]),
               ),
             ),
@@ -160,14 +161,14 @@ class _TableViewState extends State<TableView> {
               height: 42,
               child: autopilot
                   ? AutopilotBanner(g: g)
-                  : Center(child: _StatusLine(text: _revealing ? 'Gleich geht es los …' : g.spectating ? spectatorLine(g) : statusLine(g), active: !_revealing && (myTurn || myTax != null))),
+                  : Center(child: _StatusLine(text: _revealing ? t('Gleich geht es los …') : g.spectating ? spectatorLine(g) : statusLine(g), active: !_revealing && (myTurn || myTax != null))),
             ),
             if (!g.spectating) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(children: [
                 if (idx >= 0) ...[RankBadge(idx, s.order.length, size: 20), const SizedBox(width: 6), Text(rankTitle(idx, s.order.length), style: T.label(13, color: C.goldSoft))],
                 const Spacer(),
-                Text('${s.points[me] ?? 0} Punkte', style: T.label(13, color: C.inkSoft)),
+                Text(t('{points} Punkte', {'points': s.points[me] ?? 0}), style: T.label(13, color: C.inkSoft)),
                 if (g.hand.mission != null) ...[
                   const SizedBox(width: 10),
                   _MissionChip(mission: g.hand.mission!),
@@ -231,23 +232,22 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = g.state!;
     final event = s.event != null ? eventText[s.event] : null;
-    final rounds = s.goal != null ? 'Ziel ${s.goal} P.' : 'von ${s.rounds}';
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
         child: Row(children: [
-          IconButton(onPressed: onLeave, icon: const Icon(Icons.close_rounded, color: C.inkSoft), tooltip: g.spectating ? 'Zuschauen beenden' : 'Tisch verlassen'),
+          IconButton(onPressed: onLeave, icon: const Icon(Icons.close_rounded, color: C.inkSoft), tooltip: g.spectating ? t('Zuschauen beenden') : t('Tisch verlassen')),
           Expanded(
             child: Column(children: [
-              Text(s.phase == 'draw' ? 'Platzwahl' : 'Runde ${s.round} $rounds', style: T.display(20)),
+              Text(s.phase == 'draw' ? t('Platzwahl') : s.goal != null ? t('Runde {round} · Ziel {goal} P.', {'round': s.round, 'goal': s.goal}) : t('Runde {round} von {rounds}', {'round': s.round, 'rounds': s.rounds}), style: T.display(20)),
               if (event != null)
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   JIcon(eventIcons[s.event] ?? 'sparkles', size: 15, color: C.goldSoft),
                   const SizedBox(width: 4),
-                  Text(event.title, style: T.label(12, color: C.goldSoft)),
+                  Text(t(event.title), style: T.label(12, color: C.goldSoft)),
                 ]),
-              if (!g.connected) Text('Verbindung wird wiederhergestellt …', style: T.label(12, color: C.wax)),
+              if (!g.connected) Text(t('Verbindung wird wiederhergestellt …'), style: T.label(12, color: C.wax)),
               if (g.spectators.isNotEmpty)
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   const JIcon('eye', size: 14, color: C.inkSoft),
@@ -258,7 +258,7 @@ class _TopBar extends StatelessWidget {
           ),
           _ReactionButton(g: g),
           if (s.setting('chat') && !g.spectating) ChatButton(g: g),
-          IconButton(onPressed: () => showLog(context, g), icon: const Icon(Icons.receipt_long_rounded, color: C.inkSoft), tooltip: 'Verlauf'),
+          IconButton(onPressed: () => showLog(context, g), icon: const Icon(Icons.receipt_long_rounded, color: C.inkSoft), tooltip: t('Verlauf')),
         ]),
       ),
     );
@@ -316,17 +316,17 @@ class _ActionBar extends StatelessWidget {
       final canAbdicate = s.setting('abdicate') && present.isNotEmpty && present.first == me && present.length >= 3 && s.raw['abdicated'] != true && s.revolution == null;
       // One row only (the table above must keep its height): special moves sit next to "Bereit".
       bar = Row(children: [
-        if (canRevolt) ...[Expanded(child: SoftButton(label: 'Revolution!', jicon: 'fist', danger: true, onPressed: () => onSpecial('revolution'))), const SizedBox(width: 8)],
-        if (canMercy) ...[Expanded(child: SoftButton(label: 'Gnade', jicon: 'dove', onPressed: () => onSpecial('mercy'))), const SizedBox(width: 8)],
-        if (canAbdicate) ...[Expanded(child: SoftButton(label: 'Abdanken', jicon: 'throne', onPressed: () => onSpecial('abdicate'))), const SizedBox(width: 8)],
-        Expanded(child: GoldButton(label: 'Bereit', jicon: 'check', onPressed: onReady, busy: g.busy)),
+        if (canRevolt) ...[Expanded(child: SoftButton(label: t('Revolution!'), jicon: 'fist', danger: true, onPressed: () => onSpecial('revolution'))), const SizedBox(width: 8)],
+        if (canMercy) ...[Expanded(child: SoftButton(label: t('Gnade'), jicon: 'dove', onPressed: () => onSpecial('mercy'))), const SizedBox(width: 8)],
+        if (canAbdicate) ...[Expanded(child: SoftButton(label: t('Abdanken'), jicon: 'throne', onPressed: () => onSpecial('abdicate'))), const SizedBox(width: 8)],
+        Expanded(child: GoldButton(label: t('Bereit'), jicon: 'check', onPressed: onReady, busy: g.busy)),
       ]);
     } else if (s.phase == 'roundEnd' && !s.ready.contains(me)) {
-      bar = GoldButton(label: 'Nächste Runde', icon: Icons.arrow_forward_rounded, onPressed: onReady, busy: g.busy);
+      bar = GoldButton(label: t('Nächste Runde'), icon: Icons.arrow_forward_rounded, onPressed: onReady, busy: g.busy);
     } else if (myTax != null) {
       final left = myTax!.count - chosen.length;
       bar = GoldButton(
-        label: left > 0 ? 'Noch $left ${left == 1 ? 'Karte' : 'Karten'} wählen' : 'Zurückgeben',
+        label: left > 0 ? (left == 1 ? t('Noch 1 Karte wählen') : t('Noch {n} Karten wählen', {'n': left})) : t('Zurückgeben'),
         icon: Icons.redo_rounded,
         onPressed: left == 0 ? onReturn : null,
         busy: g.busy,
@@ -335,12 +335,12 @@ class _ActionBar extends StatelessWidget {
       final error = chosen.isEmpty ? null : judgePlay(chosen, s.trick, s.ctx);
       bar = Row(children: [
         if (s.trick != null) ...[
-          SizedBox(width: 120, child: SoftButton(label: s.setting('duel') && s.reserveCount > 0 ? 'Passen +1' : 'Passen', onPressed: onPass)),
+          SizedBox(width: 120, child: SoftButton(label: s.setting('duel') && s.reserveCount > 0 ? t('Passen +1') : t('Passen'), onPressed: onPass)),
           const SizedBox(width: 10),
         ],
         Expanded(
           child: GoldButton(
-            label: chosen.isEmpty ? 'Karten wählen' : error ?? 'Lege ${describeCards(chosen)}',
+            label: chosen.isEmpty ? t('Karten wählen') : error ?? t('Lege {cards}', {'cards': describeCards(chosen)}),
             icon: chosen.isEmpty || error != null ? null : Icons.north_rounded,
             onPressed: chosen.isNotEmpty && error == null ? onPlay : null,
             busy: g.busy,
@@ -365,8 +365,8 @@ class _MissionChip extends StatelessWidget {
     if (info == null) return const SizedBox();
     final done = mission['done'] == true;
     return GestureDetector(
-      onTap: () => toast(context, '${info.title}: ${info.text}${done ? ' (erfüllt!)' : ''}'),
-      child: Pill('Mission', jicon: missionIcons[mission['id']] ?? 'target', color: done ? C.vert.withValues(alpha: .3) : C.surfaceHi, textColor: done ? C.vert : C.goldSoft),
+      onTap: () => toast(context, '${t(info.title)}: ${t(info.text)}${done ? ' (${t('Erfüllt!')})' : ''}'),
+      child: Pill(t('Mission'), jicon: missionIcons[mission['id']] ?? 'target', color: done ? C.vert.withValues(alpha: .3) : C.surfaceHi, textColor: done ? C.vert : C.goldSoft),
     );
   }
 }
@@ -403,7 +403,7 @@ class _ReactionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => IconButton(
-        tooltip: 'Reaktion',
+        tooltip: t('Reaktion'),
         icon: const Icon(Icons.add_reaction_rounded, color: C.inkSoft),
         onPressed: () => showModalBottomSheet(
           context: context,
@@ -442,7 +442,7 @@ void showLog(BuildContext context, GameController g) {
               if (describeLog(e, (id) => g.nameOf(id), g.me) case final text?) (logIcons[e['kind']], stripEmoji(text)),
           ];
           return ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(22, 0, 22, 30), children: [
-            Text('Verlauf', style: T.display(28)),
+            Text(t('Verlauf'), style: T.display(28)),
             const SizedBox(height: 10),
             for (final (icon, text) in lines)
               Padding(
@@ -460,9 +460,9 @@ void showLog(BuildContext context, GameController g) {
 }
 
 String _watchers(GameController g) {
-  final names = [for (final id in g.spectators) g.profiles[id]?.username ?? 'Jemand'];
-  if (names.length == 1) return '${names.first} schaut zu';
-  return '${names.length} schauen zu';
+  final names = [for (final id in g.spectators) g.profiles[id]?.username ?? t('Jemand')];
+  if (names.length == 1) return t('{name} schaut zu', {'name': names.first});
+  return t('{n} schauen zu', {'n': names.length});
 }
 
 /// What spectators read under the table (statusLine speaks to a player).
@@ -470,15 +470,15 @@ String spectatorLine(GameController g) {
   final s = g.state!;
   switch (s.phase) {
     case 'draw':
-      return 'Die Plätze werden ausgelost …';
+      return t('Die Plätze werden ausgelost …');
     case 'court':
-      return 'Hofzeremonie';
+      return t('Hofzeremonie');
     case 'tax':
-      return 'Die Steuern werden gezahlt …';
+      return t('Die Steuern werden gezahlt …');
     case 'play':
-      return s.turn == null ? '…' : '${g.nameOf(s.turn!)} ist dran';
+      return s.turn == null ? '…' : t('{name} ist dran', {'name': g.nameOf(s.turn!)});
     case 'roundEnd':
-      return 'Runde ${s.round} ist vorbei';
+      return t('Runde {round} ist vorbei', {'round': s.round});
   }
   return '';
 }
@@ -493,10 +493,10 @@ class _SpectatorPanel extends StatelessWidget {
         Row(mainAxisSize: MainAxisSize.min, children: [
           const JIcon('eye', size: 20, color: C.goldSoft),
           const SizedBox(width: 8),
-          Text('Du schaust zu', style: T.display(24)),
+          Text(t('Du schaust zu'), style: T.display(24)),
         ]),
         const SizedBox(height: 4),
-        Text('Die Karten bleiben geheim – feuere sie mit Reaktionen an.', textAlign: TextAlign.center, style: T.body(14, color: C.inkSoft)),
+        Text(t('Die Karten bleiben geheim – feuere sie mit Reaktionen an.'), textAlign: TextAlign.center, style: T.body(14, color: C.inkSoft)),
         const SizedBox(height: 14),
         Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
           for (final e in g.quickEmojis)

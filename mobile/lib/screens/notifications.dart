@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../i18n/i18n.dart';
 import '../push.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -16,13 +17,13 @@ Future<void> showPushPrompt(BuildContext context) async {
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const JIcon('bell', size: 48, color: C.goldSoft),
         const SizedBox(height: 10),
-        Text('Benachrichtigungen', textAlign: TextAlign.center, style: T.display(30)),
+        Text(t('Benachrichtigungen'), textAlign: TextAlign.center, style: T.display(30)),
         const SizedBox(height: 6),
-        Text(_why, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
+        Text(t(_why), textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
         const SizedBox(height: 18),
-        GoldButton(label: 'Ja, gib mir Bescheid', jicon: 'bell', onPressed: () => Navigator.pop(ctx, true)),
+        GoldButton(label: t('Ja, gib mir Bescheid'), jicon: 'bell', onPressed: () => Navigator.pop(ctx, true)),
         const SizedBox(height: 10),
-        SoftButton(label: 'Später', onPressed: () => Navigator.pop(ctx, false)),
+        SoftButton(label: t('Später'), onPressed: () => Navigator.pop(ctx, false)),
       ]),
     ),
   );
@@ -82,7 +83,7 @@ class _NotificationsPanelState extends State<NotificationsPanel> with WidgetsBin
     final res = await Push.test();
     if (!mounted) return;
     setState(() => _busy = false);
-    toast(context, res.ok ? 'Testnachricht ist unterwegs.' : res.error!, error: !res.ok);
+    toast(context, res.ok ? t('Testnachricht ist unterwegs.') : res.error!, error: !res.ok);
   }
 
   @override
@@ -90,16 +91,16 @@ class _NotificationsPanelState extends State<NotificationsPanel> with WidgetsBin
     final s = _status;
     if (s == null || s == PushStatus.unsupported) return const SizedBox.shrink();
     final (String text, Widget action) = switch (s) {
-      PushStatus.authorized => ('Aktiv auf diesem iPhone.', SoftButton(label: 'Testnachricht senden', jicon: 'bell', onPressed: _busy ? null : _test)),
-      PushStatus.denied => ('In den iOS-Einstellungen ausgeschaltet.', SoftButton(label: 'Einstellungen öffnen', onPressed: Push.openSettings)),
-      _ => (_why, GoldButton(label: 'Einschalten', jicon: 'bell', busy: _busy, onPressed: _enable)),
+      PushStatus.authorized => (t('Aktiv auf diesem iPhone.'), SoftButton(label: t('Testnachricht senden'), jicon: 'bell', onPressed: _busy ? null : _test)),
+      PushStatus.denied => (t('In den iOS-Einstellungen ausgeschaltet.'), SoftButton(label: t('Einstellungen öffnen'), onPressed: Push.openSettings)),
+      _ => (t(_why), GoldButton(label: t('Einschalten'), jicon: 'bell', busy: _busy, onPressed: _enable)),
     };
     return Panel(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           const JIcon('bell', size: 26, color: C.goldSoft),
           const SizedBox(width: 10),
-          Text('Benachrichtigungen', style: T.display(22)),
+          Text(t('Benachrichtigungen'), style: T.display(22)),
         ]),
         const SizedBox(height: 6),
         Text(text, style: T.body(14, color: C.inkSoft)),

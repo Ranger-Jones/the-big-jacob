@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../api.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 
 /// A court's coat of arms: a card illustration on a round velvet medallion with a gold ring.
@@ -58,9 +59,9 @@ class CrestPicker extends StatelessWidget {
         border: Border.all(color: C.line),
       ),
       child: crests.isEmpty
-          ? Center(child: Text('Keine Wappen geladen.', style: T.body(15, color: C.inkMute)))
+          ? Center(child: Text(t('Keine Wappen geladen.'), style: T.body(15, color: C.inkMute)))
           : Semantics(
-              label: 'Wappen',
+              label: t('Wappen'),
               child: GridView.builder(
                 padding: EdgeInsets.zero,
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 64, mainAxisSpacing: 8, crossAxisSpacing: 8),
@@ -89,7 +90,7 @@ class _CrestTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Wappen ${index + 1}',
+      label: t('Wappen {n}', {'n': index + 1}),
       child: AnimatedScale(
         scale: selected ? 1.06 : 1,
         duration: const Duration(milliseconds: 160),

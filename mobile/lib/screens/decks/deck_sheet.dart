@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
@@ -13,8 +14,8 @@ const _patternLabels = {
 
 /// Short description of a deck's look, e.g. "Gotisch · Rauten".
 String deckStyleLine(Deck deck) {
-  final font = _fontLabels[deck.font] ?? 'Gotisch';
-  final back = deck.back['image'] != null ? 'Foto-Rückseite' : _patternLabels[deck.back['pattern']] ?? 'Rauten';
+  final font = t(_fontLabels[deck.font] ?? 'Gotisch');
+  final back = t(deck.back['image'] != null ? 'Foto-Rückseite' : _patternLabels[deck.back['pattern']] ?? 'Rauten');
   return '$font · $back';
 }
 
@@ -89,13 +90,13 @@ class _DeckSheetState extends State<_DeckSheet> {
               const SizedBox(width: 16),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(deck.name, style: T.display(32), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(widget.own ? deck.name : t(deck.name), style: T.display(32), maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
                   Text(deckStyleLine(deck), style: T.body(15, color: C.inkSoft)),
                   const SizedBox(height: 10),
                   Wrap(spacing: 8, runSpacing: 6, children: [
-                    Pill(widget.own ? 'Eigenes Deck' : 'Vorlage', icon: widget.own ? Icons.brush_rounded : Icons.auto_awesome_rounded),
-                    if (widget.isDefault) Pill('Standard', icon: Icons.check_rounded, color: C.gold, textColor: C.onGold),
+                    Pill(widget.own ? t('Eigenes Deck') : t('Vorlage'), icon: widget.own ? Icons.brush_rounded : Icons.auto_awesome_rounded),
+                    if (widget.isDefault) Pill(t('Standard'), icon: Icons.check_rounded, color: C.gold, textColor: C.onGold),
                   ]),
                 ]),
               ),
@@ -111,19 +112,19 @@ class _DeckSheetState extends State<_DeckSheet> {
                 child: Row(children: [
                   const Icon(Icons.verified_rounded, color: C.gold),
                   const SizedBox(width: 10),
-                  Expanded(child: Text('Mit diesem Deck kommst du an jeden Tisch.', style: T.body(15, color: C.inkSoft))),
+                  Expanded(child: Text(t('Mit diesem Deck kommst du an jeden Tisch.'), style: T.body(15, color: C.inkSoft))),
                 ]),
               )
             else if (widget.actions.isNotEmpty)
-              SoftButton(label: 'Als Standard', jicon: 'star', onPressed: _busy ? null : _makeDefault)
+              SoftButton(label: t('Als Standard'), jicon: 'star', onPressed: _busy ? null : _makeDefault)
             else
-              GoldButton(label: 'Als Standard', icon: Icons.check_rounded, busy: _busy, onPressed: _makeDefault),
+              GoldButton(label: t('Als Standard'), icon: Icons.check_rounded, busy: _busy, onPressed: _makeDefault),
             for (final a in widget.actions.skip(1)) ...[
               const SizedBox(height: 10),
               SoftButton(label: a.label, jicon: a.icon, danger: a.danger, onPressed: () => _run(a)),
             ],
             const SizedBox(height: 8),
-            const SectionTitle('Die 13 Karten'),
+            SectionTitle(t('Die 13 Karten')),
             Wrap(spacing: gap, runSpacing: gap + 2, children: [
               for (var rank = 1; rank <= 13; rank++)
                 PlayingCard(rank: rank, deck: deck, width: cardW)
@@ -131,7 +132,7 @@ class _DeckSheetState extends State<_DeckSheet> {
                     .fadeIn(duration: 260.ms)
                     .scaleXY(begin: .9, end: 1, duration: 320.ms, curve: Curves.easeOutBack),
             ]),
-            const SectionTitle('Rückseite'),
+            SectionTitle(t('Rückseite')),
             Center(child: CardBack(deck: deck, width: cardW * 1.6)).animate(delay: 300.ms).fadeIn(),
           ],
         );

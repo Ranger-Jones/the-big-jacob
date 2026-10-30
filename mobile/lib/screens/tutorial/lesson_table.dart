@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/playing_card.dart';
 
@@ -30,7 +31,7 @@ class LessonTable extends StatelessWidget {
           if (trick == null && !hasLaid)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text('Der Tisch ist leer, du eröffnest.', textAlign: TextAlign.center, style: T.display(24, color: C.ink.withValues(alpha: .8))),
+              child: Text(t('Der Tisch ist leer, du eröffnest.'), textAlign: TextAlign.center, style: T.display(24, color: C.ink.withValues(alpha: .8))),
             ).animate().fadeIn(duration: 300.ms),
           if (trick != null)
             AnimatedSlide(
@@ -49,7 +50,7 @@ class LessonTable extends StatelessWidget {
               ),
             ).animate().fadeIn(duration: 260.ms).scaleXY(begin: .9, end: 1, duration: 320.ms, curve: Curves.easeOutBack),
           if (cleared)
-            Text('Der Stich ist vorbei.', style: T.display(24, color: C.ink.withValues(alpha: .8)))
+            Text(t('Der Stich ist vorbei.'), style: T.display(24, color: C.ink.withValues(alpha: .8)))
                 .animate()
                 .fadeIn(delay: 220.ms, duration: 300.ms)
                 .slideY(begin: .3, end: 0, delay: 220.ms, duration: 300.ms),

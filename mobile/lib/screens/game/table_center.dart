@@ -10,6 +10,7 @@ import '../../api.dart';
 import '../../game/controller.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/playing_card.dart';
 import 'seats.dart';
@@ -66,7 +67,7 @@ class TrickView extends StatelessWidget {
       transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: ScaleTransition(scale: Tween(begin: .85, end: 1.0).animate(anim), child: child)),
       child: trick == null
           ? Column(key: const ValueKey('empty'), mainAxisSize: MainAxisSize.min, children: [
-              Text(s.turn == null ? '' : s.turn == g.me ? 'Du spielst aus' : '${g.nameOf(s.turn!)} spielt aus',
+              Text(s.turn == null ? '' : s.turn == g.me ? t('Du spielst aus') : t('{name} spielt aus', {'name': g.nameOf(s.turn!)}),
                   style: T.display(26, color: C.ink.withValues(alpha: .75))),
             ])
           : _Trick(key: ValueKey('t-${trick.seq}-${trick.by}'), g: g, trick: trick),
@@ -110,7 +111,7 @@ class _Trick extends StatelessWidget {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
         decoration: BoxDecoration(color: Colors.black.withValues(alpha: .3), borderRadius: BorderRadius.circular(99)),
-        child: Text('von ${g.nameOf(trick.by, you: true)}', style: T.label(13, color: C.ink)),
+        child: Text(t('von {name}', {'name': g.nameOf(trick.by, you: true)}), style: T.label(13, color: C.ink)),
       ),
     ]);
   }
@@ -225,7 +226,7 @@ class _DrawPanelState extends State<DrawPanel> {
         ),
         // The rotated outer cards reach below the stack's box.
         SizedBox(height: fanW * .3),
-        Text(drawn == 0 ? 'Noch hat niemand gezogen' : '$drawn von ${players.length} haben gezogen', style: T.label(13)),
+        Text(drawn == 0 ? t('Noch hat niemand gezogen') : t('{n} von {total} haben gezogen', {'n': drawn, 'total': players.length}), style: T.label(13)),
       ]);
     } else {
       body = Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -248,20 +249,20 @@ class _DrawPanelState extends State<DrawPanel> {
                 .animate(key: ValueKey(_left))
                 .scaleXY(begin: 1.8, end: 1, duration: 380.ms, curve: Curves.easeOutBack)
                 .fadeIn(duration: 160.ms),
-            Text('Gleich beginnt\ndie Hofzeremonie', textAlign: TextAlign.center, style: T.body(13, color: C.inkSoft)),
+            ConstrainedBox(constraints: const BoxConstraints(maxWidth: 130), child: Text(t('Gleich beginnt die Hofzeremonie'), textAlign: TextAlign.center, style: T.body(13, color: C.inkSoft))),
           ] else ...[
             Text('$drawn / ${players.length}', style: T.display(40, color: C.goldSoft)),
-            Text('haben gezogen', style: T.body(13, color: C.inkSoft)),
+            Text(t('haben gezogen'), style: T.body(13, color: C.inkSoft)),
           ],
         ]),
       ]);
     }
 
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(widget.reveal ? 'Die Karten liegen offen' : 'Wer wird Großer Jakob?', style: T.display(24)),
+      Text(widget.reveal ? t('Die Karten liegen offen') : t('Wer wird Großer Jakob?'), style: T.display(24)),
       const SizedBox(height: 4),
       Text(
-        widget.reveal ? '${g.nameOf(winner ?? '', you: true)} sitzt ganz oben' : mustPick ? 'Tippe auf eine verdeckte Karte.' : 'Die kleinste Zahl sitzt ganz oben.',
+        widget.reveal ? t('{name} sitzt ganz oben', {'name': g.nameOf(winner ?? '', you: true)}) : mustPick ? t('Tippe auf eine verdeckte Karte.') : t('Die kleinste Zahl sitzt ganz oben.'),
         style: T.body(14, color: widget.reveal ? C.goldSoft : C.inkSoft, weight: widget.reveal ? FontWeight.w800 : FontWeight.w500),
       ),
       const SizedBox(height: 14),
@@ -346,14 +347,14 @@ class CourtPanel extends StatelessWidget {
     final order = s.order;
     final event = s.event != null ? eventText[s.event] : null;
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('Runde ${s.round}', style: T.display(26)),
+      Text(t('Runde {round}', {'round': s.round}), style: T.display(26)),
       if (s.revolution != null)
         Padding(
           padding: const EdgeInsets.only(top: 6),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             JIcon(s.revolution!['grand'] == true ? 'flame' : 'fist', size: 22, color: C.goldSoft),
             const SizedBox(width: 6),
-            Text(s.revolution!['grand'] == true ? 'Große Revolution!' : 'Revolution – keine Steuern!', style: T.display(20, color: C.goldSoft)),
+            Text(s.revolution!['grand'] == true ? t('Große Revolution!') : t('Revolution – keine Steuern!'), style: T.display(20, color: C.goldSoft)),
           ])
               .animate().scaleXY(begin: .6, end: 1, curve: Curves.easeOutBack, duration: 500.ms),
         ),
@@ -366,10 +367,10 @@ class CourtPanel extends StatelessWidget {
             Row(mainAxisSize: MainAxisSize.min, children: [
               JIcon(eventIcons[s.event] ?? 'sparkles', size: 18, color: C.goldSoft),
               const SizedBox(width: 6),
-              Text(event.title, style: T.body(15, weight: FontWeight.w800, color: C.goldSoft)),
+              Text(t(event.title), style: T.body(15, weight: FontWeight.w800, color: C.goldSoft)),
             ]),
             const SizedBox(height: 2),
-            Text(event.text, textAlign: TextAlign.center, style: T.body(14)),
+            Text(t(event.text), textAlign: TextAlign.center, style: T.body(14)),
           ]),
         ),
       const SizedBox(height: 10),
@@ -396,25 +397,25 @@ class TaxPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = g.state!;
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('Steuern', style: T.display(28)),
+      Text(t('Steuern'), style: T.display(28)),
       const SizedBox(height: 10),
-      if (s.tax.isEmpty) Text('Diese Runde zahlt niemand.', style: T.body(15, color: C.inkSoft)),
-      for (final t in s.tax)
+      if (s.tax.isEmpty) Text(t('Diese Runde zahlt niemand.'), style: T.body(15, color: C.inkSoft)),
+      for (final tax in s.tax)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 3),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(g.nameOf(t.from, you: true), style: T.body(15, weight: FontWeight.w700)),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('→ ${t.count} →', style: T.label(13, color: C.goldSoft))),
-            Text(g.nameOf(t.to, you: true), style: T.body(15, weight: FontWeight.w700)),
+            Text(g.nameOf(tax.from, you: true), style: T.body(15, weight: FontWeight.w700)),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('→ ${tax.count} →', style: T.label(13, color: C.goldSoft))),
+            Text(g.nameOf(tax.to, you: true), style: T.body(15, weight: FontWeight.w700)),
             const SizedBox(width: 8),
-            Icon(t.done ? Icons.check_circle_rounded : Icons.hourglass_top_rounded, size: 16, color: t.done ? C.vert : C.inkMute),
+            Icon(tax.done ? Icons.check_circle_rounded : Icons.hourglass_top_rounded, size: 16, color: tax.done ? C.vert : C.inkMute),
           ]),
         ),
       if (g.hand.received.isNotEmpty) ...[
         const SizedBox(height: 10),
-        Text('Du hast ${describeCards(g.hand.received)} bekommen', style: T.body(14, color: C.goldSoft)),
+        Text(t('Du hast {cards} bekommen.', {'cards': describeCards(g.hand.received)}), style: T.body(14, color: C.goldSoft)),
       ],
-      if (g.hand.gave.isNotEmpty) Text('Du hast ${describeCards(g.hand.gave)} abgegeben', style: T.body(14, color: C.inkSoft)),
+      if (g.hand.gave.isNotEmpty) Text(t('Du hast {cards} abgegeben.', {'cards': describeCards(g.hand.gave)}), style: T.body(14, color: C.inkSoft)),
     ]);
   }
 }
@@ -430,7 +431,7 @@ class RoundEndPanel extends StatelessWidget {
     final last = s.history.isNotEmpty ? s.history.last : null;
     final finish = last?.finish ?? const <String>[];
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('Runde ${s.round} vorbei', style: T.display(26)),
+      Text(t('Runde {round} vorbei', {'round': s.round}), style: T.display(26)),
       const SizedBox(height: 10),
       for (var i = 0; i < finish.length; i++)
         Padding(
@@ -459,14 +460,14 @@ class Burst extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, word, color) = switch (kind) {
-      'snap' => ('bolt', 'Schnapp!', C.goldSoft),
-      'bomb' => ('bomb', 'Bombe!', C.wax),
-      'unbeatable' => ('crown', 'Unschlagbar!', C.goldSoft),
-      'revolution' => ('fist', 'Revolution!', C.wax),
-      'grandRevolution' => ('flame', 'Große Revolution!', C.wax),
-      'kingFall' => ('crown', 'Königssturz!', C.wax),
-      'throne' => ('castle', 'Thronfolge!', C.goldSoft),
-      _ => ('sparkles', '$who ist raus!', C.vert),
+      'snap' => ('bolt', t('Schnapp!'), C.goldSoft),
+      'bomb' => ('bomb', t('Bombe!'), C.wax),
+      'unbeatable' => ('crown', t('Unschlagbar!'), C.goldSoft),
+      'revolution' => ('fist', t('Revolution!'), C.wax),
+      'grandRevolution' => ('flame', t('Große Revolution!'), C.wax),
+      'kingFall' => ('crown', t('Königssturz!'), C.wax),
+      'throne' => ('castle', t('Thronfolge!'), C.goldSoft),
+      _ => ('sparkles', who == t('Du') ? t('Du bist raus!') : t('{name} ist raus!', {'name': who}), C.vert),
     };
     return IgnorePointer(
       child: Center(
@@ -531,10 +532,10 @@ class AutopilotBanner extends StatelessWidget {
         child: Row(children: [
           const JIcon('bot', size: 22, color: C.goldSoft),
           const SizedBox(width: 8),
-          Expanded(child: Text('Ein Bot spielt gerade für dich.', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(14, weight: FontWeight.w700))),
+          Expanded(child: Text(t('Ein Bot spielt gerade für dich.'), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(14, weight: FontWeight.w700))),
           TextButton(
             onPressed: () => g.dispatch({'type': 'resume'}),
-            child: Text('Zurück ins Spiel', style: T.body(14, color: C.goldSoft, weight: FontWeight.w800)),
+            child: Text(t('Zurück ins Spiel'), style: T.body(14, color: C.goldSoft, weight: FontWeight.w800)),
           ),
         ]),
       );

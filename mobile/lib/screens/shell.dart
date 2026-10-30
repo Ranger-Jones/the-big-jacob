@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../i18n/i18n.dart';
 import '../push.dart';
 import '../theme.dart';
 import 'friends_screen.dart';
@@ -149,7 +150,7 @@ class _NavBar extends StatelessWidget {
                     )),
                 ]),
                 const SizedBox(height: 2),
-                Text(_items[i].$2, style: T.label(12, color: i == index ? C.goldSoft : C.inkMute)),
+                Text(t(_items[i].$2), style: T.label(12, color: i == index ? C.goldSoft : C.inkMute)),
               ]),
             ),
           ),

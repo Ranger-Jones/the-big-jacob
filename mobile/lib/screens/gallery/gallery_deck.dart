@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api.dart';
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
@@ -60,14 +61,14 @@ void showCopiedToast(BuildContext context, {required VoidCallback onMakeDefault}
   messenger?.hideCurrentSnackBar();
   messenger?.showSnackBar(
     SnackBar(
-      content: const Row(
+      content: Row(
         children: [
-          Icon(Icons.check_circle_outline_rounded, color: C.gold, size: 20),
-          SizedBox(width: 10),
-          Expanded(child: Text('In deine Decks kopiert')),
+          const Icon(Icons.check_circle_outline_rounded, color: C.gold, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(t('In deine Decks kopiert'))),
         ],
       ),
-      action: SnackBarAction(label: 'Als Standard nutzen', textColor: C.goldSoft, onPressed: onMakeDefault),
+      action: SnackBarAction(label: t('Als Standard nutzen'), textColor: C.goldSoft, onPressed: onMakeDefault),
       // Actions make snack bars sticky by default; this one should still fade on its own.
       persist: false,
       duration: const Duration(seconds: 5),

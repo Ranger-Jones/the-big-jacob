@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../api.dart';
 import '../game/loot.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/jakob_icons.dart';
@@ -90,7 +91,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
     if (!mounted) return;
     if (!res.ok) return toast(context, res.error!, error: true);
     setState(() => _apply(res.data as Map));
-    toast(context, 'Neue Truhe gekauft!');
+    toast(context, t('Neue Truhe gekauft!'));
   }
 
   Future<void> _equip(LootItem item, {bool off = false}) async {
@@ -98,7 +99,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
     if (!mounted) return;
     if (!res.ok) return toast(context, res.error!, error: true);
     setState(() => _equipped = (res.data as Map).map((k, v) => MapEntry(k as String, v as String)));
-    toast(context, off ? '${item.name} abgelegt' : '${item.name} angelegt');
+    toast(context, off ? t('{name} abgelegt', {'name': item.title}) : t('{name} angelegt', {'name': item.title}));
   }
 
   @override
@@ -122,16 +123,16 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
               Row(children: [
                 IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded, color: C.inkSoft)),
                 const Spacer(),
-                Pill('$_dukaten Dukaten', jicon: 'coins', textColor: C.goldSoft),
+                Pill(t('{n} Dukaten', {'n': _dukaten}), jicon: 'coins', textColor: C.goldSoft),
               ]),
-              Text('Schatzkammer', style: T.display(44)),
-              Text('Jedes beendete Spiel bringt eine Truhe, ein Sieg sogar zwei. Darin warten Rahmen, Wappen, Kartenrücken und Tischfilze.',
+              Text(t('Schatzkammer'), style: T.display(44)),
+              Text(t('Jedes beendete Spiel bringt eine Truhe, ein Sieg sogar zwei. Darin warten Rahmen, Wappen, Kartenrücken und Tischfilze.'),
                   style: T.body(15, color: C.inkSoft)),
               const SizedBox(height: 18),
               if (_loading)
                 const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: C.gold)))
               else if (_error != null)
-                EmptyNote(_error!, icon: Icons.wifi_off_rounded)
+                EmptyNote(t(_error!), icon: Icons.wifi_off_rounded)
               else ...[
                 _ChestPanel(chests: _chests, opening: _opening, onOpen: _open, price: _price, dukaten: _dukaten, onBuy: _buy),
                 const SizedBox(height: 22),
@@ -143,7 +144,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
                           avatar: JIcon(lootKindIcon[k]!, size: 16, color: _kind == k ? C.onGold : C.inkSoft),
-                          label: Text(lootKindLabel[k]!, style: T.body(14, weight: FontWeight.w700, color: _kind == k ? C.onGold : C.ink)),
+                          label: Text(t(lootKindLabel[k]!), style: T.body(14, weight: FontWeight.w700, color: _kind == k ? C.onGold : C.ink)),
                           selected: _kind == k,
                           showCheckmark: false,
                           selectedColor: C.gold,
@@ -155,7 +156,7 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
                   ]),
                 ),
                 const SizedBox(height: 10),
-                Text('$ownedInKind von ${items.length} gesammelt', style: T.label(13)),
+                Text(t('{n} von {total} gesammelt', {'n': ownedInKind, 'total': items.length}), style: T.label(13)),
                 const SizedBox(height: 12),
                 GridView.count(
                   shrinkWrap: true,
@@ -194,18 +195,18 @@ class _TreasuryScreenState extends State<TreasuryScreen> {
           const SizedBox(height: 12),
           _RarityBadge(rarity: item.rarity),
           const SizedBox(height: 6),
-          Text(owned ? item.name : '???', style: T.display(30)),
+          Text(owned ? item.title : '???', style: T.display(30)),
           const SizedBox(height: 4),
-          Text(owned ? item.text : 'Noch nicht gefunden – vielleicht in der nächsten Truhe.', textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
-          if ((_owned[item.id] ?? 0) > 1) Text('${_owned[item.id]}× gefunden', style: T.label(13)),
+          Text(owned ? t(item.text) : t('Noch nicht gefunden – vielleicht in der nächsten Truhe.'), textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
+          if ((_owned[item.id] ?? 0) > 1) Text(t('{n}× gefunden', {'n': _owned[item.id]}), style: T.label(13)),
           const SizedBox(height: 18),
           if (owned)
             equipped
-                ? SoftButton(label: 'Ablegen', jicon: 'close', onPressed: () {
+                ? SoftButton(label: t('Ablegen'), jicon: 'close', onPressed: () {
                     Navigator.pop(ctx);
                     _equip(item, off: true);
                   })
-                : GoldButton(label: 'Anlegen', jicon: 'check', onPressed: () {
+                : GoldButton(label: t('Anlegen'), jicon: 'check', onPressed: () {
                     Navigator.pop(ctx);
                     _equip(item);
                   }),
@@ -261,7 +262,7 @@ class _RarityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: .18), borderRadius: BorderRadius.circular(99), border: Border.all(color: color)),
-      child: Text(rarityLabel[rarity]!, style: T.label(13, color: color)),
+      child: Text(t(rarityLabel[rarity]!), style: T.label(13, color: color)),
     );
   }
 }
@@ -296,7 +297,7 @@ class _ItemTile extends StatelessWidget {
           Row(children: [
             Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
             const SizedBox(width: 4),
-            Expanded(child: Text(owned ? item.name : '???', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(11.5, color: owned ? C.ink : C.inkMute))),
+            Expanded(child: Text(owned ? item.title : '???', maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(11.5, color: owned ? C.ink : C.inkMute))),
             if (equipped) const JIcon('check', size: 13, color: C.gold) else if (count > 1) Text('×$count', style: T.label(11)),
           ]),
         ]),
@@ -334,18 +335,17 @@ class _ChestPanel extends StatelessWidget {
         ]),
         const SizedBox(height: 14),
         GoldButton(
-          label: chests > 0 ? 'Truhe öffnen' : 'Keine Truhe übrig',
+          label: chests > 0 ? t('Truhe öffnen') : t('Keine Truhe übrig'),
           jicon: 'key',
           large: true,
           busy: opening,
           onPressed: chests > 0 ? onOpen : null,
         ),
         const SizedBox(height: 10),
-        SoftButton(label: 'Truhe kaufen · $price Dukaten', jicon: 'coins', onPressed: dukaten >= price ? onBuy : null),
+        SoftButton(label: t('Truhe kaufen · {n} Dukaten', {'n': price}), jicon: 'coins', onPressed: dukaten >= price ? onBuy : null),
         const SizedBox(height: 6),
         Text(
-          'Dukaten gibt es für doppelte Stücke, die tägliche Herausforderung, jede neu eroberte Kampagnen-Station '
-          'und den ersten Sieg gegen jeden Bot.',
+          t('Dukaten gibt es für doppelte Stücke, die tägliche Herausforderung, jede neu eroberte Kampagnen-Station und den ersten Sieg gegen jeden Bot.'),
           textAlign: TextAlign.center,
           style: T.body(13, color: C.inkMute, height: 1.35),
         ),
@@ -403,23 +403,23 @@ class _RevealState extends State<_Reveal> {
           const SizedBox(height: 14),
           _RarityBadge(rarity: item.rarity).animate().fadeIn(delay: 700.ms),
           const SizedBox(height: 6),
-          Text(item.name, textAlign: TextAlign.center, style: T.display(34, color: item.rarity == 'legendaer' ? C.goldSoft : C.ink))
+          Text(item.title, textAlign: TextAlign.center, style: T.display(34, color: item.rarity == 'legendaer' ? C.goldSoft : C.ink))
               .animate().fadeIn(delay: 800.ms).slideY(begin: .3),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 4),
-            child: Text(item.text, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
+            child: Text(t(item.text), textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
           ).animate().fadeIn(delay: 900.ms),
           const SizedBox(height: 6),
-          Text(widget.fresh ? 'Neu in deiner Sammlung!' : 'Doppelt: +${widget.dukaten} Dukaten', style: T.label(14, color: widget.fresh ? C.vert : C.goldSoft))
+          Text(widget.fresh ? t('Neu in deiner Sammlung!') : t('Doppelt: +{n} Dukaten', {'n': widget.dukaten}), style: T.label(14, color: widget.fresh ? C.vert : C.goldSoft))
               .animate().fadeIn(delay: 1000.ms),
           const SizedBox(height: 18),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Row(children: [
-              Expanded(child: SoftButton(label: 'Weiter', onPressed: () => Navigator.pop(context))),
+              Expanded(child: SoftButton(label: t('Weiter'), onPressed: () => Navigator.pop(context))),
               if (!widget.equipped) ...[
                 const SizedBox(width: 10),
-                Expanded(child: GoldButton(label: 'Anlegen', jicon: 'check', onPressed: () {
+                Expanded(child: GoldButton(label: t('Anlegen'), jicon: 'check', onPressed: () {
                   Navigator.pop(context);
                   widget.onEquip();
                 })),

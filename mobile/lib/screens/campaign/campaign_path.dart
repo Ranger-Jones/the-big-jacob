@@ -4,6 +4,7 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/jakob_icons.dart';
 
@@ -100,19 +101,19 @@ class _StationLabel extends StatelessWidget {
     final cross = alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final textAlign = alignEnd ? TextAlign.right : TextAlign.left;
     final (badge, badgeColor) = switch (state) {
-      StageState.won => ('Gewonnen', C.gold),
-      StageState.next => ('Als Nächstes', C.goldSoft),
-      StageState.locked => ('Station ${stage.level}', C.inkMute),
+      StageState.won => (t('Gewonnen'), C.gold),
+      StageState.next => (t('Als Nächstes'), C.goldSoft),
+      StageState.locked => (t('Station {n}', {'n': stage.level}), C.inkMute),
     };
     return Opacity(
       opacity: locked ? .55 : 1,
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: cross, children: [
         Text(badge, style: T.label(12.5, color: badgeColor)),
         const SizedBox(height: 2),
-        Text(stage.place, textAlign: textAlign, maxLines: 2, overflow: TextOverflow.ellipsis,
+        Text(t(stage.place), textAlign: textAlign, maxLines: 2, overflow: TextOverflow.ellipsis,
             style: T.display(25, color: locked ? C.inkSoft : C.ink)),
         const SizedBox(height: 2),
-        Text('Titel: ${stage.title}', textAlign: textAlign, style: T.body(13.5, color: C.inkSoft)),
+        Text(t('Titel: {title}', {'title': t(stage.title)}), textAlign: textAlign, style: T.body(13.5, color: C.inkSoft)),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -124,7 +125,7 @@ class _StationLabel extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(Icons.auto_awesome_rounded, size: 13, color: locked ? C.inkMute : C.goldSoft),
             const SizedBox(width: 4),
-            Flexible(child: Text(stage.twist, overflow: TextOverflow.ellipsis, style: T.label(12.5, color: locked ? C.inkMute : C.goldSoft))),
+            Flexible(child: Text(t(stage.twist), overflow: TextOverflow.ellipsis, style: T.label(12.5, color: locked ? C.inkMute : C.goldSoft))),
           ]),
         ),
       ]),
@@ -198,7 +199,7 @@ class StationNode extends StatelessWidget {
         if (badge != null) Positioned(right: -2, bottom: -2, child: badge),
       ]),
     );
-    return Semantics(button: true, label: '${stage.place}, ${stage.title}', child: node);
+    return Semantics(button: true, label: '${t(stage.place)}, ${t(stage.title)}', child: node);
   }
 }
 

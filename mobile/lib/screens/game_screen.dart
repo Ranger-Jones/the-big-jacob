@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../game/controller.dart';
+import '../i18n/i18n.dart';
 import '../push.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -70,15 +71,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(running ? 'Tisch verlassen?' : 'Lobby verlassen?', style: T.display(26)),
+        title: Text(running ? t('Tisch verlassen?') : t('Lobby verlassen?'), style: T.display(26)),
         content: Text(
-          running ? 'Ein Bot übernimmt deinen Platz nicht automatisch – du verlässt das Spiel endgültig.' : 'Du kannst über den Code jederzeit zurückkommen.',
+          running ? t('Ein Bot übernimmt deinen Platz nicht automatisch – du verlässt das Spiel endgültig.') : t('Du kannst über den Code jederzeit zurückkommen.'),
           style: T.body(16, color: C.inkSoft),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Bleiben', style: T.body(16, weight: FontWeight.w700))),
-          if (running) TextButton(onPressed: () => Navigator.pop(ctx, null), child: Text('Nur schließen', style: T.body(16, color: C.inkSoft))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Verlassen', style: T.body(16, color: C.wax, weight: FontWeight.w700))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t('Bleiben'), style: T.body(16, weight: FontWeight.w700))),
+          if (running) TextButton(onPressed: () => Navigator.pop(ctx, null), child: Text(t('Nur schließen'), style: T.body(16, color: C.inkSoft))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t('Verlassen'), style: T.body(16, color: C.wax, weight: FontWeight.w700))),
         ],
       ),
     );
@@ -107,9 +108,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       const JIcon('castle', size: 64, color: C.inkSoft),
                       const SizedBox(height: 12),
-                      Text(_error ?? 'Dieser Tisch wurde aufgelöst.', textAlign: TextAlign.center, style: T.display(26)),
+                      Text(t(_error ?? 'Dieser Tisch wurde aufgelöst.'), textAlign: TextAlign.center, style: T.display(26)),
                       const SizedBox(height: 22),
-                      GoldButton(label: 'Zurück zum Hof', onPressed: () => Navigator.pop(context)),
+                      GoldButton(label: t('Zurück zum Hof'), onPressed: () => Navigator.pop(context)),
                     ]),
                   ),
                 );

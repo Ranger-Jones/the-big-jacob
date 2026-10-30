@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../api.dart';
 import '../game/models.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'campaign_screen.dart';
@@ -39,7 +40,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
     setState(() {
       _loading = false;
       _deck = deck;
-      _error = res.ok ? (deck == null ? 'Kein Kartendeck gefunden.' : null) : res.error;
+      _error = res.ok ? (deck == null ? t('Kein Kartendeck gefunden.') : null) : res.error;
     });
   }
 
@@ -57,22 +58,22 @@ class _TutorialScreenState extends State<TutorialScreen> {
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
           leading: BackButton(onPressed: () => Navigator.maybePop(context)),
-          title: Text('Spielen lernen', style: T.display(30)),
+          title: Text(t('Spielen lernen'), style: T.display(30)),
         ),
         body: _loading
             ? Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   const CircularProgressIndicator(color: C.gold),
                   const SizedBox(height: 16),
-                  Text('Die Karten werden gemischt …', style: T.body(16, color: C.inkSoft)),
+                  Text(t('Die Karten werden gemischt …'), style: T.body(16, color: C.inkSoft)),
                 ]).animate().fadeIn(duration: 300.ms),
               )
             : deck == null
                 ? Padding(
                     padding: const EdgeInsets.all(22),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      EmptyNote(_error ?? 'Kein Kartendeck gefunden.', icon: Icons.wifi_off_rounded),
-                      SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: _load),
+                      EmptyNote(t(_error ?? 'Kein Kartendeck gefunden.'), icon: Icons.wifi_off_rounded),
+                      SoftButton(label: t('Nochmal versuchen'), icon: Icons.refresh_rounded, onPressed: _load),
                     ]),
                   )
                 : LessonFlow(deck: deck, onCampaign: _toCampaign).animate().fadeIn(duration: 260.ms),

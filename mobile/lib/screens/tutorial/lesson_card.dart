@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
 import '../../game/tutorial.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../game/hand_fan.dart';
@@ -73,13 +74,13 @@ class _LessonCardState extends State<LessonCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Lektion ${widget.index + 1} von ${lessons.length}'.toUpperCase(), style: T.label(12, color: C.gold).copyWith(letterSpacing: 1.6)),
+          Text(t('Lektion {n} von {total}', {'n': widget.index + 1, 'total': lessons.length}).toUpperCase(), style: T.label(12, color: C.gold).copyWith(letterSpacing: 1.6)),
           const SizedBox(height: 4),
-          Text(lesson.title, style: T.display(36)),
+          Text(t(lesson.title), style: T.display(36)),
           const SizedBox(height: 8),
-          Text(lesson.text, style: T.body(16, color: C.inkSoft, height: 1.38)),
+          Text(t(lesson.text), style: T.body(16, color: C.inkSoft, height: 1.38)),
           const SizedBox(height: 14),
-          _TaskBox(text: lesson.task),
+          _TaskBox(text: t(lesson.task)),
           const SizedBox(height: 16),
           if (kind == LessonKind.play || kind == LessonKind.pass) ...[
             LessonTable(deck: widget.deck, trick: lesson.trick, laid: _laid, cleared: kind == LessonKind.pass && _solved),
@@ -121,14 +122,14 @@ class _LessonCardState extends State<LessonCard> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Text(
-            'Ausgewählt: $picked von ${lesson.taxCount}',
+            t('Ausgewählt: {n} von {total}', {'n': picked, 'total': lesson.taxCount}),
             textAlign: TextAlign.center,
             style: T.label(14, color: picked == lesson.taxCount ? C.goldSoft : C.inkSoft),
           ),
         ),
       if (tax)
         GoldButton(
-          label: 'Zurückgeben',
+          label: t('Zurückgeben'),
           icon: Icons.redo_rounded,
           onPressed: _solved ? null : () => _answer(cards: selectedCards(_selection)),
         )
@@ -138,7 +139,7 @@ class _LessonCardState extends State<LessonCard> {
             Expanded(
               flex: 3,
               child: GoldButton(
-                label: 'Legen',
+                label: t('Legen'),
                 icon: Icons.style_rounded,
                 onPressed: _solved ? null : () => _answer(cards: selectedCards(_selection)),
               ),
@@ -146,7 +147,7 @@ class _LessonCardState extends State<LessonCard> {
             const SizedBox(width: 10),
             Expanded(
               flex: 2,
-              child: SoftButton(label: 'Passen', icon: Icons.front_hand_rounded, onPressed: _solved ? null : () => _answer(pass: true)),
+              child: SoftButton(label: t('Passen'), icon: Icons.front_hand_rounded, onPressed: _solved ? null : () => _answer(pass: true)),
             ),
           ],
         ),
@@ -159,7 +160,7 @@ class _LessonCardState extends State<LessonCard> {
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: SoftButton(
-          label: lesson.quiz[i].label,
+          label: t(lesson.quiz[i].label),
           icon: !_tried.contains(i)
               ? Icons.radio_button_unchecked_rounded
               : lesson.quiz[i].correct
@@ -177,7 +178,7 @@ class _LessonCardState extends State<LessonCard> {
         style: TextButton.styleFrom(foregroundColor: C.inkSoft, minimumSize: const Size(48, 48), padding: const EdgeInsets.symmetric(horizontal: 10)),
         icon: const Icon(Icons.chevron_left_rounded),
         label: Text(
-          'Zurück',
+          t('Zurück'),
           style: T.body(16, color: widget.onBack == null ? C.inkMute : C.inkSoft, weight: FontWeight.w700),
         ),
       ),
@@ -187,7 +188,7 @@ class _LessonCardState extends State<LessonCard> {
         Flexible(
           flex: 6,
           child: GoldButton(
-            label: _last ? 'Abschließen' : 'Nächste Lektion',
+            label: _last ? t('Abschließen') : t('Nächste Lektion'),
             icon: _last ? Icons.emoji_events_rounded : Icons.arrow_forward_rounded,
             expand: false,
             onPressed: widget.onNext,

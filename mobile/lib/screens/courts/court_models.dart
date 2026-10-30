@@ -1,4 +1,5 @@
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 
 /// A player may belong to this many courts at once (MAX_COURTS on the server).
 const maxCourts = 5;
@@ -60,12 +61,13 @@ class CourtDetail {
 List<String> crestIds(Object? raw) => ((raw as List?) ?? const []).whereType<String>().toList();
 
 const _months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const _monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-/// "28. Oktober 2026".
-String germanDate(DateTime d) => '${d.day}. ${_months[d.month - 1]} ${d.year}';
+/// "28. Oktober 2026" in German, "28 October 2026" in English.
+String longDate(DateTime d) => I18n.english ? '${d.day} ${_monthsEn[d.month - 1]} ${d.year}' : '${d.day}. ${_months[d.month - 1]} ${d.year}';
 
-/// Picks the singular or plural German noun for [n].
-String plural(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+/// "1 Mitglied" / "5 Mitglieder", translated.
+String memberCount(int n) => n == 1 ? t('{n} Mitglied', {'n': n}) : t('{n} Mitglieder', {'n': n});
 
 /// The public link that opens the join form with the code filled in.
 String inviteLink(String code) => 'https://the-big-jacob.vercel.app/hoefe?code=$code';

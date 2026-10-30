@@ -61,7 +61,7 @@ class _JakobAppState extends State<JakobApp> {
   Widget _app() {
     return MaterialApp(
       builder: Config.tapLog ? (context, child) => _TapLog(child: child!) : null,
-      title: 'Der Große Jakob',
+      title: t('Der Große Jakob'),
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       home: !_gateOpen

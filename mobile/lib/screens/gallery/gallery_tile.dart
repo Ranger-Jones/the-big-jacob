@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../decks/deck_fan.dart';
@@ -34,7 +35,7 @@ class GalleryTile extends StatelessWidget {
                   Text(deck.deck.name, style: T.display(24), maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 3),
                   Text(
-                    'von ${deck.ownerName}',
+                    t('von {name}', {'name': deck.ownerName}),
                     style: T.body(14.5, color: C.goldSoft, weight: FontWeight.w700),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -100,7 +101,7 @@ class CopyButton extends StatelessWidget {
                 else
                   const Icon(Icons.content_copy_rounded, size: 18, color: C.goldSoft),
                 const SizedBox(width: 8),
-                Text('Kopieren', style: T.label(15, color: C.goldSoft)),
+                Text(t('Kopieren'), style: T.label(15, color: C.goldSoft)),
               ],
             ),
           ),

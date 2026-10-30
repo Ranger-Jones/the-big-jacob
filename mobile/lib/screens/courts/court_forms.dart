@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../api.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'crest.dart';
@@ -56,9 +57,9 @@ class _JoinCourtPanelState extends State<JoinCourtPanel> {
   Widget build(BuildContext context) {
     return Panel(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Hof beitreten', style: T.display(30)),
+        Text(t('Hof beitreten'), style: T.display(30)),
         const SizedBox(height: 4),
-        Text('Den Einladungscode bekommst du von jemandem am Hof.', style: T.body(15, color: C.inkSoft)),
+        Text(t('Den Einladungscode bekommst du von jemandem am Hof.'), style: T.body(15, color: C.inkSoft)),
         const SizedBox(height: 14),
         TextField(
           controller: _code,
@@ -68,13 +69,13 @@ class _JoinCourtPanelState extends State<JoinCourtPanel> {
           textAlign: TextAlign.center,
           inputFormatters: [_CodeFormatter()],
           style: codeStyle(26),
-          decoration: const InputDecoration(labelText: 'Einladungscode', hintText: 'z. B. K7QM2XPA', floatingLabelAlignment: FloatingLabelAlignment.center),
+          decoration: InputDecoration(labelText: t('Einladungscode'), hintText: t('z. B. K7QM2XPA'), floatingLabelAlignment: FloatingLabelAlignment.center),
           onChanged: (_) => setState(() {}),
           onSubmitted: (_) => _join(),
         ),
         const SizedBox(height: 14),
         GoldButton(
-          label: 'Beitreten',
+          label: t('Beitreten'),
           icon: Icons.login_rounded,
           busy: _busy,
           onPressed: _code.text.length == 8 ? _join : null,
@@ -117,7 +118,7 @@ class _CreateCourtPanelState extends State<CreateCourtPanel> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (!res.ok) return toast(context, res.error!, error: true);
-    toast(context, 'Hof gegründet. Teile jetzt den Einladungscode.');
+    toast(context, t('Hof gegründet. Teile jetzt den Einladungscode.'));
     _name.clear();
     setState(() => _crest = null);
     widget.onCreated((res.data as Map)['id'] as String);
@@ -128,9 +129,9 @@ class _CreateCourtPanelState extends State<CreateCourtPanel> {
     final crest = _chosen;
     return Panel(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(widget.first ? 'Deinen ersten Hof gründen' : 'Neuen Hof gründen', style: T.display(30)),
+        Text(widget.first ? t('Deinen ersten Hof gründen') : t('Neuen Hof gründen'), style: T.display(30)),
         const SizedBox(height: 4),
-        Text('Du wirst Hofherr und kannst danach alle einladen.', style: T.body(15, color: C.inkSoft)),
+        Text(t('Du wirst Hofherr und kannst danach alle einladen.'), style: T.body(15, color: C.inkSoft)),
         const SizedBox(height: 16),
         Row(children: [
           AnimatedSwitcher(
@@ -145,19 +146,19 @@ class _CreateCourtPanelState extends State<CreateCourtPanel> {
               maxLength: 40,
               textCapitalization: TextCapitalization.sentences,
               style: T.body(17),
-              decoration: const InputDecoration(labelText: 'Name', hintText: 'z. B. Wache Süd', counterText: ''),
+              decoration: InputDecoration(labelText: t('Name'), hintText: t('z. B. Wache Süd'), counterText: ''),
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _create(),
             ),
           ),
         ]),
         const SizedBox(height: 16),
-        Text('Wappen', style: T.label(15)),
+        Text(t('Wappen'), style: T.label(15)),
         const SizedBox(height: 8),
         CrestPicker(crests: widget.crests, value: crest, onChanged: (id) => setState(() => _crest = id)),
         const SizedBox(height: 16),
         GoldButton(
-          label: 'Hof gründen',
+          label: t('Hof gründen'),
           icon: Icons.fort_rounded,
           busy: _busy,
           onPressed: _name.text.trim().length >= 2 && crest != null ? _create : null,

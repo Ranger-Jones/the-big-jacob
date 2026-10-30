@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import 'gallery_deck.dart';
 
@@ -41,7 +42,7 @@ class _LikeButtonState extends State<LikeButton> {
       return Semantics(
         button: true,
         toggled: s.liked,
-        label: s.liked ? 'Gefällt mir nicht mehr' : 'Gefällt mir',
+        label: s.liked ? t('Gefällt mir nicht mehr') : t('Gefällt mir'),
         value: '${s.likes}',
         excludeSemantics: true,
         child: Material(

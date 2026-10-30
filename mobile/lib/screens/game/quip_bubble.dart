@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/controller.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../bots_screen.dart';
 
@@ -76,8 +77,8 @@ class _QuipBubbleState extends State<QuipBubble> {
                         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .4), blurRadius: 14, offset: const Offset(0, 4))],
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                        Text(bot.name, style: T.label(11.5, color: const Color(0xFF6B4F3A))),
-                        Text('„${quip['text']}“', style: T.body(15.5, color: C.onGold, weight: FontWeight.w800, height: 1.25)),
+                        Text(t(bot.name), style: T.label(11.5, color: const Color(0xFF6B4F3A))),
+                        Text(t('„{text}“', {'text': t(quip['text'] as String? ?? '')}), style: T.body(15.5, color: C.onGold, weight: FontWeight.w800, height: 1.25)),
                       ]),
                     ),
                   ),

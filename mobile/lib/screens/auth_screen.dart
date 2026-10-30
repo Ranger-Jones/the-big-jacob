@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
+import '../i18n/language_picker.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -42,7 +44,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (session is Map) {
           await auth.setSession(session['refresh_token'] as String);
         } else {
-          error = 'Fast geschafft: Bitte bestätige deine E-Mail und melde dich dann an.';
+          error = t('Fast geschafft: Bitte bestätige deine E-Mail und melde dich dann an.');
         }
       }
     } else {
@@ -50,13 +52,13 @@ class _AuthScreenState extends State<AuthScreen> {
         await auth.signInWithPassword(email: _email.text.trim(), password: _password.text);
       } on AuthException catch (e) {
         error = switch (e.code) {
-          'invalid_credentials' => 'E-Mail oder Passwort falsch.',
-          'email_not_confirmed' => 'Bitte bestätige zuerst deine E-Mail-Adresse.',
-          'over_request_rate_limit' || 'over_email_send_rate_limit' => 'Zu viele Versuche. Warte ein paar Minuten und versuch es dann nochmal.',
-          _ => 'Anmeldung fehlgeschlagen: ${e.message}',
+          'invalid_credentials' => t('E-Mail oder Passwort falsch.'),
+          'email_not_confirmed' => t('Bitte bestätige zuerst deine E-Mail-Adresse.'),
+          'over_request_rate_limit' || 'over_email_send_rate_limit' => t('Zu viele Versuche. Warte ein paar Minuten und versuch es dann nochmal.'),
+          _ => t('Anmeldung fehlgeschlagen: {message}', {'message': e.message}),
         };
       } catch (_) {
-        error = 'Keine Verbindung zum Hof. Bitte nochmal versuchen.';
+        error = t('Keine Verbindung zum Hof. Bitte nochmal versuchen.');
       }
     }
     if (!mounted) return;
@@ -71,45 +73,49 @@ class _AuthScreenState extends State<AuthScreen> {
     return Scaffold(
       body: Backdrop(
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text(_register ? 'Am Hof anmelden' : 'Willkommen zurück', style: T.display(42)),
-                  const SizedBox(height: 6),
-                  Text(_register ? 'Ein Name, und der Thron wartet auf dich.' : 'Log dich ein, der Thron wartet.', style: T.body(17, color: C.inkSoft)),
-                  const SizedBox(height: 28),
-                  if (_register) ...[
-                    TextField(controller: _username, style: T.body(17), textInputAction: TextInputAction.next, autocorrect: false,
-                        decoration: const InputDecoration(labelText: 'Benutzername', prefixIcon: Icon(Icons.person_rounded))),
+          child: Stack(children: [
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Text(_register ? t('Am Hof anmelden') : t('Willkommen zurück'), style: T.display(42)),
+                    const SizedBox(height: 6),
+                    Text(_register ? t('Ein Name, und der Thron wartet auf dich.') : t('Log dich ein, der Thron wartet.'), style: T.body(17, color: C.inkSoft)),
+                    const SizedBox(height: 28),
+                    if (_register) ...[
+                      TextField(controller: _username, style: T.body(17), textInputAction: TextInputAction.next, autocorrect: false,
+                          decoration: InputDecoration(labelText: t('Benutzername'), prefixIcon: const Icon(Icons.person_rounded))),
+                      const SizedBox(height: 14),
+                    ],
+                    TextField(controller: _email, style: T.body(17), keyboardType: TextInputType.emailAddress, autocorrect: false,
+                        textInputAction: TextInputAction.next, decoration: InputDecoration(labelText: t('E-Mail'), prefixIcon: const Icon(Icons.mail_rounded))),
                     const SizedBox(height: 14),
-                  ],
-                  TextField(controller: _email, style: T.body(17), keyboardType: TextInputType.emailAddress, autocorrect: false,
-                      textInputAction: TextInputAction.next, decoration: const InputDecoration(labelText: 'E-Mail', prefixIcon: Icon(Icons.mail_rounded))),
-                  const SizedBox(height: 14),
-                  TextField(controller: _password, style: T.body(17), obscureText: true, textInputAction: TextInputAction.go, onSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(labelText: 'Passwort', prefixIcon: const Icon(Icons.lock_rounded), helperText: _register ? 'Mindestens 8 Zeichen' : null)),
-                  if (_error != null) ...[
-                    const SizedBox(height: 14),
-                    Text(_error!, style: T.body(15, color: C.wax, weight: FontWeight.w700)).animate().fadeIn().shakeX(amount: 4),
-                  ],
-                  const SizedBox(height: 22),
-                  GoldButton(label: _register ? 'Konto erstellen' : 'Einloggen', busy: _busy, onPressed: _submit),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      _register = !_register;
-                      _error = null;
-                    }),
-                    child: Text(_register ? 'Schon dabei? Einloggen' : 'Noch kein Konto? Registrieren', style: T.body(16, color: C.goldSoft, weight: FontWeight.w700)),
-                  ),
-                ]),
+                    TextField(controller: _password, style: T.body(17), obscureText: true, textInputAction: TextInputAction.go, onSubmitted: (_) => _submit(),
+                        decoration: InputDecoration(labelText: t('Passwort'), prefixIcon: const Icon(Icons.lock_rounded), helperText: _register ? t('Mindestens 8 Zeichen') : null)),
+                    if (_error != null) ...[
+                      const SizedBox(height: 14),
+                      Text(_error!, style: T.body(15, color: C.wax, weight: FontWeight.w700)).animate().fadeIn().shakeX(amount: 4),
+                    ],
+                    const SizedBox(height: 22),
+                    GoldButton(label: _register ? t('Konto erstellen') : t('Einloggen'), busy: _busy, onPressed: _submit),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => setState(() {
+                        _register = !_register;
+                        _error = null;
+                      }),
+                      child: Text(_register ? t('Schon dabei? Einloggen') : t('Noch kein Konto? Registrieren'), style: T.body(16, color: C.goldSoft, weight: FontWeight.w700)),
+                    ),
+                  ]),
+                ),
               ),
             ),
-          ),
+            // Switch the language before signing in.
+            const Positioned(top: 8, right: 12, child: LanguagePicker(compact: true)),
+          ]),
         ),
       ),
     );

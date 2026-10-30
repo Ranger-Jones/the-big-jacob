@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api.dart';
 import '../game/models.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/jakob_icons.dart';
@@ -114,8 +115,8 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         _incoming = _Entry.list(d['incoming']);
         _outgoing = _Entry.list(d['outgoing']);
         _atTable = {
-          for (final t in ((d['tables'] as List?) ?? const []).whereType<Map>())
-            for (final id in ((t['friendIds'] as List?) ?? const []).whereType<String>()) id: t,
+          for (final table in ((d['tables'] as List?) ?? const []).whereType<Map>())
+            for (final id in ((table['friendIds'] as List?) ?? const []).whereType<String>()) id: table,
         };
         _error = null;
       } else {
@@ -237,7 +238,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         if (!mounted) return;
         if (!res.ok) return toast(context, res.error!, error: true);
         final accepted = (res.data as Map?)?['status'] == 'accepted';
-        toast(context, accepted ? 'Ihr seid jetzt Freunde!' : 'Anfrage an ${p.username} gesendet');
+        toast(context, accepted ? t('Ihr seid jetzt Freunde!') : t('Anfrage an {name} gesendet', {'name': p.username}));
         _clearSearch();
         _searchFocus.unfocus();
         await _load();
@@ -249,7 +250,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         if (!res.ok) return toast(context, res.error!, error: true);
         if (accept) {
           HapticFeedback.mediumImpact();
-          toast(context, 'Du und ${e.profile.username} seid jetzt Freunde');
+          toast(context, t('Du und {name} seid jetzt Freunde', {'name': e.profile.username}));
         }
         await _load();
       });
@@ -258,7 +259,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         final res = await Api.post('friends', {'op': 'remove', 'id': e.id});
         if (!mounted) return;
         if (!res.ok) return toast(context, res.error!, error: true);
-        toast(context, 'Anfrage an ${e.profile.username} zurückgezogen');
+        toast(context, t('Anfrage an {name} zurückgezogen', {'name': e.profile.username}));
         await _load();
       });
 
@@ -266,14 +267,14 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
     final sure = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Freundschaft beenden?', style: T.display(28)),
-        content: Text('Möchtest du ${e.profile.username} wirklich aus deiner Freundesliste entfernen?', style: T.body(16, color: C.inkSoft)),
+        title: Text(t('Freundschaft beenden?'), style: T.display(28)),
+        content: Text(t('Möchtest du {name} wirklich aus deiner Freundesliste entfernen?', {'name': e.profile.username}), style: T.body(16, color: C.inkSoft)),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
           Row(children: [
-            Expanded(child: SoftButton(label: 'Abbrechen', onPressed: () => Navigator.pop(ctx, false))),
+            Expanded(child: SoftButton(label: t('Abbrechen'), onPressed: () => Navigator.pop(ctx, false))),
             const SizedBox(width: 10),
-            Expanded(child: SoftButton(label: 'Entfernen', danger: true, icon: Icons.person_remove_rounded, onPressed: () => Navigator.pop(ctx, true))),
+            Expanded(child: SoftButton(label: t('Entfernen'), danger: true, icon: Icons.person_remove_rounded, onPressed: () => Navigator.pop(ctx, true))),
           ]),
         ],
       ),
@@ -283,7 +284,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
       final res = await Api.post('friends', {'op': 'remove', 'id': e.id});
       if (!mounted) return;
       if (!res.ok) return toast(context, res.error!, error: true);
-      toast(context, '${e.profile.username} ist nicht mehr in deiner Freundesliste');
+      toast(context, t('{name} ist nicht mehr in deiner Freundesliste', {'name': e.profile.username}));
       await _load();
     });
   }
@@ -294,7 +295,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         if (!res.ok) return toast(context, res.error!, error: true);
         final d = res.data as Map;
         final code = d['code'] as String?;
-        toast(context, d['alreadyThere'] == true ? '${e.profile.username} sitzt schon an deinem Tisch' : 'Einladung an ${e.profile.username} gesendet');
+        toast(context, d['alreadyThere'] == true ? t('{name} sitzt schon an deinem Tisch', {'name': e.profile.username}) : t('Einladung an {name} gesendet', {'name': e.profile.username}));
         if (code != null) await openTable(context, code);
         if (mounted) _load();
       });
@@ -359,8 +360,8 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
                 ),
               ],
               SectionTitle(
-                'Deine Freunde',
-                trailing: friends.isEmpty ? null : Pill('$onlineCount online', icon: Icons.circle, textColor: onlineCount > 0 ? C.vert : C.inkSoft),
+                t('Deine Freunde'),
+                trailing: friends.isEmpty ? null : Pill(t('{count} online', {'count': onlineCount}), icon: Icons.circle, textColor: onlineCount > 0 ? C.vert : C.inkSoft),
               ),
               if (friends.isEmpty && _error == null)
                 _EmptyFriends(onSearch: () => _searchFocus.requestFocus())
@@ -382,7 +383,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
               if (_outgoing.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 26, bottom: 10),
-                  child: Text('Gesendete Anfragen', style: T.display(22, color: C.inkSoft)),
+                  child: Text(t('Gesendete Anfragen'), style: T.display(22, color: C.inkSoft)),
                 ),
                 for (final e in _outgoing)
                   Padding(
@@ -403,7 +404,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
     if (q.length < 2) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
-        child: Text('Mindestens zwei Buchstaben, bitte.', style: T.body(14, color: C.inkMute)),
+        child: Text(t('Mindestens zwei Buchstaben, bitte.'), style: T.body(14, color: C.inkMute)),
       );
     }
     final raw = _results;
@@ -415,7 +416,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
         padding: const EdgeInsets.fromLTRB(14, 6, 10, 6),
         child: visible.isEmpty
             ? EmptyNote(
-                raw.isEmpty ? 'Niemand mit diesem Namen gefunden.' : 'Alle Treffer kennst du schon.',
+                raw.isEmpty ? t('Niemand mit diesem Namen gefunden.') : t('Alle Treffer kennst du schon.'),
                 icon: raw.isEmpty ? Icons.search_off_rounded : Icons.handshake_rounded,
               )
             : Column(children: [
@@ -425,7 +426,7 @@ class _FriendsScreenState extends State<FriendsScreen> with WidgetsBindingObserv
                     profile: visible[i],
                     onOpen: () => _openProfile(visible[i]),
                     trailing: _SmallButton(
-                      label: 'Anfrage senden',
+                      label: t('Anfrage senden'),
                       icon: Icons.person_add_alt_1_rounded,
                       busy: _busy.contains('request:${visible[i].id}'),
                       onPressed: () => _request(visible[i]),
@@ -448,14 +449,17 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final friends = count == 1 ? t('1 Freund') : t('{count} Freunde', {'count': count});
     final sub = !loaded || count == 0
-        ? 'Dein Gefolge am Hof'
-        : '$count ${count == 1 ? 'Freund' : 'Freunde'}${online > 0 ? ' · $online gerade da' : ''}';
+        ? t('Dein Gefolge am Hof')
+        : online > 0
+            ? t('{friends} · {online} gerade da', {'friends': friends, 'online': online})
+            : friends;
     return Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(sub, style: T.body(16, color: C.inkSoft)),
-          Text('Freunde', style: T.display(40)),
+          Text(t('Freunde'), style: T.display(40)),
         ]),
       ),
       const JIcon('friends', size: 34, color: C.gold)
@@ -466,7 +470,7 @@ class _Header extends StatelessWidget {
         color: C.surfaceHi,
         shape: const CircleBorder(side: BorderSide(color: C.line)),
         child: IconButton(
-          tooltip: 'Code scannen',
+          tooltip: t('Code scannen'),
           constraints: const BoxConstraints.tightFor(width: 48, height: 48),
           onPressed: () {
             HapticFeedback.selectionClick();
@@ -503,8 +507,8 @@ class _QrAction extends StatelessWidget {
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Per QR-Code hinzufügen', style: T.body(17, weight: FontWeight.w800)),
-            Text('Ihr steht nebeneinander? Code zeigen oder scannen.', style: T.body(14, color: C.inkSoft)),
+            Text(t('Per QR-Code hinzufügen'), style: T.body(17, weight: FontWeight.w800)),
+            Text(t('Ihr steht nebeneinander? Code zeigen oder scannen.'), style: T.body(14, color: C.inkSoft)),
           ]),
         ),
         const SizedBox(width: 8),
@@ -534,7 +538,7 @@ class _SearchField extends StatelessWidget {
       style: T.body(17),
       cursorColor: C.gold,
       decoration: InputDecoration(
-        hintText: 'Name suchen …',
+        hintText: t('Name suchen …'),
         prefixIcon: const Icon(Icons.search_rounded, color: C.inkSoft),
         suffixIcon: ValueListenableBuilder<TextEditingValue>(
           valueListenable: controller,
@@ -546,7 +550,7 @@ class _SearchField extends StatelessWidget {
               );
             }
             if (value.text.isEmpty) return const SizedBox.shrink();
-            return IconButton(tooltip: 'Leeren', onPressed: onClear, icon: const Icon(Icons.close_rounded, color: C.inkSoft));
+            return IconButton(tooltip: t('Leeren'), onPressed: onClear, icon: const Icon(Icons.close_rounded, color: C.inkSoft));
           },
         ),
       ),
@@ -685,7 +689,7 @@ class _IncomingPanel extends StatelessWidget {
         Row(children: [
           const JIcon('scroll', size: 24, color: C.goldSoft),
           const SizedBox(width: 10),
-          Expanded(child: Text(entries.length == 1 ? 'Neue Anfrage' : 'Neue Anfragen', style: T.display(24, color: C.goldSoft))),
+          Expanded(child: Text(entries.length == 1 ? t('Neue Anfrage') : t('Neue Anfragen'), style: T.display(24, color: C.goldSoft))),
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: Pill('${entries.length}', color: C.gold, textColor: C.onGold),
@@ -696,7 +700,7 @@ class _IncomingPanel extends StatelessWidget {
           if (i > 0) const Divider(height: 1, color: C.line),
           _PersonRow(
             profile: entries[i].profile,
-            subtitle: 'möchte mit dir befreundet sein',
+            subtitle: t('möchte mit dir befreundet sein'),
             onOpen: () => onOpen(entries[i].profile),
             trailing: busy.contains('respond:${entries[i].id}')
                 ? const SizedBox(
@@ -705,13 +709,13 @@ class _IncomingPanel extends StatelessWidget {
                   )
                 : Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(
-                      tooltip: 'Ablehnen',
+                      tooltip: t('Ablehnen'),
                       constraints: const BoxConstraints.tightFor(width: 48, height: 48),
                       onPressed: () => onRespond(entries[i], false),
                       icon: const Icon(Icons.close_rounded, color: C.inkSoft),
                     ),
                     const SizedBox(width: 4),
-                    _SmallButton(label: 'Annehmen', icon: Icons.check_rounded, onPressed: () => onRespond(entries[i], true)),
+                    _SmallButton(label: t('Annehmen'), icon: Icons.check_rounded, onPressed: () => onRespond(entries[i], true)),
                   ]),
           ).animate(key: ValueKey('i-${entries[i].id}'), delay: (60 * i).ms).fadeIn(duration: 300.ms).slideX(begin: .06),
         ],
@@ -747,17 +751,17 @@ class _FriendRow extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p.username, style: T.body(18, weight: FontWeight.w800), overflow: TextOverflow.ellipsis),
             if (table != null)
-              Text('spielt gerade · Runde ${table!['round']}', style: T.label(13, color: C.goldSoft))
+              Text(t('spielt gerade · Runde {round}', {'round': table!['round']}), style: T.label(13, color: C.goldSoft))
             else
-              Text(online ? 'online' : 'nicht da', style: T.label(13, color: online ? C.vert : C.inkMute)),
+              Text(online ? t('online') : t('nicht da'), style: T.label(13, color: online ? C.vert : C.inkMute)),
           ]),
         ),
         if (table != null)
-          _SmallButton(label: 'Zuschauen', icon: Icons.visibility_rounded, outlined: true, busy: false, onPressed: onWatch)
+          _SmallButton(label: t('Zuschauen'), icon: Icons.visibility_rounded, outlined: true, busy: false, onPressed: onWatch)
         else
-          _SmallButton(label: 'Einladen', icon: Icons.style_rounded, outlined: true, busy: inviting, onPressed: onInvite),
+          _SmallButton(label: t('Einladen'), icon: Icons.style_rounded, outlined: true, busy: inviting, onPressed: onInvite),
         PopupMenuButton<String>(
-          tooltip: 'Mehr',
+          tooltip: t('Mehr'),
           icon: const Icon(Icons.more_horiz_rounded, color: C.inkSoft),
           color: C.surfaceHi,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: C.line)),
@@ -769,7 +773,7 @@ class _FriendRow extends StatelessWidget {
               child: Row(children: [
                 const Icon(Icons.person_rounded, size: 20, color: C.ink),
                 const SizedBox(width: 12),
-                Text('Profil ansehen', style: T.body(16)),
+                Text(t('Profil ansehen'), style: T.body(16)),
               ]),
             ),
             PopupMenuItem(
@@ -778,7 +782,7 @@ class _FriendRow extends StatelessWidget {
               child: Row(children: [
                 const Icon(Icons.person_remove_rounded, size: 20, color: C.wax),
                 const SizedBox(width: 12),
-                Text('Entfernen', style: T.body(16, color: C.wax)),
+                Text(t('Entfernen'), style: T.body(16, color: C.wax)),
               ]),
             ),
           ],
@@ -803,7 +807,7 @@ class _OutgoingRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
         child: _PersonRow(
           profile: entry.profile,
-          subtitle: 'wartet auf Antwort',
+          subtitle: t('wartet auf Antwort'),
           onOpen: onOpen,
           trailing: SizedBox(
             height: 48,
@@ -812,7 +816,7 @@ class _OutgoingRow extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: C.inkSoft, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               child: busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.inkSoft))
-                  : Text('Zurückziehen', style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
+                  : Text(t('Zurückziehen'), style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
             ),
           ),
         ),
@@ -834,15 +838,15 @@ class _EmptyFriends extends StatelessWidget {
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(begin: -3, end: 3, duration: 1700.ms, curve: Curves.easeInOut),
         const SizedBox(height: 10),
-        Text('Noch ganz allein am Hof', style: T.display(26), textAlign: TextAlign.center),
+        Text(t('Noch ganz allein am Hof'), style: T.display(26), textAlign: TextAlign.center),
         const SizedBox(height: 6),
         Text(
-          'Such oben nach dem Namen deiner Freunde und schick ihnen eine Anfrage. Dann könnt ihr euch gegenseitig an den Tisch holen.',
+          t('Such oben nach dem Namen deiner Freunde und schick ihnen eine Anfrage. Dann könnt ihr euch gegenseitig an den Tisch holen.'),
           style: T.body(15, color: C.inkSoft, height: 1.35),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 18),
-        SoftButton(label: 'Jemanden suchen', icon: Icons.search_rounded, onPressed: onSearch),
+        SoftButton(label: t('Jemanden suchen'), icon: Icons.search_rounded, onPressed: onSearch),
       ]),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: .06);
   }

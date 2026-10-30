@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../api.dart';
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -60,7 +61,7 @@ class _QrFriendSheetState extends State<QrFriendSheet> {
       if (raw is Map) {
         _me = _meCache = Profile.from(raw);
       } else if (_me == null) {
-        _meError = res.error ?? 'Dein Profil ließ sich nicht laden.';
+        _meError = res.error ?? t('Dein Profil ließ sich nicht laden.');
       }
     });
   }
@@ -85,9 +86,9 @@ class _QrFriendSheetState extends State<QrFriendSheet> {
             padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.paddingOf(context).bottom + 18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [
-                Expanded(child: Text('Freund per QR-Code', style: T.display(30))),
+                Expanded(child: Text(t('Freund per QR-Code'), style: T.display(30))),
                 IconButton(
-                  tooltip: 'Schließen',
+                  tooltip: t('Schließen'),
                   constraints: const BoxConstraints.tightFor(width: 48, height: 48),
                   onPressed: () => Navigator.pop(context),
                   icon: const JIcon('close', size: 22, color: C.inkSoft),
@@ -179,7 +180,7 @@ class _TabSwitch extends StatelessWidget {
         ),
         Material(
           color: Colors.transparent,
-          child: Row(children: [tab(0, 'qr', 'Mein Code'), tab(1, 'scan', 'Scannen')]),
+          child: Row(children: [tab(0, 'qr', t('Mein Code')), tab(1, 'scan', t('Scannen'))]),
         ),
       ]),
     );
@@ -202,7 +203,7 @@ class _MyCodeTab extends StatelessWidget {
       return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           EmptyNote(error!, icon: Icons.wifi_off_rounded),
-          SoftButton(label: 'Nochmal versuchen', expand: false, onPressed: onRetry),
+          SoftButton(label: t('Nochmal versuchen'), expand: false, onPressed: onRetry),
         ]),
       );
     }
@@ -233,10 +234,10 @@ class _MyCodeTab extends StatelessWidget {
                 errorCorrectionLevel: QrErrorCorrectLevel.M,
                 eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: _qrInk),
                 dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: _qrInk),
-                semanticsLabel: 'Dein Freundes-Code',
+                semanticsLabel: t('Dein Freundes-Code'),
               ),
               const SizedBox(height: 12),
-              Text('Der Große Jakob', style: T.display(20, color: _qrInk.withValues(alpha: .75))),
+              Text(t('Der Große Jakob'), style: T.display(20, color: _qrInk.withValues(alpha: .75))),
             ]),
           ).animate().fadeIn(duration: 320.ms).scaleXY(begin: .94, curve: Curves.easeOutBack, duration: 460.ms),
           const SizedBox(height: 22),
@@ -247,7 +248,7 @@ class _MyCodeTab extends StatelessWidget {
           ]).animate(delay: 120.ms).fadeIn(duration: 300.ms).slideY(begin: .2, curve: Curves.easeOutCubic),
           const SizedBox(height: 10),
           Text(
-            'Lass deinen Freund diesen Code scannen.',
+            t('Lass deinen Freund diesen Code scannen.'),
             textAlign: TextAlign.center,
             style: T.body(16, color: C.inkSoft, height: 1.3),
           ).animate(delay: 180.ms).fadeIn(duration: 300.ms),
@@ -306,9 +307,9 @@ class _ScanTabState extends State<_ScanTab> {
     final raw = capture.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
     if (raw == null) return;
     final name = parseFriendCode(raw);
-    if (name == null) return _showNotice('Das ist kein Freundes-Code vom Großen Jakob.');
+    if (name == null) return _showNotice(t('Das ist kein Freundes-Code vom Großen Jakob.'));
     if (widget.myName != null && name.toLowerCase() == widget.myName!.toLowerCase()) {
-      return _showNotice('Das ist dein eigener Code.');
+      return _showNotice(t('Das ist dein eigener Code.'));
     }
     HapticFeedback.mediumImpact();
     _noticeTimer?.cancel();
@@ -347,7 +348,7 @@ class _ScanTabState extends State<_ScanTab> {
     }
     HapticFeedback.mediumImpact();
     final accepted = (res.data as Map?)?['status'] == 'accepted';
-    Navigator.pop(context, accepted ? 'Ihr seid jetzt befreundet' : 'Anfrage an $name gesendet');
+    Navigator.pop(context, accepted ? t('Ihr seid jetzt befreundet') : t('Anfrage an {name} gesendet', {'name': name}));
   }
 
   @override
@@ -387,7 +388,7 @@ class _ScanTabState extends State<_ScanTab> {
           duration: const Duration(milliseconds: 220),
           child: _notice != null
               ? _Hint(key: ValueKey(_notice), icon: 'close', text: _notice!, color: C.wax)
-              : const _Hint(key: ValueKey('hint'), icon: 'scan', text: 'Halte die Kamera auf den Code deines Freundes.', color: C.inkSoft),
+              : _Hint(key: const ValueKey('hint'), icon: 'scan', text: t('Halte die Kamera auf den Code deines Freundes.'), color: C.inkSoft),
         ),
       ),
     ]);
@@ -491,16 +492,16 @@ class _ConfirmCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(name, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: T.display(32)),
               const SizedBox(height: 4),
-              Text('Freundschaftsanfrage senden?', textAlign: TextAlign.center, style: T.body(16, color: C.inkSoft)),
+              Text(t('Freundschaftsanfrage senden?'), textAlign: TextAlign.center, style: T.body(16, color: C.inkSoft)),
               const SizedBox(height: 18),
-              GoldButton(label: 'Anfrage senden', icon: Icons.person_add_alt_1_rounded, busy: busy, onPressed: onConfirm),
+              GoldButton(label: t('Anfrage senden'), icon: Icons.person_add_alt_1_rounded, busy: busy, onPressed: onConfirm),
               const SizedBox(height: 6),
               SizedBox(
                 height: 48,
                 child: TextButton(
                   onPressed: busy ? null : onCancel,
                   style: TextButton.styleFrom(foregroundColor: C.inkSoft, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                  child: Text('Weiter scannen', style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
+                  child: Text(t('Weiter scannen'), style: T.body(15, color: C.inkSoft, weight: FontWeight.w700)),
                 ),
               ),
             ]),
@@ -521,16 +522,16 @@ class _CameraError extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, text) = switch (error.errorCode) {
       MobileScannerErrorCode.permissionDenied => (
-          'Kein Zugriff auf die Kamera',
-          'Erlaube Der Große Jakob den Kamerazugriff in den Einstellungen deines Handys und versuch es dann nochmal.',
+          t('Kein Zugriff auf die Kamera'),
+          t('Erlaube Der Große Jakob den Kamerazugriff in den Einstellungen deines Handys und versuch es dann nochmal.'),
         ),
       MobileScannerErrorCode.unsupported => (
-          'Scannen geht hier nicht',
-          'Dieses Gerät kann keine Codes scannen. Lass dir stattdessen den Namen sagen und such oben danach.',
+          t('Scannen geht hier nicht'),
+          t('Dieses Gerät kann keine Codes scannen. Lass dir stattdessen den Namen sagen und such oben danach.'),
         ),
       _ => (
-          'Die Kamera mag gerade nicht',
-          'Sie ließ sich nicht starten. Vielleicht nutzt sie gerade eine andere App?',
+          t('Die Kamera mag gerade nicht'),
+          t('Sie ließ sich nicht starten. Vielleicht nutzt sie gerade eine andere App?'),
         ),
     };
     return ColoredBox(
@@ -550,7 +551,7 @@ class _CameraError extends StatelessWidget {
             const SizedBox(height: 8),
             Text(text, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft, height: 1.35)),
             const SizedBox(height: 18),
-            SoftButton(label: 'Nochmal versuchen', expand: false, onPressed: onRetry),
+            SoftButton(label: t('Nochmal versuchen'), expand: false, onPressed: onRetry),
           ]),
         ).animate().fadeIn(duration: 300.ms),
       ),

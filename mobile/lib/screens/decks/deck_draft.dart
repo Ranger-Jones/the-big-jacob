@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../game/models.dart';
+import '../../i18n/i18n.dart';
 import '../../widgets/card_layout.dart';
 
 /// Labels as on the web (lib/decks.ts).
@@ -146,18 +147,18 @@ class DeckDraft extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The checks the server makes on names and symbols, with a German hint for the first problem.
+  /// The checks the server makes on names and symbols, with a hint for the first problem.
   String? problem() {
-    if (!_fits(_name, 40)) return 'Der Deck-Name braucht 1–40 Zeichen.';
-    if (!_fits(back['emblem'], 8)) return 'Das Wappen braucht ein Symbol (höchstens 8 Zeichen).';
+    if (!_fits(_name, 40)) return t('Der Deck-Name braucht 1–40 Zeichen.');
+    if (!_fits(back['emblem'], 8)) return t('Das Wappen braucht ein Symbol (höchstens 8 Zeichen).');
     for (var r = 1; r <= 13; r++) {
       final c = card(r);
-      if (!_fits(c['name'], 24)) return 'Karte $r braucht einen Namen (höchstens 24 Zeichen).';
-      if (!_fits(c['emoji'], 8)) return 'Karte $r braucht ein Symbol (höchstens 8 Zeichen).';
+      if (!_fits(c['name'], 24)) return t('Karte {rank} braucht einen Namen (höchstens 24 Zeichen).', {'rank': r});
+      if (!_fits(c['emoji'], 8)) return t('Karte {rank} braucht ein Symbol (höchstens 8 Zeichen).', {'rank': r});
       final layout = c['layout'];
       if (layout is Map) {
         for (final s in (layout['stickers'] as List? ?? const [])) {
-          if (!_fits((s as Map)['value'], 24)) return 'Ein Sticker auf Karte $r ist leer.';
+          if (!_fits((s as Map)['value'], 24)) return t('Ein Sticker auf Karte {rank} ist leer.', {'rank': r});
         }
       }
     }

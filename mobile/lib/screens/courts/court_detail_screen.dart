@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../api.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../profile_screen.dart';
@@ -58,21 +59,21 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
   Future<void> _invite() async {
     final code = _court!.inviteCode;
     await Clipboard.setData(ClipboardData(text: inviteLink(code)));
-    if (mounted) toast(context, 'Einladungslink kopiert. Der Code ist $code.');
+    if (mounted) toast(context, t('Einladungslink kopiert. Der Code ist {code}.', {'code': code}));
   }
 
   Future<void> _copyCode() async {
     await Clipboard.setData(ClipboardData(text: _court!.inviteCode));
-    if (mounted) toast(context, 'Einladungscode kopiert.');
+    if (mounted) toast(context, t('Einladungscode kopiert.'));
   }
 
   Future<void> _kick(CourtStanding s) async {
     final name = s.profile.username;
     final yes = await confirmDanger(
       context,
-      title: '$name verbannen?',
-      message: '$name verliert den Platz am Hof und kann nur mit dem Code wieder beitreten.',
-      confirm: 'Verbannen',
+      title: t('{name} verbannen?', {'name': name}),
+      message: t('{name} verliert den Platz am Hof und kann nur mit dem Code wieder beitreten.', {'name': name}),
+      confirm: t('Verbannen'),
     );
     if (!yes || !mounted) return;
     setState(() => _kicking = s.profile.id);
@@ -80,14 +81,14 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
     if (!mounted) return;
     setState(() => _kicking = null);
     if (!res.ok) return toast(context, res.error!, error: true);
-    toast(context, '$name wurde verbannt.');
+    toast(context, t('{name} wurde verbannt.', {'name': name}));
     _load();
   }
 
   Future<void> _edit() async {
     final saved = await showEditCourtSheet(context, _court!);
     if (!saved || !mounted) return;
-    toast(context, 'Hof gespeichert.');
+    toast(context, t('Hof gespeichert.'));
     _load();
   }
 
@@ -95,18 +96,18 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
     final court = _court!;
     final alone = court.standings.length <= 1;
     final message = !_owner
-        ? 'Deine Spiele bleiben gezählt, falls du zurückkommst.'
+        ? t('Deine Spiele bleiben gezählt, falls du zurückkommst.')
         : alone
-            ? 'Du bist das letzte Mitglied. Wenn du gehst, wird der Hof aufgelöst.'
-            : 'Die Hofherrschaft geht an das dienstälteste Mitglied. Bist du das letzte Mitglied, wird der Hof aufgelöst.';
-    final yes = await confirmDanger(context, title: 'Hof verlassen?', message: message, confirm: 'Verlassen', cancel: 'Bleiben');
+            ? t('Du bist das letzte Mitglied. Wenn du gehst, wird der Hof aufgelöst.')
+            : t('Die Hofherrschaft geht an das dienstälteste Mitglied. Bist du das letzte Mitglied, wird der Hof aufgelöst.');
+    final yes = await confirmDanger(context, title: t('Hof verlassen?'), message: message, confirm: t('Verlassen'), cancel: t('Bleiben'));
     if (!yes || !mounted) return;
     setState(() => _leaving = true);
     final res = await Api.post('court', {'op': 'leave', 'id': widget.id});
     if (!mounted) return;
     setState(() => _leaving = false);
     if (!res.ok) return toast(context, res.error!, error: true);
-    toast(context, _owner && alone ? 'Der Hof wurde aufgelöst.' : 'Du hast ${court.name} verlassen.');
+    toast(context, _owner && alone ? t('Der Hof wurde aufgelöst.') : t('Du hast {name} verlassen.', {'name': court.name}));
     Navigator.pop(context, true);
   }
 
@@ -120,7 +121,7 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Hof', style: T.display(30)),
+          title: Text(t('Hof'), style: T.display(30)),
         ),
         body: court == null
             ? _error == null
@@ -140,9 +141,9 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
                         .animate(delay: 90.ms)
                         .fadeIn(duration: 320.ms)
                         .slideY(begin: .1, end: 0, curve: Curves.easeOutCubic),
-                    SectionTitle('Hoftabelle', trailing: Text(plural(court.standings.length, 'Mitglied', 'Mitglieder'), style: T.body(15, color: C.inkSoft))),
+                    SectionTitle(t('Hoftabelle'), trailing: Text(memberCount(court.standings.length), style: T.body(15, color: C.inkSoft))),
                     Text(
-                      'Es zählen normale Spiele mit mindestens zwei Mitgliedern. Einen Sieg holt, wer von den Mitgliedern am besten abschneidet.',
+                      t('Es zählen normale Spiele mit mindestens zwei Mitgliedern. Einen Sieg holt, wer von den Mitgliedern am besten abschneidet.'),
                       style: T.body(14, color: C.inkMute, height: 1.35),
                     ),
                     const SizedBox(height: 12),
@@ -163,10 +164,10 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
                     ),
                     const SizedBox(height: 28),
                     if (_owner) ...[
-                      SoftButton(label: 'Name und Wappen ändern', icon: Icons.edit_rounded, onPressed: _edit),
+                      SoftButton(label: t('Name und Wappen ändern'), icon: Icons.edit_rounded, onPressed: _edit),
                       const SizedBox(height: 10),
                     ],
-                    SoftButton(label: _leaving ? 'Einen Moment …' : 'Hof verlassen', icon: Icons.logout_rounded, danger: true, onPressed: _leaving ? null : _leave),
+                    SoftButton(label: _leaving ? t('Einen Moment …') : t('Hof verlassen'), icon: Icons.logout_rounded, danger: true, onPressed: _leaving ? null : _leave),
                   ],
                 ),
               ),
@@ -186,7 +187,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           EmptyNote(message, icon: Icons.shield_outlined),
           const SizedBox(height: 8),
-          SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: onRetry),
+          SoftButton(label: t('Nochmal versuchen'), icon: Icons.refresh_rounded, onPressed: onRetry),
         ]),
       );
 }
@@ -197,7 +198,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final founded = court.createdAt == null ? null : 'Gegründet am ${germanDate(court.createdAt!)}';
+    final founded = court.createdAt == null ? null : t('Gegründet am {date}', {'date': longDate(court.createdAt!)});
     return Column(children: [
       Crest(id: court.crest, size: 128)
           .animate()
@@ -207,7 +208,7 @@ class _Header extends StatelessWidget {
       const SizedBox(height: 8),
       if (founded != null) Text(founded, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft)),
       const SizedBox(height: 10),
-      Pill(plural(court.courtGames, 'Hofspiel', 'Hofspiele'), icon: Icons.style_rounded, textColor: C.goldSoft),
+      Pill(court.courtGames == 1 ? t('{n} Hofspiel', {'n': 1}) : t('{n} Hofspiele', {'n': court.courtGames}), icon: Icons.style_rounded, textColor: C.goldSoft),
     ]);
   }
 }
@@ -221,10 +222,10 @@ class _InviteCard extends StatelessWidget {
   Widget build(BuildContext context) => Panel(
         color: C.velvet,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Einladungscode', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+          Text(t('Einladungscode'), style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
           const SizedBox(height: 6),
           Semantics(
-            label: 'Einladungscode ${code.split('').join(' ')}',
+            label: t('Einladungscode {code}', {'code': code.split('').join(' ')}),
             excludeSemantics: true,
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -233,12 +234,12 @@ class _InviteCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text('Wer den Code oder Link hat, kann deinem Hof beitreten.', style: T.body(14, color: C.inkMute)),
+          Text(t('Wer den Code oder Link hat, kann deinem Hof beitreten.'), style: T.body(14, color: C.inkMute)),
           const SizedBox(height: 14),
           Row(children: [
-            Expanded(child: GoldButton(label: 'Einladen', icon: Icons.link_rounded, onPressed: onInvite)),
+            Expanded(child: GoldButton(label: t('Einladen'), icon: Icons.link_rounded, onPressed: onInvite)),
             const SizedBox(width: 10),
-            SoftButton(label: 'Code', icon: Icons.copy_rounded, expand: false, onPressed: onCopyCode),
+            SoftButton(label: t('Code'), icon: Icons.copy_rounded, expand: false, onPressed: onCopyCode),
           ]),
         ]),
       );
@@ -295,17 +296,17 @@ class _StandingRow extends StatelessWidget {
                       Flexible(child: Text(s.profile.username, overflow: TextOverflow.ellipsis, style: T.body(17, weight: FontWeight.w800))),
                       if (s.owner) ...[
                         const SizedBox(width: 6),
-                        Semantics(label: 'Hofherr', child: const Tooltip(message: 'Hofherr', child: JIcon('crown', size: 18, color: C.gold))),
+                        Semantics(label: t('Hofherr'), child: Tooltip(message: t('Hofherr'), child: const JIcon('crown', size: 18, color: C.gold))),
                       ],
                     ]),
                     const SizedBox(height: 2),
-                    Text('${plural(s.wins, 'Sieg', 'Siege')} · ${plural(s.games, 'Spiel', 'Spiele')}', style: T.body(14, color: C.inkSoft)),
+                    Text('${s.wins == 1 ? t('{n} Sieg', {'n': 1}) : t('{n} Siege', {'n': s.wins})} · ${s.games == 1 ? t('{n} Spiel', {'n': 1}) : t('{n} Spiele', {'n': s.games})}', style: T.body(14, color: C.inkSoft)),
                   ]),
                 ),
                 const SizedBox(width: 8),
                 Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
                   Text('${s.points}', style: T.display(26, color: C.gold)),
-                  Text(s.points == 1 ? 'Punkt' : 'Punkte', style: T.label(12, color: C.inkMute)),
+                  Text(s.points == 1 ? t('Punkt') : t('Punkte'), style: T.label(12, color: C.inkMute)),
                 ]),
                 if (canKick)
                   SizedBox(
@@ -315,7 +316,7 @@ class _StandingRow extends StatelessWidget {
                         ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.wax)))
                         : IconButton(
                             onPressed: onKick,
-                            tooltip: '${s.profile.username} verbannen',
+                            tooltip: t('{name} verbannen', {'name': s.profile.username}),
                             icon: const Icon(Icons.close_rounded, size: 20),
                             color: C.inkMute,
                           ),

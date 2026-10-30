@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../api.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/jakob_icons.dart';
@@ -71,12 +72,12 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     }
     HapticFeedback.mediumImpact();
     _draft.markSaved();
-    toast(context, 'Deck gespeichert');
+    toast(context, t('Deck gespeichert'));
     return true;
   }
 
   Future<void> _rename() async {
-    final name = await showNameSheet(context, title: 'Deck umbenennen', initial: _draft.name);
+    final name = await showNameSheet(context, title: t('Deck umbenennen'), initial: _draft.name);
     if (name != null) _draft.name = name;
   }
 
@@ -85,17 +86,17 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     if (!mounted) return;
     if (!res.ok) return toast(context, res.error!, error: true);
     setState(() => _isDefault = true);
-    toast(context, '„${_draft.name}“ ist jetzt dein Standard-Deck.');
+    toast(context, t('„{name}“ ist jetzt dein Standard-Deck.', {'name': _draft.name}));
   }
 
   Future<void> _delete() async {
     final ok = await confirmSheet(context,
-        title: 'Deck löschen?', text: '„${widget.deck.name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', confirm: 'Löschen');
+        title: t('Deck löschen?'), text: t('„{name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', {'name': widget.deck.name}), confirm: t('Löschen'));
     if (!ok || !mounted) return;
     final res = await Api.post('deck', {'op': 'delete', 'id': _draft.id});
     if (!mounted) return;
     if (!res.ok) return toast(context, res.error!, error: true);
-    toast(context, 'Deck gelöscht');
+    toast(context, t('Deck gelöscht'));
     Navigator.pop(context, true);
   }
 
@@ -108,11 +109,11 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(_draft.name, style: T.display(30), maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 14),
-            ToolButton(icon: 'pencil', label: 'Umbenennen', onTap: () => Navigator.pop(ctx, 'rename')),
+            ToolButton(icon: 'pencil', label: t('Umbenennen'), onTap: () => Navigator.pop(ctx, 'rename')),
             const SizedBox(height: 10),
-            ToolButton(icon: 'star', label: _isDefault ? 'Ist dein Standard-Deck' : 'Als Standard-Deck', onTap: _isDefault ? null : () => Navigator.pop(ctx, 'default')),
+            ToolButton(icon: 'star', label: _isDefault ? t('Ist dein Standard-Deck') : t('Als Standard-Deck'), onTap: _isDefault ? null : () => Navigator.pop(ctx, 'default')),
             const SizedBox(height: 10),
-            ToolButton(icon: 'close', label: 'Deck löschen', danger: true, onTap: () => Navigator.pop(ctx, 'delete')),
+            ToolButton(icon: 'close', label: t('Deck löschen'), danger: true, onTap: () => Navigator.pop(ctx, 'delete')),
           ]),
         ),
       ),
@@ -151,23 +152,23 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     setState(() => _uploading = null);
     final data = res.data;
     final url = data is Map ? data['url'] as String? : null;
-    if (url == null) return toast(context, res.error ?? 'Das Bild konnte nicht hochgeladen werden.', error: true);
+    if (url == null) return toast(context, res.error ?? t('Das Bild konnte nicht hochgeladen werden.'), error: true);
     if (slot == 'back') {
       _draft.setBackFields({'image': url, 'zoom': 1, 'panX': 0, 'panY': 0});
     } else {
       _draft.setCard(slot as int, 'image', url);
     }
-    toast(context, 'Bild eingesetzt – vergiss nicht zu speichern.');
+    toast(context, t('Bild eingesetzt – vergiss nicht zu speichern.'));
   }
 
   Future<void> _pickArt(int rank) async {
-    final id = await showArtPicker(context, title: rank == jester ? 'Grafik für den Narren' : 'Grafik für Karte $rank', groups: widget.art);
+    final id = await showArtPicker(context, title: rank == jester ? t('Grafik für den Narren') : t('Grafik für Karte {rank}', {'rank': rank}), groups: widget.art);
     if (id == null) return;
     _draft.setCardFields(rank, {'art': id, 'image': null});
   }
 
   Future<void> _pickBackArt() async {
-    final id = await showArtPicker(context, title: 'Wappen-Grafik wählen', groups: widget.art);
+    final id = await showArtPicker(context, title: t('Wappen-Grafik wählen'), groups: widget.art);
     if (id != null) _draft.setBack('art', id);
   }
 
@@ -188,7 +189,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
 
   Future<void> _leave() async {
     final discard = await confirmSheet(context,
-        title: 'Änderungen verwerfen?', text: 'Du hast ungespeicherte Änderungen an diesem Deck.', confirm: 'Verwerfen');
+        title: t('Änderungen verwerfen?'), text: t('Du hast ungespeicherte Änderungen an diesem Deck.'), confirm: t('Verwerfen'));
     if (discard && mounted) Navigator.pop(context, true);
   }
 
@@ -223,9 +224,9 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
               ),
             ),
             actions: [
-              IconButton(tooltip: 'Rückgängig', onPressed: _draft.canUndo ? _draft.undo : null, icon: JIcon('undo', color: _draft.canUndo ? C.ink : C.inkMute)),
-              IconButton(tooltip: 'Wiederholen', onPressed: _draft.canRedo ? _draft.redo : null, icon: JIcon('redo', color: _draft.canRedo ? C.ink : C.inkMute)),
-              IconButton(tooltip: 'Mehr', onPressed: _menu, icon: const Icon(Icons.more_horiz_rounded)),
+              IconButton(tooltip: t('Rückgängig'), onPressed: _draft.canUndo ? _draft.undo : null, icon: JIcon('undo', color: _draft.canUndo ? C.ink : C.inkMute)),
+              IconButton(tooltip: t('Wiederholen'), onPressed: _draft.canRedo ? _draft.redo : null, icon: JIcon('redo', color: _draft.canRedo ? C.ink : C.inkMute)),
+              IconButton(tooltip: t('Mehr'), onPressed: _menu, icon: const Icon(Icons.more_horiz_rounded)),
             ],
           ),
           body: Column(children: [
@@ -263,10 +264,10 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Semantics(
               button: true,
-              label: 'Karte $_rank frei gestalten',
+              label: t('Karte {rank} frei gestalten', {'rank': _rank}),
               child: PlayingCard(rank: _rank, deck: deck, width: faceW),
             ),
-            caption('${_rank == jester ? 'Narr' : 'Rang $_rank'} · ${face.name}'),
+            caption('${_rank == jester ? t('Narr') : t('Rang {rank}', {'rank': _rank})} · ${t(face.name)}'),
           ]),
         ),
         const SizedBox(width: 22),
@@ -274,7 +275,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
           onTap: () => setState(() => _tab = _Tab.rueckseite),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             CardBack(deck: deck, width: backW),
-            caption('Rückseite'),
+            caption(t('Rückseite')),
           ]),
         ),
       ]),
@@ -294,7 +295,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
             return Semantics(
               button: true,
               selected: rank == _rank,
-              label: rank == jester ? 'Narr bearbeiten' : 'Karte $rank bearbeiten',
+              label: rank == jester ? t('Narr bearbeiten') : t('Karte {rank} bearbeiten', {'rank': rank}),
               child: GestureDetector(
                 onTap: () => _selectRank(rank),
                 child: AnimatedOpacity(
@@ -333,7 +334,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                     borderRadius: BorderRadius.circular(99),
                     gradient: tab == _tab ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.goldSoft, C.gold]) : null,
                   ),
-                  child: Text(label, style: T.body(16, color: tab == _tab ? C.onGold : C.ink, weight: FontWeight.w800)),
+                  child: Text(t(label), style: T.body(16, color: tab == _tab ? C.onGold : C.ink, weight: FontWeight.w800)),
                 ),
               ),
             ),
@@ -350,52 +351,52 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     final custom = c['layout'] is Map;
     return [
       EditorGroup(
-        title: rank == jester ? 'Narr' : 'Karte $rank',
-        hint: 'Kommt ${copiesOf(rank)}× ins Spiel. Die Zahl bestimmt den Rang und bleibt fest.',
+        title: rank == jester ? t('Narr') : t('Karte {rank}', {'rank': rank}),
+        hint: t('Kommt {count}× ins Spiel. Die Zahl bestimmt den Rang und bleibt fest.', {'count': copiesOf(rank)}),
         children: [
-          DraftTextField(label: 'Name', value: c['name'] as String? ?? '', maxLength: 24, onChanged: (v) => _draft.setCard(rank, 'name', v, key: '$rank-name')),
-          SymbolField(label: 'Symbol', value: c['emoji'] as String? ?? '', onChanged: (v) => _draft.setCard(rank, 'emoji', v, key: '$rank-emoji')),
+          DraftTextField(label: t('Name'), value: c['name'] as String? ?? '', maxLength: 24, onChanged: (v) => _draft.setCard(rank, 'name', v, key: '$rank-name')),
+          SymbolField(label: t('Symbol'), value: c['emoji'] as String? ?? '', onChanged: (v) => _draft.setCard(rank, 'emoji', v, key: '$rank-emoji')),
         ],
       ),
       EditorGroup(
-        title: 'Bild',
-        hint: 'Wahlweise eine gezeichnete Grafik oder ein eigenes Foto statt des Symbols.',
+        title: t('Bild'),
+        hint: t('Wahlweise eine gezeichnete Grafik oder ein eigenes Foto statt des Symbols.'),
         children: [
           Row(children: [
             if (art != null) ...[
               SizedBox(width: 44, height: 44, child: SvgPicture.network(Api.artUrl(art, full: false))),
               const SizedBox(width: 8),
             ],
-            Expanded(child: ToolButton(icon: 'palette', label: art != null ? 'Grafik ändern' : 'Grafik wählen', onTap: () => _pickArt(rank))),
+            Expanded(child: ToolButton(icon: 'palette', label: art != null ? t('Grafik ändern') : t('Grafik wählen'), onTap: () => _pickArt(rank))),
             if (art != null) ...[
               const SizedBox(width: 8),
-              ToolButton(icon: 'close', tooltip: 'Grafik entfernen', onTap: () => _draft.setCard(rank, 'art', null)),
+              ToolButton(icon: 'close', tooltip: t('Grafik entfernen'), onTap: () => _draft.setCard(rank, 'art', null)),
             ],
           ]),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(
               child: ToolButton(
-                icon: 'camera', label: image != null ? 'Foto ändern' : 'Foto einsetzen', busy: _isUploading(rank),
+                icon: 'camera', label: image != null ? t('Foto ändern') : t('Foto einsetzen'), busy: _isUploading(rank),
                 onTap: _uploading == null ? () => _uploadPhoto(rank) : null,
               ),
             ),
             if (image != null) ...[
               const SizedBox(width: 8),
-              ToolButton(icon: 'close', tooltip: 'Foto entfernen', onTap: () => _draft.setCard(rank, 'image', null)),
+              ToolButton(icon: 'close', tooltip: t('Foto entfernen'), onTap: () => _draft.setCard(rank, 'image', null)),
             ],
           ]),
           const SizedBox(height: 10),
         ],
       ),
       EditorGroup(
-        title: 'Freie Gestaltung',
-        hint: 'Bild, Zahl und Name verschieben, vergrößern und drehen, Sticker und Text aufkleben.',
+        title: t('Freie Gestaltung'),
+        hint: t('Bild, Zahl und Name verschieben, vergrößern und drehen, Sticker und Text aufkleben.'),
         children: [
-          SoftButton(label: custom ? 'Gestaltung bearbeiten' : 'Karte frei gestalten', jicon: 'pencil', onPressed: _openStudio),
+          SoftButton(label: custom ? t('Gestaltung bearbeiten') : t('Karte frei gestalten'), jicon: 'pencil', onPressed: _openStudio),
           if (custom) ...[
             const SizedBox(height: 8),
-            SoftButton(label: 'Zurück zum Standard-Layout', jicon: 'undo', onPressed: () => _draft.setCard(rank, 'layout', null)),
+            SoftButton(label: t('Zurück zum Standard-Layout'), jicon: 'undo', onPressed: () => _draft.setCard(rank, 'layout', null)),
           ],
           const SizedBox(height: 8),
         ],
@@ -407,31 +408,31 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     final d = _draft.design;
     String color(String k) => d[k] as String? ?? '#000000';
     return [
-      EditorGroup(title: 'Name des Decks', children: [
-        DraftTextField(label: 'Name', value: _draft.name, maxLength: 40, onChanged: (v) => _draft.name = v),
+      EditorGroup(title: t('Name des Decks'), children: [
+        DraftTextField(label: t('Name'), value: _draft.name, maxLength: 40, onChanged: (v) => _draft.name = v),
       ]),
-      EditorGroup(title: 'Farben der Vorderseite', children: [
-        ColorField(label: 'Rahmen', value: color('frame'), onChanged: (v) => _draft.set('frame', v, key: 'color-frame')),
-        ColorField(label: 'Zahlen', value: color('accent'), onChanged: (v) => _draft.set('accent', v, key: 'color-accent')),
-        ColorField(label: 'Papier', value: color('paper'), onChanged: (v) => _draft.set('paper', v, key: 'color-paper')),
-        ColorField(label: 'Schrift', value: color('ink'), onChanged: (v) => _draft.set('ink', v, key: 'color-ink')),
+      EditorGroup(title: t('Farben der Vorderseite'), children: [
+        ColorField(label: t('Rahmen'), value: color('frame'), onChanged: (v) => _draft.set('frame', v, key: 'color-frame')),
+        ColorField(label: t('Zahlen'), value: color('accent'), onChanged: (v) => _draft.set('accent', v, key: 'color-accent')),
+        ColorField(label: t('Papier'), value: color('paper'), onChanged: (v) => _draft.set('paper', v, key: 'color-paper')),
+        ColorField(label: t('Schrift'), value: color('ink'), onChanged: (v) => _draft.set('ink', v, key: 'color-ink')),
         const SizedBox(height: 6),
       ]),
-      EditorGroup(title: 'Schriftart', children: [
+      EditorGroup(title: t('Schriftart'), children: [
         ChoiceRow(
           value: d['font'] as String? ?? 'gotisch',
-          options: [for (final e in fontLabels.entries) (e.key, e.value)],
+          options: [for (final e in fontLabels.entries) (e.key, t(e.value))],
           onChanged: (v) => _draft.set('font', v),
         ),
         const SizedBox(height: 6),
       ]),
       EditorGroup(
-        title: 'Bilder auf der Vorderseite',
-        hint: '„Ganze Karte“: Grafiken und Fotos füllen die komplette Vorderseite – bei Grafiken wird die Zahl groß ins Bild eingearbeitet.',
+        title: t('Bilder auf der Vorderseite'),
+        hint: t('„Ganze Karte“: Grafiken und Fotos füllen die komplette Vorderseite – bei Grafiken wird die Zahl groß ins Bild eingearbeitet.'),
         children: [
           ChoiceRow(
             value: d['photoFit'] as String? ?? 'medaillon',
-            options: [for (final e in photoFitLabels.entries) (e.key, e.value)],
+            options: [for (final e in photoFitLabels.entries) (e.key, t(e.value))],
             onChanged: (v) => _draft.set('photoFit', v),
           ),
           const SizedBox(height: 6),
@@ -451,7 +452,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     }
 
     return [
-      EditorGroup(title: 'Muster', hint: image != null ? 'Das Foto deckt das Muster gerade zu.' : null, children: [
+      EditorGroup(title: t('Muster'), hint: image != null ? t('Das Foto deckt das Muster gerade zu.') : null, children: [
         LayoutBuilder(builder: (context, box) {
           final w = ((box.maxWidth - 3 * 10) / 4).floorToDouble().clamp(40.0, 80.0);
           return Wrap(spacing: 10, runSpacing: 10, children: [
@@ -459,7 +460,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
               Semantics(
                 button: true,
                 selected: back['pattern'] == e.key,
-                label: 'Muster ${e.value}',
+                label: t('Muster {name}', {'name': t(e.value)}),
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();
@@ -475,7 +476,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
                       child: CardBack(deck: withPattern(e.key), width: w - 10),
                     ),
                     const SizedBox(height: 4),
-                    Text(e.value, style: T.label(13, color: back['pattern'] == e.key ? C.goldSoft : C.inkSoft)),
+                    Text(t(e.value), style: T.label(13, color: back['pattern'] == e.key ? C.goldSoft : C.inkSoft)),
                   ]),
                 ),
               ),
@@ -483,47 +484,47 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
         }),
         const SizedBox(height: 10),
       ]),
-      EditorGroup(title: 'Farben der Rückseite', children: [
-        ColorField(label: 'Grundfarbe', value: back['a'] as String? ?? '#6b1e2e', onChanged: (v) => _draft.setBack('a', v, key: 'back-a')),
-        ColorField(label: 'Musterfarbe', value: back['b'] as String? ?? '#8e2f40', onChanged: (v) => _draft.setBack('b', v, key: 'back-b')),
+      EditorGroup(title: t('Farben der Rückseite'), children: [
+        ColorField(label: t('Grundfarbe'), value: back['a'] as String? ?? '#6b1e2e', onChanged: (v) => _draft.setBack('a', v, key: 'back-a')),
+        ColorField(label: t('Musterfarbe'), value: back['b'] as String? ?? '#8e2f40', onChanged: (v) => _draft.setBack('b', v, key: 'back-b')),
         const SizedBox(height: 6),
       ]),
-      EditorGroup(title: 'Wappen', hint: 'Die Grafik steht statt des Symbols in der Mitte.', children: [
-        SymbolField(label: 'Wappen (Emoji oder Kürzel)', value: back['emblem'] as String? ?? '', onChanged: (v) => _draft.setBack('emblem', v, key: 'back-emblem')),
+      EditorGroup(title: t('Wappen'), hint: t('Die Grafik steht statt des Symbols in der Mitte.'), children: [
+        SymbolField(label: t('Wappen (Emoji oder Kürzel)'), value: back['emblem'] as String? ?? '', onChanged: (v) => _draft.setBack('emblem', v, key: 'back-emblem')),
         const SizedBox(height: 6),
         Row(children: [
           if (art != null) ...[
             SizedBox(width: 44, height: 44, child: SvgPicture.network(Api.artUrl(art, full: false))),
             const SizedBox(width: 8),
           ],
-          Expanded(child: ToolButton(icon: 'palette', label: art != null ? 'Wappen-Grafik ändern' : 'Wappen-Grafik wählen', onTap: _pickBackArt)),
+          Expanded(child: ToolButton(icon: 'palette', label: art != null ? t('Wappen-Grafik ändern') : t('Wappen-Grafik wählen'), onTap: _pickBackArt)),
           if (art != null) ...[
             const SizedBox(width: 8),
-            ToolButton(icon: 'close', tooltip: 'Wappen-Grafik entfernen', onTap: () => _draft.setBack('art', null)),
+            ToolButton(icon: 'close', tooltip: t('Wappen-Grafik entfernen'), onTap: () => _draft.setBack('art', null)),
           ],
         ]),
         const SizedBox(height: 10),
       ]),
-      EditorGroup(title: 'Foto über die ganze Rückseite', hint: 'Ersetzt Muster und Wappen.', children: [
+      EditorGroup(title: t('Foto über die ganze Rückseite'), hint: t('Ersetzt Muster und Wappen.'), children: [
         Row(children: [
           Expanded(
             child: ToolButton(
-              icon: 'camera', label: image != null ? 'Foto ändern' : 'Foto einsetzen', busy: _isUploading('back'),
+              icon: 'camera', label: image != null ? t('Foto ändern') : t('Foto einsetzen'), busy: _isUploading('back'),
               onTap: _uploading == null ? () => _uploadPhoto('back') : null,
             ),
           ),
           if (image != null) ...[
             const SizedBox(width: 8),
-            ToolButton(icon: 'close', tooltip: 'Rückseitenfoto entfernen', onTap: () => _draft.setBack('image', null)),
+            ToolButton(icon: 'close', tooltip: t('Rückseitenfoto entfernen'), onTap: () => _draft.setBack('image', null)),
           ],
         ]),
         if (image != null) ...[
           const SizedBox(height: 6),
-          LabeledSlider(label: 'Zoom', value: (back['zoom'] as num? ?? 1) * 100, min: 100, max: 500, unit: ' %',
+          LabeledSlider(label: t('Zoom'), value: (back['zoom'] as num? ?? 1) * 100, min: 100, max: 500, unit: ' %',
               onChanged: (v) => _draft.setBack('zoom', v.round() / 100, key: 'back-zoom')),
-          LabeledSlider(label: 'Waagerecht', value: (back['panX'] as num? ?? 0).toDouble(), min: -100, max: 100,
+          LabeledSlider(label: t('Waagerecht'), value: (back['panX'] as num? ?? 0).toDouble(), min: -100, max: 100,
               onChanged: (v) => _draft.setBack('panX', v.roundToDouble(), key: 'back-panX')),
-          LabeledSlider(label: 'Senkrecht', value: (back['panY'] as num? ?? 0).toDouble(), min: -100, max: 100,
+          LabeledSlider(label: t('Senkrecht'), value: (back['panY'] as num? ?? 0).toDouble(), min: -100, max: 100,
               onChanged: (v) => _draft.setBack('panY', v.roundToDouble(), key: 'back-panY')),
         ],
         const SizedBox(height: 10),
@@ -536,10 +537,10 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
         decoration: BoxDecoration(color: C.night.withValues(alpha: .92), border: const Border(top: BorderSide(color: C.line))),
         child: Row(children: [
           Expanded(
-            child: Text(_draft.dirty ? 'Ungespeicherte Änderungen' : 'Alles gespeichert',
+            child: Text(_draft.dirty ? t('Ungespeicherte Änderungen') : t('Alles gespeichert'),
                 style: T.body(15, color: _draft.dirty ? C.goldSoft : C.inkSoft, weight: FontWeight.w700)),
           ),
-          GoldButton(label: _saving ? 'Speichert …' : 'Speichern', jicon: 'check', expand: false, busy: _saving, onPressed: _draft.dirty ? _save : null),
+          GoldButton(label: _saving ? t('Speichert …') : t('Speichern'), jicon: 'check', expand: false, busy: _saving, onPressed: _draft.dirty ? _save : null),
         ]),
       );
 }

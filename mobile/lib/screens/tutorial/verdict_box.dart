@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/tutorial.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 
 /// Feedback on an answer: green with a check when right, red when wrong.
@@ -38,7 +39,7 @@ class VerdictBox extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(v.ok ? Icons.check_circle_rounded : Icons.info_outline_rounded, size: 22, color: text),
           const SizedBox(width: 10),
-          Expanded(child: Text(v.message, style: T.body(16, color: text, weight: FontWeight.w700, height: 1.3))),
+          Expanded(child: Text(t(v.message), style: T.body(16, color: text, weight: FontWeight.w700, height: 1.3))),
         ]),
       ),
     );

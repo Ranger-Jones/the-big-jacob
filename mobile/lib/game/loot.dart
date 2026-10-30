@@ -1,15 +1,23 @@
 import 'dart:ui';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
 
 /// A cosmetic from a loot chest (catalogue in src/lib/loot/catalog.ts).
 class LootItem {
   final String id, kind, rarity, name, text;
-  const LootItem(this.id, this.kind, this.rarity, this.name, this.text);
+  /// English name from the catalogue (the description is translated via the dictionary).
+  final String nameEn;
+  const LootItem(this.id, this.kind, this.rarity, this.name, this.text, [this.nameEn = '']);
 
   factory LootItem.from(Map m) => LootItem(
         m['id'] as String, m['kind'] as String, m['rarity'] as String, m['name'] as String? ?? '', m['text'] as String? ?? '',
+        m['nameEn'] as String? ?? '',
       );
+
+  /// The name in the current language.
+  String get title => I18n.english && nameEn.isNotEmpty ? nameEn : name;
+
 }
 
 const lootKinds = ['rahmen', 'wappen', 'rueckseite', 'filz'];

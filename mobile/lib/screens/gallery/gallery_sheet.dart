@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
@@ -59,7 +60,7 @@ class _GallerySheet extends StatelessWidget {
                             Text(d.name, style: T.display(32), maxLines: 2, overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 4),
                             Text(
-                              'von ${deck.ownerName}',
+                              t('von {name}', {'name': deck.ownerName}),
                               style: T.body(15.5, color: C.goldSoft, weight: FontWeight.w700),
                             ),
                             const SizedBox(height: 2),
@@ -76,7 +77,7 @@ class _GallerySheet extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: GoldButton(
-                          label: 'Kopieren',
+                          label: t('Kopieren'),
                           icon: Icons.content_copy_rounded,
                           onPressed: canCopy ? () => Navigator.pop(context, true) : null,
                         ),
@@ -85,10 +86,10 @@ class _GallerySheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Eine Kopie landet in deinen Decks. Dort kannst du sie im Browser weiter gestalten.',
+                    t('Eine Kopie landet in deinen Decks. Dort kannst du sie im Browser weiter gestalten.'),
                     style: T.body(14, color: C.inkMute),
                   ),
-                  const SectionTitle('Die 13 Karten'),
+                  SectionTitle(t('Die 13 Karten')),
                   Wrap(
                     spacing: gap,
                     runSpacing: gap + 2,
@@ -100,7 +101,7 @@ class _GallerySheet extends StatelessWidget {
                             .scaleXY(begin: .9, end: 1, duration: 320.ms, curve: Curves.easeOutBack),
                     ],
                   ),
-                  const SectionTitle('Rückseite'),
+                  SectionTitle(t('Rückseite')),
                   Center(
                     child: CardBack(deck: d, width: cardW * 1.6),
                   ).animate(delay: 300.ms).fadeIn(),

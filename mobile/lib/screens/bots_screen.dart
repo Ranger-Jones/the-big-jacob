@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../api.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/jakob_icons.dart';
@@ -134,7 +135,7 @@ class _BotsScreenState extends State<BotsScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Gegen Bots spielen', style: T.display(28)),
+          title: Text(t('Gegen Bots spielen'), style: T.display(28)),
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator(color: C.gold))
@@ -145,16 +146,15 @@ class _BotsScreenState extends State<BotsScreen> {
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(context).bottom + 30),
                   children: [
-                    Text('Fordere die Leute vom Hof zum Duell: zu zweit, mit je 15 Karten und einem verdeckten Hofstapel. '
-                        'Jeder spielt anders – und ganz oben wartet der König.', style: T.body(15, color: C.inkSoft, height: 1.35)),
+                    Text(t('Fordere die Leute vom Hof zum Duell: zu zweit, mit je 15 Karten und einem verdeckten Hofstapel. Jeder spielt anders – und ganz oben wartet der König.'), style: T.body(15, color: C.inkSoft, height: 1.35)),
                     const SizedBox(height: 12),
-                    Align(alignment: Alignment.centerLeft, child: Pill('$beaten von ${_bots.length} besiegt', jicon: 'trophy', textColor: C.goldSoft)),
-                    if (_error != null) EmptyNote(_error!, icon: Icons.wifi_off_rounded),
+                    Align(alignment: Alignment.centerLeft, child: Pill(t('{n} von {total} besiegt', {'n': beaten, 'total': _bots.length}), jicon: 'trophy', textColor: C.goldSoft)),
+                    if (_error != null) EmptyNote(t(_error!), icon: Icons.wifi_off_rounded),
                     if (_starting) const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator(color: C.gold, backgroundColor: C.surface)),
                     for (final tier in [_featured, ...tiers])
                       if (_inGroup(tier).isNotEmpty) ...[
-                        SectionTitle(tier),
-                        Transform.translate(offset: const Offset(0, -8), child: Text(_tierHint[tier]!, style: T.body(14, color: C.inkSoft))),
+                        SectionTitle(t(tier)),
+                        Transform.translate(offset: const Offset(0, -8), child: Text(t(_tierHint[tier]!), style: T.body(14, color: C.inkSoft))),
                         GridView.count(
                           crossAxisCount: 3,
                           shrinkWrap: true,
@@ -196,7 +196,7 @@ class _BotTile extends StatelessWidget {
           ]),
           const SizedBox(height: 8),
           Expanded(
-            child: Text(bot.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+            child: Text(t(bot.name), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: T.body(13, weight: FontWeight.w800, height: 1.15)),
           ),
           Text('${bot.elo}', style: T.label(13, color: C.goldSoft)),
@@ -239,29 +239,35 @@ class _BotSheetState extends State<_BotSheet> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Center(child: BotPortrait(bot.name, size: 116, highlight: true)).animate().scaleXY(begin: .8, end: 1, duration: 380.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 12),
-        Text(bot.name, textAlign: TextAlign.center, style: T.display(34)),
+        Text(t(bot.name), textAlign: TextAlign.center, style: T.display(34)),
         const SizedBox(height: 6),
-        Center(child: Pill('${bot.tier} · ${bot.elo} Elo', color: const Color(0xFF6B1E2E), textColor: C.ink)),
+        Center(child: Pill('${t(bot.tier)} · ${bot.elo} Elo', color: const Color(0xFF6B1E2E), textColor: C.ink)),
         const SizedBox(height: 14),
         Panel(
           color: C.velvet,
-          child: Text('„${bot.greeting}“', textAlign: TextAlign.center, style: T.body(18, weight: FontWeight.w800).copyWith(fontStyle: FontStyle.italic)),
+          child: Text(t('„{text}“', {'text': t(bot.greeting)}), textAlign: TextAlign.center, style: T.body(18, weight: FontWeight.w800).copyWith(fontStyle: FontStyle.italic)),
         ).animate(delay: 120.ms).fadeIn().slideY(begin: .15, end: 0),
         const SizedBox(height: 10),
-        Text(bot.bio, textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft, height: 1.35)),
+        Text(t(bot.bio), textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft, height: 1.35)),
         if (bot.won == 0 && bot.firstWinDukaten > 0) ...[
           const SizedBox(height: 8),
-          Center(child: Pill('Erster Sieg: +${bot.firstWinDukaten} Dukaten', jicon: 'coins', textColor: C.goldSoft)),
+          Center(child: Pill(t('Erster Sieg: +{n} Dukaten', {'n': bot.firstWinDukaten}), jicon: 'coins', textColor: C.goldSoft)),
         ],
         const SizedBox(height: 6),
         Text(
-          bot.played == 0 ? 'Noch nie gegeneinander gespielt' : 'Deine Bilanz: ${bot.won} ${bot.won == 1 ? 'Sieg' : 'Siege'} aus ${bot.played} ${bot.played == 1 ? 'Duell' : 'Duellen'}',
+          bot.played == 0
+              ? t('Noch nie gegeneinander gespielt')
+              : bot.played == 1
+                  ? (bot.won == 1 ? t('Deine Bilanz: 1 Sieg aus 1 Duell') : t('Deine Bilanz: {won} Siege aus 1 Duell', {'won': bot.won}))
+                  : bot.won == 1
+                      ? t('Deine Bilanz: 1 Sieg aus {played} Duellen', {'played': bot.played})
+                      : t('Deine Bilanz: {won} Siege aus {played} Duellen', {'won': bot.won, 'played': bot.played}),
           textAlign: TextAlign.center,
           style: T.label(13, color: bot.won > 0 ? C.vert : C.inkSoft),
         ),
         const SizedBox(height: 18),
         if (!running) ...[
-          Text('Spielart', style: T.body(16, weight: FontWeight.w800)),
+          Text(t('Spielart'), style: T.body(16, weight: FontWeight.w800)),
           const SizedBox(height: 8),
           for (final v in widget.variants)
             Padding(
@@ -276,8 +282,8 @@ class _BotSheetState extends State<_BotSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(v.name, style: T.body(16, weight: FontWeight.w800)),
-                      Text(v.description, style: T.body(13, color: C.inkSoft, height: 1.3)),
+                      Text(t(v.name), style: T.body(16, weight: FontWeight.w800)),
+                      Text(t(v.description), style: T.body(13, color: C.inkSoft, height: 1.3)),
                     ]),
                   ),
                 ]),
@@ -286,7 +292,7 @@ class _BotSheetState extends State<_BotSheet> {
           const SizedBox(height: 8),
         ],
         GoldButton(
-          label: running ? 'Duell fortsetzen' : 'Duell beginnen',
+          label: running ? t('Duell fortsetzen') : t('Duell beginnen'),
           jicon: 'sword',
           large: true,
           onPressed: () => Navigator.pop(context, _variant),
@@ -310,12 +316,12 @@ Future<String?> showPersonaPicker(BuildContext context, Set<String> seated) => s
           builder: (ctx, snap) {
             if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: C.gold));
             final res = snap.data!;
-            if (!res.ok) return EmptyNote(res.error!, icon: Icons.wifi_off_rounded);
+            if (!res.ok) return EmptyNote(t(res.error!), icon: Icons.wifi_off_rounded);
             final bots = (((res.data as Map)['bots'] as List?) ?? const []).whereType<Map>().map(BotPersona.from).toList();
             return ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(20, 0, 20, 40), children: [
-              Text('Charakter an den Tisch holen', style: T.display(28)),
+              Text(t('Charakter an den Tisch holen'), style: T.display(28)),
               for (final tier in tiers) ...[
-                SectionTitle(tier),
+                SectionTitle(t(tier)),
                 for (final b in bots.where((b) => b.tier == tier))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -329,8 +335,8 @@ Future<String?> showPersonaPicker(BuildContext context, Set<String> seated) => s
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(b.name, style: T.body(16, weight: FontWeight.w800)),
-                              Text(seated.contains(b.id) ? 'sitzt schon da' : b.bio, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(13, color: C.inkSoft)),
+                              Text(t(b.name), style: T.body(16, weight: FontWeight.w800)),
+                              Text(seated.contains(b.id) ? t('sitzt schon da') : t(b.bio), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.body(13, color: C.inkSoft)),
                             ]),
                           ),
                           Text('${b.elo}', style: T.label(14, color: C.goldSoft)),

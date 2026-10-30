@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../api.dart';
 import '../game/models.dart';
 import '../game/rules.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/jakob_icons.dart';
 import 'card_layout.dart';
@@ -29,7 +30,7 @@ TextStyle deckFont(String font, double size, Color color) {
   }
 }
 
-String numeral(int rank) => rank == jester ? 'N' : '$rank';
+String numeral(int rank) => rank == jester ? t('N') : '$rank';
 
 /// A card face drawn from the deck design. Width drives every measure (aspect 5:7).
 class PlayingCard extends StatelessWidget {
@@ -108,12 +109,12 @@ class PlayingCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(fit: StackFit.expand, children: [
         body,
-        if (width >= 56 && face.layout == null) Positioned(left: 0, right: 0, bottom: 5 * s, child: _NameBanner(name: face.name, deck: deck, scale: s)),
+        if (width >= 56 && face.layout == null) Positioned(left: 0, right: 0, bottom: 5 * s, child: _NameBanner(name: t(face.name), deck: deck, scale: s)),
         if (marked)
           Positioned(right: 4 * s, top: 4 * s, child: Container(
             padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 2 * s),
             decoration: BoxDecoration(color: C.gold, borderRadius: BorderRadius.circular(8 * s)),
-            child: Text('neu', style: T.label(10 * s, color: C.onGold)),
+            child: Text(t('neu'), style: T.label(10 * s, color: C.onGold)),
           )),
       ]),
     );

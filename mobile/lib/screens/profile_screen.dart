@@ -10,6 +10,7 @@ import 'decks_screen.dart';
 import 'notifications.dart';
 import 'profile/profile_edit.dart';
 import 'profile/profile_widgets.dart';
+import '../i18n/i18n.dart';
 import '../i18n/language_picker.dart';
 import '../widgets/jakob_icons.dart';
 
@@ -84,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _data = res.data as Map;
         _error = null;
       } else {
-        _error = res?.error ?? 'Profil nicht gefunden.';
+        _error = res?.error ?? t('Profil nicht gefunden.');
       }
     });
   }
@@ -112,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       if (res.ok) {
         await _load();
-        if (mounted) toast(context, 'Profilbild entfernt');
+        if (mounted) toast(context, t('Profilbild entfernt'));
       } else {
         toast(context, res.error!, error: true);
       }
@@ -133,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case AvatarDone():
         // Keep the spinner until the new portrait is loaded so the old one does not flash.
         await _load();
-        if (mounted) toast(context, 'Profilbild aktualisiert');
+        if (mounted) toast(context, t('Profilbild aktualisiert'));
       case AvatarFailed(:final message):
         toast(context, message, error: true);
     }
@@ -151,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     if (!mounted) return;
     setState(() => _renamed = name == widget.username ? null : name);
-    toast(context, 'Name geändert');
+    toast(context, t('Name geändert'));
     await _load();
   }
 
@@ -159,11 +160,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Abmelden?', style: T.display(30)),
-        content: Text('Du kannst dich jederzeit wieder anmelden.', style: T.body(16, color: C.inkSoft)),
+        title: Text(t('Abmelden?'), style: T.display(30)),
+        content: Text(t('Du kannst dich jederzeit wieder anmelden.'), style: T.body(16, color: C.inkSoft)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Bleiben', style: T.body(16, color: C.inkSoft, weight: FontWeight.w700))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Abmelden', style: T.body(16, color: C.wax, weight: FontWeight.w800))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t('Bleiben'), style: T.body(16, color: C.inkSoft, weight: FontWeight.w700))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t('Abmelden'), style: T.body(16, color: C.wax, weight: FontWeight.w800))),
         ],
       ),
     );
@@ -173,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await Supabase.instance.client.auth.signOut();
     } catch (_) {
-      if (mounted) toast(context, 'Abmelden hat nicht geklappt. Bitte nochmal versuchen.', error: true);
+      if (mounted) toast(context, t('Abmelden hat nicht geklappt. Bitte nochmal versuchen.'), error: true);
     }
   }
 
@@ -204,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(children: [
         if (!widget.isMe)
           IconButton(
-            tooltip: 'Zurück',
+            tooltip: t('Zurück'),
             style: IconButton.styleFrom(backgroundColor: C.surface.withValues(alpha: .7), fixedSize: const Size(48, 48)),
             onPressed: () => Navigator.maybePop(context),
             icon: const Icon(Icons.arrow_back_rounded, color: C.ink),
@@ -212,7 +213,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const Spacer(),
         if (widget.isMe)
           IconButton(
-            tooltip: 'Abmelden',
+            tooltip: t('Abmelden'),
             style: IconButton.styleFrom(backgroundColor: C.surface.withValues(alpha: .7), fixedSize: const Size(48, 48)),
             onPressed: _signOut,
             icon: const Icon(Icons.logout_rounded, color: C.inkSoft),
@@ -226,11 +227,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         if (_error != null) ...[
           EmptyNote(_error!, icon: Icons.wifi_off_rounded),
-          SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: _load),
+          SoftButton(label: t('Nochmal versuchen'), icon: Icons.refresh_rounded, onPressed: _load),
         ] else if (_loading || _name.trim().isNotEmpty)
           const ProfileSkeleton()
         else
-          const EmptyNote('Dein Profil wird geladen …'),
+          EmptyNote(t('Dein Profil wird geladen …')),
         if (widget.isMe) ...[const SizedBox(height: 24), ..._account()],
       ];
     }
@@ -261,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       StatTiles(stats: stats),
       if (detailed != null) DetailedStatsBlock(detailed: detailed, isMe: widget.isMe),
       if (widget.isMe) ...[
-        const SectionTitle('Am Hof'),
+        SectionTitle(t('Am Hof')),
         Panel(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
           child: Row(children: [
@@ -273,26 +274,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Deine Decks', style: T.display(22)),
+                Text(t('Deine Decks'), style: T.display(22)),
                 const SizedBox(height: 2),
-                Text('Wähle und gestalte die Karten, mit denen du spielst.', style: T.body(14, color: C.inkSoft)),
+                Text(t('Wähle und gestalte die Karten, mit denen du spielst.'), style: T.body(14, color: C.inkSoft)),
               ]),
             ),
             const Icon(Icons.chevron_right_rounded, color: C.inkSoft),
           ]),
         ),
       ],
-      SectionTitle('Abzeichen', trailing: Pill('$earned von ${badges.length}', textColor: C.goldSoft)),
+      SectionTitle(t('Abzeichen'), trailing: Pill(t('{earned} von {total}', {'earned': earned, 'total': badges.length}), textColor: C.goldSoft)),
       BadgeGrid(badges: badges),
       if (rivals.isNotEmpty) ...[
-        const SectionTitle('Rivalitäten'),
+        SectionTitle(t('Rivalitäten')),
         RivalList(rivals: rivals, onOpen: _open),
       ],
-      const SectionTitle('Letzte Spiele'),
+      SectionTitle(t('Letzte Spiele')),
       if (history.isEmpty)
         Panel(
           child: EmptyNote(
-            widget.isMe ? 'Noch keine Spiele. Eröffne einen Tisch am Hof.' : 'Noch keine beendeten Spiele.',
+            widget.isMe ? t('Noch keine Spiele. Eröffne einen Tisch am Hof.') : t('Noch keine beendeten Spiele.'),
             icon: Icons.style_rounded,
           ),
         )
@@ -307,6 +308,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 14),
         const NotificationsPanel(),
         const SizedBox(height: 14),
-        SoftButton(label: 'Abmelden', icon: Icons.logout_rounded, danger: true, onPressed: _signOut),
+        SoftButton(label: t('Abmelden'), icon: Icons.logout_rounded, danger: true, onPressed: _signOut),
       ];
 }

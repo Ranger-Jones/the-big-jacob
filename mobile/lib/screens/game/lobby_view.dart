@@ -8,6 +8,7 @@ import '../../api.dart';
 import '../../game/controller.dart';
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/playing_card.dart';
@@ -47,15 +48,15 @@ class LobbyView extends StatelessWidget {
             Row(children: [
               IconButton(onPressed: onLeave, icon: const Icon(Icons.arrow_back_rounded, color: C.inkSoft)),
               const Spacer(),
-              if (!public) IconButton(onPressed: () => _invite(context), icon: const Icon(Icons.person_add_alt_1_rounded, color: C.goldSoft), tooltip: 'Freunde einladen'),
+              if (!public) IconButton(onPressed: () => _invite(context), icon: const Icon(Icons.person_add_alt_1_rounded, color: C.goldSoft), tooltip: t('Freunde einladen')),
             ]),
-            Text(public ? 'Offene Runde' : 'Dein Tisch', style: T.body(17, color: C.inkSoft)),
+            Text(public ? t('Offene Runde') : t('Dein Tisch'), style: T.body(17, color: C.inkSoft)),
             if (!public)
               GestureDetector(
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: g.game!.code));
                   HapticFeedback.selectionClick();
-                  toast(context, 'Code ${g.game!.code} kopiert. Schick ihn deinen Freunden!');
+                  toast(context, t('Code {code} kopiert. Schick ihn deinen Freunden!', {'code': g.game!.code}));
                 },
                 child: Row(children: [
                   Text(g.game!.code, style: T.body(46, color: C.goldSoft, weight: FontWeight.w800).copyWith(letterSpacing: 7)),
@@ -66,15 +67,15 @@ class LobbyView extends StatelessWidget {
             else
               _PublicCountdown(g: g),
             const SizedBox(height: 4),
-            Text('${players.length} von ${s.maxPlayers} Plätzen besetzt', style: T.body(15, color: C.inkSoft)),
-            const SectionTitle('Am Tisch'),
+            Text(t('{n} von {max} Plätzen besetzt', {'n': players.length, 'max': s.maxPlayers}), style: T.body(15, color: C.inkSoft)),
+            SectionTitle(t('Am Tisch')),
             for (var i = 0; i < players.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Panel(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(children: [
-                    Avatar(name: g.nameOf(players[i].id), url: g.profiles[players[i].id]?.avatarUrl, emoji: players[i].bot?.emoji, size: 44,
+                    Avatar(name: players[i].bot?.name ?? g.nameOf(players[i].id), url: g.profiles[players[i].id]?.avatarUrl, emoji: players[i].bot?.emoji, size: 44,
                         ring: players[i].id == g.me ? C.gold : null),
                     const SizedBox(width: 12),
                     Expanded(
@@ -83,10 +84,10 @@ class LobbyView extends StatelessWidget {
                         Builder(builder: (_) {
                           final p = players[i];
                           final (icon, label) = p.id == s.hostId
-                              ? ('crown', 'Gastgeber')
+                              ? ('crown', t('Gastgeber'))
                               : p.bot != null
-                                  ? (p.bot!.level == 'sly' ? ('fox', 'Gerissener Bot') : ('smile', 'Einfacher Bot'))
-                                  : ('user', p.id == g.me ? 'Du' : 'Höfling');
+                                  ? (p.bot!.level == 'sly' ? ('fox', t('Gerissener Bot')) : ('smile', t('Einfacher Bot')))
+                                  : ('user', p.id == g.me ? t('Du') : t('Höfling'));
                           return Row(children: [
                             JIcon(icon, size: 15, color: icon == 'crown' ? C.gold : C.inkSoft),
                             const SizedBox(width: 4),
@@ -106,14 +107,14 @@ class LobbyView extends StatelessWidget {
               ),
             if (canManage && !full)
               Row(children: [
-                Expanded(child: SoftButton(label: 'Einfacher Bot', jicon: 'smile', onPressed: () => _act(context, {'type': 'addBot', 'level': 'easy'}))),
+                Expanded(child: SoftButton(label: t('Einfacher Bot'), jicon: 'smile', onPressed: () => _act(context, {'type': 'addBot', 'level': 'easy'}))),
                 const SizedBox(width: 10),
-                Expanded(child: SoftButton(label: 'Gerissen', jicon: 'fox', onPressed: () => _act(context, {'type': 'addBot', 'level': 'sly'}))),
+                Expanded(child: SoftButton(label: t('Gerissen'), jicon: 'fox', onPressed: () => _act(context, {'type': 'addBot', 'level': 'sly'}))),
               ]),
             if (canManage && !full) ...[
               const SizedBox(height: 10),
               SoftButton(
-                label: 'Charakter wählen …',
+                label: t('Charakter wählen …'),
                 jicon: 'crown',
                 onPressed: () async {
                   final seated = {for (final p in players) if (p.bot?.persona != null) p.bot!.persona!};
@@ -122,7 +123,7 @@ class LobbyView extends StatelessWidget {
                 },
               ),
             ],
-            const SectionTitle('Dein Deck'),
+            SectionTitle(t('Dein Deck')),
             SizedBox(
               height: 128,
               child: ListView(scrollDirection: Axis.horizontal, children: [
@@ -134,19 +135,19 @@ class LobbyView extends StatelessWidget {
                   ),
               ]),
             ),
-            SectionTitle('Regeln', trailing: canManage ? TextButton(onPressed: () => _editRules(context), child: Text('Ändern', style: T.body(16, color: C.goldSoft, weight: FontWeight.w700))) : null),
+            SectionTitle(t('Regeln'), trailing: canManage ? TextButton(onPressed: () => _editRules(context), child: Text(t('Ändern'), style: T.body(16, color: C.goldSoft, weight: FontWeight.w700))) : null),
             _RulesSummary(s: s),
             const SizedBox(height: 24),
             if (isHost && !public)
               GoldButton(
-                label: players.length < 2 ? 'Mindestens 2 Spieler' : 'Spiel starten',
+                label: players.length < 2 ? t('Mindestens 2 Spieler') : t('Spiel starten'),
                 icon: Icons.play_arrow_rounded,
                 large: true,
                 busy: g.busy,
                 onPressed: players.length < 2 ? null : () => _act(context, {'type': 'start'}),
               ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(delay: 2.seconds, duration: 1200.ms, color: Colors.white54)
             else
-              Center(child: Text(public ? 'Das Spiel startet automatisch.' : 'Warte, bis ${g.nameOf(s.hostId)} das Spiel startet …', style: T.body(16, color: C.inkSoft))),
+              Center(child: Text(public ? t('Das Spiel startet automatisch.') : t('Warte, bis {name} das Spiel startet …', {'name': g.nameOf(s.hostId)}), style: T.body(16, color: C.inkSoft))),
           ],
         );
       },
@@ -161,9 +162,9 @@ class LobbyView extends StatelessWidget {
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Freunde einladen', style: T.display(28)),
+          Text(t('Freunde einladen'), style: T.display(28)),
           const SizedBox(height: 10),
-          if (friends.isEmpty) const EmptyNote('Alle deine Freunde sitzen schon hier, oder du hast noch keine. Teile einfach den Code.'),
+          if (friends.isEmpty) EmptyNote(t('Alle deine Freunde sitzen schon hier, oder du hast noch keine. Teile einfach den Code.')),
           for (final f in friends)
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -174,7 +175,7 @@ class LobbyView extends StatelessWidget {
                 final res = await Api.post('invite/${g.game!.id}', {'friendId': f.id});
                 if (!ctx.mounted) return;
                 Navigator.pop(ctx);
-                toast(context, res.ok ? '${f.username} ist eingeladen.' : res.error!, error: !res.ok);
+                toast(context, res.ok ? t('{name} ist eingeladen.', {'name': f.username}) : res.error!, error: !res.ok);
               },
             ),
         ]),
@@ -196,12 +197,12 @@ class LobbyView extends StatelessWidget {
             final s = g.state!;
             void set(String key, Object? value) => _act(context, {'type': 'updateSettings', 'settings': {key: value}});
             return ListView(controller: scroll, padding: const EdgeInsets.fromLTRB(20, 0, 20, 40), children: [
-              Text('Regeln & Kniffe', style: T.display(30)),
+              Text(t('Regeln & Kniffe'), style: T.display(30)),
               const SizedBox(height: 16),
-              _Choice(label: 'Runden', value: s.settings['rounds'], options: {for (final r in roundOptions) r: '$r'}, onSelect: (v) => set('rounds', v)),
-              _Choice(label: 'Punkteziel', value: s.settings['goal'], options: {for (final r in goalOptions) r: r == null ? 'Aus' : '$r'}, onSelect: (v) => set('goal', v)),
-              _Choice(label: 'Zugzeit', value: s.settings['turnSeconds'], options: {for (final r in turnOptions) r: r == null ? 'Aus' : '${r}s'}, onSelect: (v) => set('turnSeconds', v)),
-              _Choice(label: 'Steuern', value: s.settings['tax'], options: taxOptions, onSelect: (v) => set('tax', v)),
+              _Choice(label: t('Runden'), value: s.settings['rounds'], options: {for (final r in roundOptions) r: '$r'}, onSelect: (v) => set('rounds', v)),
+              _Choice(label: t('Punkteziel'), value: s.settings['goal'], options: {for (final r in goalOptions) r: r == null ? t('Aus') : '$r'}, onSelect: (v) => set('goal', v)),
+              _Choice(label: t('Zugzeit'), value: s.settings['turnSeconds'], options: {for (final r in turnOptions) r: r == null ? t('Aus') : '${r}s'}, onSelect: (v) => set('turnSeconds', v)),
+              _Choice(label: t('Steuern'), value: s.settings['tax'], options: {for (final o in taxOptions.entries) o.key: t(o.value)}, onSelect: (v) => set('tax', v)),
               const SizedBox(height: 8),
               for (final e in settingText.entries)
                 SwitchListTile(
@@ -212,8 +213,8 @@ class LobbyView extends StatelessWidget {
                           ((e.key == 'teams' || e.key == 'doubleDeck') && s.setting('duel'))
                       ? null
                       : (v) => set(e.key, v),
-                  title: Text(e.value.label, style: T.body(17, weight: FontWeight.w700)),
-                  subtitle: e.value.hint == null ? null : Text(e.value.hint!, style: T.body(13, color: C.inkSoft)),
+                  title: Text(t(e.value.label), style: T.body(17, weight: FontWeight.w700)),
+                  subtitle: e.value.hint == null ? null : Text(t(e.value.hint!), style: T.body(13, color: C.inkSoft)),
                 ),
             ]);
           },
@@ -259,11 +260,11 @@ class _RulesSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final turn = s.settings['turnSeconds'];
-    final active = settingText.entries.where((e) => s.setting(e.key) && e.key != 'chat' && e.key != 'tracker').map((e) => e.value.label);
+    final active = settingText.entries.where((e) => s.setting(e.key) && e.key != 'chat' && e.key != 'tracker').map((e) => t(e.value.label));
     return Wrap(spacing: 8, runSpacing: 8, children: [
-      Pill(s.goal != null ? 'Bis ${s.goal} Punkte' : '${s.rounds} Runden', jicon: 'rotate'),
-      Pill(turn == null ? 'Ohne Zugzeit' : '${turn}s Zugzeit', jicon: 'hourglass'),
-      Pill('Steuern: ${taxOptions[s.settings['tax']] ?? 'Normal'}', jicon: 'coins'),
+      Pill(s.goal != null ? t('Bis {goal} Punkte', {'goal': s.goal}) : t('{count} Runden', {'count': s.rounds}), jicon: 'rotate'),
+      Pill(turn == null ? t('Ohne Zugzeit') : t('{seconds}s Zugzeit', {'seconds': turn}), jicon: 'hourglass'),
+      Pill(t('Steuern: {tax}', {'tax': t(taxOptions[s.settings['tax']] ?? 'Normal')}), jicon: 'coins'),
       for (final a in active) Pill(a, jicon: 'sparkles', color: C.gold.withValues(alpha: .16), textColor: C.goldSoft),
     ]);
   }
@@ -294,7 +295,7 @@ class _DeckChoice extends StatelessWidget {
           child: Column(children: [
             PlayingCard(rank: 1, deck: deck, width: 52),
             const SizedBox(height: 6),
-            Text(deck.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(12, color: selected ? C.goldSoft : C.ink)),
+            Text(t(deck.name), maxLines: 1, overflow: TextOverflow.ellipsis, style: T.label(12, color: selected ? C.goldSoft : C.ink)),
           ]),
         ),
       );
@@ -321,7 +322,7 @@ class _PublicCountdownState extends State<_PublicCountdown> {
   Widget build(BuildContext context) {
     final at = DateTime.tryParse(widget.g.state!.autoStartAt ?? '');
     final left = at?.difference(widget.g.serverNow);
-    final text = left == null ? 'Warte auf Mitspieler …' : left.isNegative ? 'Gleich geht es los …' : 'Start in ${left.inMinutes}:${(left.inSeconds % 60).toString().padLeft(2, '0')}';
+    final text = left == null ? t('Warte auf Mitspieler …') : left.isNegative ? t('Gleich geht es los …') : t('Start in {time}', {'time': '${left.inMinutes}:${(left.inSeconds % 60).toString().padLeft(2, '0')}'});
     return Text(text, style: T.display(40, color: C.goldSoft));
   }
 }

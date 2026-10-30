@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../api.dart';
 import '../game/models.dart';
 import '../game/progress.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/playing_card.dart';
@@ -93,9 +94,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(22, 4, 22, MediaQuery.viewInsetsOf(ctx).bottom + 26),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Tisch beitreten', style: T.display(30)),
+          Text(t('Tisch beitreten'), style: T.display(30)),
           const SizedBox(height: 6),
-          Text('Den Code zeigt dir, wer den Tisch eröffnet hat.', style: T.body(15, color: C.inkSoft)),
+          Text(t('Den Code zeigt dir, wer den Tisch eröffnet hat.'), style: T.body(15, color: C.inkSoft)),
           const SizedBox(height: 18),
           TextField(
             controller: ctrl, autofocus: true, textCapitalization: TextCapitalization.characters, maxLength: 6,
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onSubmitted: (v) => Navigator.pop(ctx, v),
           ),
           const SizedBox(height: 16),
-          GoldButton(label: 'Beitreten', icon: Icons.login_rounded, onPressed: () => Navigator.pop(ctx, ctrl.text)),
+          GoldButton(label: t('Beitreten'), icon: Icons.login_rounded, onPressed: () => Navigator.pop(ctx, ctrl.text)),
         ]),
       ),
     );
@@ -151,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_greeting(), style: T.body(16, color: C.inkSoft)),
-                  Text(name.isEmpty ? 'Der Große Jakob' : name, style: T.display(36), overflow: TextOverflow.ellipsis),
+                  Text(name.isEmpty ? t('Der Große Jakob') : name, style: T.display(36), overflow: TextOverflow.ellipsis),
                 ]),
               ),
               if (profile != null) Avatar(name: name, url: profile['avatar_url'] as String?, size: 52, ring: C.gold),
@@ -159,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             if (d != null) ...[
               const SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, children: [
-                Pill('Stufe $level · ${levelTitle(level)}', jicon: 'star', textColor: C.goldSoft),
+                Pill(t('Stufe {level} · {title}', {'level': level, 'title': t(levelTitle(level))}), jicon: 'star', textColor: C.goldSoft),
                 Pill('$elo Elo', jicon: tierFor(elo).icon, color: tierFor(elo).color.withValues(alpha: .22)),
               ]),
             ],
@@ -173,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             if (_error != null) ...[const SizedBox(height: 14), EmptyNote(_error!, icon: Icons.wifi_off_rounded)],
             if (invites.isNotEmpty) ...[
-              const SectionTitle('Einladungen'),
+              SectionTitle(t('Einladungen')),
               for (final inv in invites)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -182,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: Row(children: [
                       Avatar.of(Profile.from(inv['from'] as Map), size: 44),
                       const SizedBox(width: 12),
-                      Expanded(child: Text('${(inv['from'] as Map)['username']} lädt dich an den Tisch ${inv['gameCode']} ein', style: T.body(16))),
+                      Expanded(child: Text(t('{name} lädt dich an den Tisch {code} ein', {'name': (inv['from'] as Map)['username'], 'code': inv['gameCode']}), style: T.body(16))),
                       IconButton(onPressed: () => _respondInvite(inv as Map, false), icon: const Icon(Icons.close_rounded, color: C.inkSoft)),
                       IconButton.filled(
                         style: IconButton.styleFrom(backgroundColor: C.gold),
@@ -194,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ).animate().fadeIn().slideX(begin: .05),
             ],
             if (active.isNotEmpty) ...[
-              const SectionTitle('Deine offenen Tische'),
+              SectionTitle(t('Deine offenen Tische')),
               for (final g in active)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -212,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          '${g['status'] == 'lobby' ? 'Lobby' : 'Runde ${g['round']}'} · ${g['playerCount']} am Tisch',
+                          g['status'] == 'lobby' ? t('Lobby · {count} am Tisch', {'count': g['playerCount']}) : t('Runde {round} · {count} am Tisch', {'round': g['round'], 'count': g['playerCount']}),
                           style: T.body(16),
                         ),
                       ),
@@ -222,31 +223,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
             ],
             if (friendTables.isNotEmpty) ...[
-              const SectionTitle('Freunde am Tisch'),
-              for (final t in friendTables)
+              SectionTitle(t('Freunde am Tisch')),
+              for (final ft in friendTables)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Panel(
-                    onTap: () => openTable(context, t['code'] as String, spectate: true),
+                    onTap: () => openTable(context, ft['code'] as String, spectate: true),
                     child: Row(children: [
-                      Avatar.of(Profile.from(t['friend'] as Map), size: 44, ring: C.vert),
+                      Avatar.of(Profile.from(ft['friend'] as Map), size: 44, ring: C.vert),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(_friendNames(t), style: T.body(16, weight: FontWeight.w800)),
-                          Text('spielt Runde ${t['round']} · ${t['players']} am Tisch', style: T.body(14, color: C.inkSoft)),
+                          Text(_friendNames(ft), style: T.body(16, weight: FontWeight.w800)),
+                          Text(t('spielt Runde {round} · {count} am Tisch', {'round': ft['round'], 'count': ft['players']}), style: T.body(14, color: C.inkSoft)),
                         ]),
                       ),
-                      const Pill('Zuschauen', jicon: 'eye', textColor: C.goldSoft),
+                      Pill(t('Zuschauen'), jicon: 'eye', textColor: C.goldSoft),
                     ]),
                   ),
                 ).animate().fadeIn().slideX(begin: .05),
             ],
-            const SectionTitle('Allein am Hof'),
+            SectionTitle(t('Allein am Hof')),
             _ModeTile(
               icon: 'ladder',
-              title: 'Kampagne',
-              text: campaign == null ? 'Vom Bauern zum König' : 'Dein Titel: ${campaign['title']} · Station ${math.min(((campaign['level'] as num?) ?? 0).toInt() + 1, ((campaign['stages'] as num?) ?? 8).toInt())} von ${campaign['stages']}',
+              title: t('Kampagne'),
+              text: campaign == null
+                  ? t('Vom Bauern zum König')
+                  : t('Dein Titel: {title} · Station {n} von {total}', {'title': t(campaign['title'] as String? ?? ''), 'n': math.min(((campaign['level'] as num?) ?? 0).toInt() + 1, ((campaign['stages'] as num?) ?? 8).toInt()), 'total': campaign['stages']}),
               onTap: () async {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const CampaignScreen()));
                 _load();
@@ -255,15 +258,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'sword',
-              title: 'Gegen Bots spielen',
-              text: '18 Charaktere vom Bauern bis zum König – im Duell, eins gegen eins.',
+              title: t('Gegen Bots spielen'),
+              text: t('{n} Charaktere vom Bauern bis zum König – im Duell, eins gegen eins', {'n': 18}),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BotsScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'calendar',
-              title: 'Tägliche Herausforderung',
-              text: daily != null ? 'Heute erledigt: ${daily['points']} Punkte' : 'Dieselbe Hand für alle. Heute noch offen.',
+              title: t('Tägliche Herausforderung'),
+              text: daily != null ? t('Heute erledigt: {points} Punkte', {'points': daily['points']}) : t('Dieselbe Hand für alle. Heute noch offen.'),
               done: daily != null,
               busy: _starting == 'daily',
               onTap: daily != null ? null : () => _start('daily'),
@@ -271,17 +274,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'cards',
-              title: 'Deine Decks',
-              text: 'Eigene Decks gestalten und wählen, mit welchem du an den Tisch kommst.',
+              title: t('Deine Decks'),
+              text: t('Eigene Decks gestalten und wählen, mit welchem du an den Tisch kommst.'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DecksScreen())),
             ),
-            const SectionTitle('Am Hof'),
+            SectionTitle(t('Am Hof')),
             _ModeTile(
               icon: 'gift',
-              title: 'Schatzkammer',
+              title: t('Schatzkammer'),
               text: ((d?['chests'] as num?) ?? 0) > 0
-                  ? '${d!['chests']} ${d['chests'] == 1 ? 'Truhe wartet' : 'Truhen warten'} darauf, geöffnet zu werden!'
-                  : 'Rahmen, Wappen, Kartenrücken und Tischfilze sammeln.',
+                  ? d!['chests'] == 1 ? t('1 Truhe wartet darauf, geöffnet zu werden!') : t('{n} Truhen warten darauf, geöffnet zu werden!', {'n': d['chests']})
+                  : t('Rahmen, Wappen, Kartenrücken und Tischfilze sammeln.'),
               done: ((d?['chests'] as num?) ?? 0) > 0,
               onTap: () async {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const TreasuryScreen()));
@@ -291,26 +294,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'castle',
-              title: 'Höfe',
-              text: 'Deine feste Runde mit Wappen und eigener Tabelle.',
+              title: t('Höfe'),
+              text: t('Deine feste Runde mit Wappen und eigener Tabelle.'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourtsScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'image',
-              title: 'Deck-Galerie',
-              text: 'Decks anderer Spieler ansehen, liken und kopieren.',
+              title: t('Deck-Galerie'),
+              text: t('Decks anderer Spieler ansehen, liken und kopieren.'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryScreen())),
             ),
             const SizedBox(height: 10),
             _ModeTile(
               icon: 'book',
-              title: 'Spielen lernen',
-              text: 'Sieben kurze Lektionen, Schritt für Schritt.',
+              title: t('Spielen lernen'),
+              text: t('Sieben kurze Lektionen, Schritt für Schritt.'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorialScreen())),
             ),
             if (king != null) ...[
-              const SectionTitle('König der Woche'),
+              SectionTitle(t('König der Woche')),
               Panel(
                 glow: true,
                 child: Row(children: [
@@ -321,8 +324,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(king['user_id'] == profile?['id'] ? 'Du!' : king['username'] as String? ?? '', style: T.display(26)),
-                      Text('${king['wins']} ${king['wins'] == 1 ? 'Sieg' : 'Siege'} in 7 Tagen unter dir und deinen Freunden', style: T.body(14, color: C.inkSoft)),
+                      Text(king['user_id'] == profile?['id'] ? t('Du!') : king['username'] as String? ?? '', style: T.display(26)),
+                      Text(king['wins'] == 1 ? t('1 Sieg in den letzten 7 Tagen unter dir und deinen Freunden') : t('{count} Siege in den letzten 7 Tagen unter dir und deinen Freunden', {'count': king['wins']}), style: T.body(14, color: C.inkSoft)),
                     ]),
                   ),
                 ]),
@@ -336,10 +339,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 5) return 'Noch wach, Majestät?';
-    if (h < 11) return 'Guten Morgen';
-    if (h < 18) return 'Willkommen am Hof';
-    return 'Guten Abend';
+    if (h < 5) return t('Noch wach, Majestät?');
+    if (h < 11) return t('Guten Morgen');
+    if (h < 18) return t('Willkommen am Hof');
+    return t('Guten Abend');
   }
 }
 
@@ -371,12 +374,12 @@ class _Hero extends StatelessWidget {
           ]),
         ),
         const SizedBox(height: 18),
-        GoldButton(label: 'Neuen Tisch eröffnen', icon: Icons.add_rounded, large: true, busy: starting == 'new', onPressed: onNew),
+        GoldButton(label: t('Neuen Tisch eröffnen'), icon: Icons.add_rounded, large: true, busy: starting == 'new', onPressed: onNew),
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: SoftButton(label: waiting > 0 ? 'Online · $waiting warten' : 'Online spielen', jicon: 'globe', onPressed: starting == null ? onOnline : null)),
+          Expanded(child: SoftButton(label: waiting > 0 ? t('Online · {n} warten', {'n': waiting}) : t('Online spielen'), jicon: 'globe', onPressed: starting == null ? onOnline : null)),
           const SizedBox(width: 10),
-          Expanded(child: SoftButton(label: 'Code', jicon: 'hash', onPressed: onCode)),
+          Expanded(child: SoftButton(label: t('Code'), jicon: 'hash', onPressed: onCode)),
         ]),
       ]),
     );
@@ -418,8 +421,8 @@ class _ModeTile extends StatelessWidget {
 
 /// "Anna" or "Anna und 2 weitere Freunde" for a table with several of your friends.
 String _friendNames(Map table) {
-  final name = (table['friend'] as Map)['username'] as String? ?? 'Ein Freund';
+  final name = (table['friend'] as Map)['username'] as String? ?? t('Ein Freund');
   final more = ((table['friendIds'] as List?)?.length ?? 1) - 1;
   if (more <= 0) return name;
-  return '$name und $more ${more == 1 ? 'weiterer Freund' : 'weitere Freunde'}';
+  return more == 1 ? t('{name} und 1 weiterer Freund', {'name': name}) : t('{name} und {n} weitere Freunde', {'name': name, 'n': more});
 }

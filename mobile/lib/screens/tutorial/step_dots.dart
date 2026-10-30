@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../game/tutorial.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 
 /// Numbered lesson steps; tapping one jumps there. Each dot has a full 48 px touch target.
@@ -28,7 +29,7 @@ class StepDots extends StatelessWidget {
       key: ValueKey('step-$i'),
       button: true,
       selected: active,
-      label: 'Lektion ${i + 1}: ${lessons[i].title}',
+      label: t('Lektion {n}: {title}', {'n': i + 1, 'title': t(lessons[i].title)}),
       excludeSemantics: true,
       child: InkResponse(
         onTap: () {

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../api.dart';
 import '../game/models.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'decks/deck_draft.dart';
@@ -69,9 +70,12 @@ class _DecksScreenState extends State<DecksScreen> {
       return false;
     }
     await _load();
-    if (mounted) toast(context, '„${deck.name}“ ist jetzt dein Standard-Deck.');
+    if (mounted) toast(context, t('„{name}“ ist jetzt dein Standard-Deck.', {'name': _name(deck)}));
     return true;
   }
+
+  /// Presets carry German names from the game data; own decks keep the name the player gave them.
+  String _name(Deck deck) => _mine.contains(deck) ? deck.name : t(deck.name);
 
   /// Opens the editor for an own deck and reloads afterwards (it may have been changed or deleted).
   Future<void> _edit(Deck deck) async {
@@ -100,12 +104,12 @@ class _DecksScreenState extends State<DecksScreen> {
     if (choice == null || !mounted) return;
     setState(() => _creating = true);
     final res = choice == 'blank'
-        ? await Api.post('deck', {'op': 'create', 'name': 'Mein Deck', 'design': blankDesign()})
+        ? await Api.post('deck', {'op': 'create', 'name': t('Mein Deck'), 'design': blankDesign()})
         : await Api.post('deck', {'op': 'copy', 'id': choice});
     if (!mounted) return;
     setState(() => _creating = false);
     final id = _newId(res);
-    if (id == null) return toast(context, res.error ?? 'Das Deck konnte nicht angelegt werden.', error: true);
+    if (id == null) return toast(context, res.error ?? t('Das Deck konnte nicht angelegt werden.'), error: true);
     await _editNew(id);
   }
 
@@ -113,19 +117,19 @@ class _DecksScreenState extends State<DecksScreen> {
     final res = await Api.post('deck', {'op': 'copy', 'id': deck.id});
     if (!mounted) return;
     final id = _newId(res);
-    if (id == null) return toast(context, res.error ?? 'Das Deck konnte nicht kopiert werden.', error: true);
-    toast(context, 'Kopie von „${deck.name}“ angelegt.');
+    if (id == null) return toast(context, res.error ?? t('Das Deck konnte nicht kopiert werden.'), error: true);
+    toast(context, t('Kopie von „{name}“ angelegt.', {'name': _name(deck)}));
     await _editNew(id);
   }
 
   Future<void> _delete(Deck deck) async {
     final ok = await confirmSheet(context,
-        title: 'Deck löschen?', text: '„${deck.name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', confirm: 'Löschen');
+        title: t('Deck löschen?'), text: t('„{name}“ und alle hochgeladenen Kartenbilder werden gelöscht.', {'name': deck.name}), confirm: t('Löschen'));
     if (!ok || !mounted) return;
     final res = await Api.post('deck', {'op': 'delete', 'id': deck.id});
     if (!mounted) return;
     if (!res.ok) return toast(context, res.error!, error: true);
-    toast(context, 'Deck gelöscht');
+    toast(context, t('Deck gelöscht'));
     await _load();
   }
 
@@ -137,11 +141,11 @@ class _DecksScreenState extends State<DecksScreen> {
         onMakeDefault: () => _makeDefault(deck),
         actions: own
             ? [
-                (label: 'Bearbeiten', icon: 'pencil', danger: false, onTap: () => _edit(deck)),
-                (label: 'Duplizieren', icon: 'cards', danger: false, onTap: () => _copy(deck)),
-                (label: 'Löschen', icon: 'close', danger: true, onTap: () => _delete(deck)),
+                (label: t('Bearbeiten'), icon: 'pencil', danger: false, onTap: () => _edit(deck)),
+                (label: t('Duplizieren'), icon: 'cards', danger: false, onTap: () => _copy(deck)),
+                (label: t('Löschen'), icon: 'close', danger: true, onTap: () => _delete(deck)),
               ]
-            : [(label: 'Als Vorlage nutzen', icon: 'pencil', danger: false, onTap: () => _copy(deck))],
+            : [(label: t('Als Vorlage nutzen'), icon: 'pencil', danger: false, onTap: () => _copy(deck))],
       );
 
   @override
@@ -153,6 +157,7 @@ class _DecksScreenState extends State<DecksScreen> {
         padding: const EdgeInsets.only(bottom: 12),
         child: _DeckTile(
           deck: deck,
+          own: own,
           isDefault: deck.id == _defaultId,
           saving: _saving == deck.id,
           onTap: () => _open(deck, own: own),
@@ -168,7 +173,7 @@ class _DecksScreenState extends State<DecksScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Deine Decks', style: T.display(30)),
+          title: Text(t('Deine Decks'), style: T.display(30)),
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator(color: C.gold))
@@ -179,20 +184,20 @@ class _DecksScreenState extends State<DecksScreen> {
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(context).bottom + 32),
                   children: [
-                    Text('Wähle, mit welchem Deck du an den Tisch kommst, oder gestalte dein eigenes. Tippe ein Deck an, um alle Karten zu sehen.',
+                    Text(t('Wähle, mit welchem Deck du an den Tisch kommst, oder gestalte dein eigenes. Tippe ein Deck an, um alle Karten zu sehen.'),
                         style: T.body(15, color: C.inkSoft)),
-                    if (_error != null) EmptyNote(_error!, icon: Icons.wifi_off_rounded),
+                    if (_error != null) EmptyNote(t(_error!), icon: Icons.wifi_off_rounded),
                     if (_error == null || _presets.isNotEmpty) ...[
-                      const SectionTitle('Meine Decks'),
+                      SectionTitle(t('Meine Decks')),
                       if (_mine.isEmpty)
-                        const EmptyNote('Noch keine eigenen Decks. Leg eins an – leer oder aus einer Vorlage.', icon: Icons.style_rounded)
+                        EmptyNote(t('Noch keine eigenen Decks. Leg eins an – leer oder aus einer Vorlage.'), icon: Icons.style_rounded)
                       else
                         for (final d in _mine) tile(d, true),
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: GoldButton(label: 'Neues Deck gestalten', jicon: 'plus', busy: _creating, onPressed: _creating ? null : _create),
+                        child: GoldButton(label: t('Neues Deck gestalten'), jicon: 'plus', busy: _creating, onPressed: _creating ? null : _create),
                       ),
-                      const SectionTitle('Vorlagen'),
+                      SectionTitle(t('Vorlagen')),
                       for (final d in _presets) tile(d, false),
                     ],
                   ],
@@ -205,10 +210,10 @@ class _DecksScreenState extends State<DecksScreen> {
 
 class _DeckTile extends StatelessWidget {
   final Deck deck;
-  final bool isDefault, saving;
+  final bool own, isDefault, saving;
   final VoidCallback onTap;
   final VoidCallback? onMakeDefault;
-  const _DeckTile({required this.deck, required this.isDefault, required this.saving, required this.onTap, this.onMakeDefault});
+  const _DeckTile({required this.deck, required this.own, required this.isDefault, required this.saving, required this.onTap, this.onMakeDefault});
 
   @override
   Widget build(BuildContext context) {
@@ -237,14 +242,14 @@ class _DeckTile extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(deck.name, style: T.display(24), maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(own ? deck.name : t(deck.name), style: T.display(24), maxLines: 2, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 2),
             Text(deckStyleLine(deck), style: T.body(13.5, color: C.inkSoft)),
             const SizedBox(height: 10),
             if (isDefault)
-              const Pill('Standard', icon: Icons.check_rounded, color: C.gold, textColor: C.onGold)
+              Pill(t('Standard'), icon: Icons.check_rounded, color: C.gold, textColor: C.onGold)
             else
-              _SmallAction(label: 'Als Standard', busy: saving, onTap: onMakeDefault),
+              _SmallAction(label: t('Als Standard'), busy: saving, onTap: onMakeDefault),
           ]),
         ),
       ]),

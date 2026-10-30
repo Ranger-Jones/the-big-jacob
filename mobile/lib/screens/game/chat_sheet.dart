@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../game/controller.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
@@ -13,7 +14,7 @@ class ChatButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Stack(clipBehavior: Clip.none, children: [
         IconButton(
-          tooltip: 'Chat',
+          tooltip: t('Chat'),
           icon: const Icon(Icons.chat_bubble_rounded, color: C.inkSoft),
           onPressed: () async {
             g.markChatRead(true);
@@ -65,7 +66,7 @@ class _ChatSheetState extends State<ChatSheet> {
         child: ListenableBuilder(
           listenable: g,
           builder: (context, _) => Column(children: [
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Row(children: [Text('Chat', style: T.display(28))])),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Row(children: [Text(t('Chat'), style: T.display(28))])),
             Expanded(
               child: ListView(
                 reverse: true,
@@ -88,7 +89,7 @@ class _ChatSheetState extends State<ChatSheet> {
                         ]),
                       ),
                     ),
-                  if (g.chat.isEmpty) Padding(padding: const EdgeInsets.all(20), child: Text('Noch still am Tisch. Sag was!', textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft))),
+                  if (g.chat.isEmpty) Padding(padding: const EdgeInsets.all(20), child: Text(t('Noch still am Tisch. Sag was!'), textAlign: TextAlign.center, style: T.body(15, color: C.inkSoft))),
                 ],
               ),
             ),
@@ -98,7 +99,7 @@ class _ChatSheetState extends State<ChatSheet> {
                 for (final p in quickPhrases)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
-                    child: ActionChip(label: Text(p, style: T.body(13)), backgroundColor: C.surfaceHi, side: const BorderSide(color: C.line), onPressed: () => _send(p)),
+                    child: ActionChip(label: Text(t(p), style: T.body(13)), backgroundColor: C.surfaceHi, side: const BorderSide(color: C.line), onPressed: () => _send(t(p))),
                   ),
               ]),
             ),
@@ -108,7 +109,7 @@ class _ChatSheetState extends State<ChatSheet> {
                 Expanded(
                   child: TextField(
                     controller: _text, maxLength: 200, style: T.body(16), textInputAction: TextInputAction.send, onSubmitted: _send,
-                    decoration: const InputDecoration(hintText: 'Nachricht an den Tisch', counterText: ''),
+                    decoration: InputDecoration(hintText: t('Nachricht an den Tisch'), counterText: ''),
                   ),
                 ),
                 const SizedBox(width: 8),

@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../api.dart';
 import '../game/models.dart';
+import '../i18n/i18n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'gallery/gallery_deck.dart';
@@ -121,7 +122,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       toast(context, res.error!, error: true);
       return;
     }
-    toast(context, 'Neue Tische startest du jetzt mit diesem Deck.');
+    toast(context, t('Neue Tische startest du jetzt mit diesem Deck.'));
   }
 
   Future<void> _setPublic(Deck deck, bool public) async {
@@ -139,7 +140,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     if (!res.ok) {
       toast(context, res.error!, error: true);
     } else {
-      toast(context, public ? '„${deck.name}“ hängt jetzt in der Galerie.' : '„${deck.name}“ ist wieder privat.');
+      toast(context, public ? t('„{name}“ hängt jetzt in der Galerie.', {'name': deck.name}) : t('„{name}“ ist wieder privat.', {'name': deck.name}));
     }
   }
 
@@ -157,12 +158,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           foregroundColor: C.ink,
-          title: Text('Deck-Galerie', style: T.display(30)),
+          title: Text(t('Deck-Galerie'), style: T.display(30)),
           actions: [
             TextButton.icon(
               onPressed: () => _openDecks(),
               icon: const JIcon('cards', size: 18, color: C.goldSoft),
-              label: Text('Meine Decks', style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
+              label: Text(t('Meine Decks'), style: T.body(15, color: C.goldSoft, weight: FontWeight.w700)),
             ),
             const SizedBox(width: 6),
           ],
@@ -177,11 +178,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   padding: EdgeInsets.fromLTRB(18, 0, 18, MediaQuery.paddingOf(context).bottom + 32),
                   children: [
                     Text(
-                      'Decks, die andere Spieler geteilt haben. Gefällt dir eins, kopiere es und mach es zu deinem.',
+                      t('Decks, die andere Spieler geteilt haben. Gefällt dir eins, kopiere es und mach es zu deinem.'),
                       style: T.body(15, color: C.inkSoft),
                     ),
                     const SizedBox(height: 14),
-                    GoldButton(label: 'Eigenes Deck gestalten', jicon: 'plus', onPressed: () => _openDecks(create: true)),
+                    GoldButton(label: t('Eigenes Deck gestalten'), jicon: 'plus', onPressed: () => _openDecks(create: true)),
                     const SizedBox(height: 18),
                     Row(
                       children: [
@@ -215,14 +216,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          EmptyNote(_galleryError!, icon: Icons.wifi_off_rounded),
-          SoftButton(label: 'Nochmal versuchen', icon: Icons.refresh_rounded, onPressed: () => _loadGallery()),
+          EmptyNote(t(_galleryError!), icon: Icons.wifi_off_rounded),
+          SoftButton(label: t('Nochmal versuchen'), icon: Icons.refresh_rounded, onPressed: () => _loadGallery()),
         ],
       );
     }
     if (_gallery.isEmpty) {
-      return const EmptyNote(
-        'Noch hängt nichts in der Galerie. Teile eins deiner Decks und sei der Erste.',
+      return EmptyNote(
+        t('Noch hängt nichts in der Galerie. Teile eins deiner Decks und sei der Erste.'),
         icon: Icons.collections_bookmark_outlined,
       );
     }

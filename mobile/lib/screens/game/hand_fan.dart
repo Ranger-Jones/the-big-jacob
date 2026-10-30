@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../game/models.dart';
 import '../../game/rules.dart';
+import '../../i18n/i18n.dart';
 import '../../theme.dart';
 import '../../widgets/playing_card.dart';
 
@@ -81,7 +82,7 @@ class HandFan extends StatelessWidget {
       if (groups.isEmpty) {
         return SizedBox(
           height: heightFor(box.maxWidth),
-          child: Center(child: Text('Keine Karten mehr – gut gemacht!', style: T.display(22, color: C.inkSoft))),
+          child: Center(child: Text(t('Keine Karten mehr – gut gemacht!'), style: T.display(22, color: C.inkSoft))),
         );
       }
       final width = box.maxWidth;
