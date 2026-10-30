@@ -10,6 +10,7 @@ import 'decks_screen.dart';
 import 'notifications.dart';
 import 'profile/profile_edit.dart';
 import 'profile/profile_widgets.dart';
+import '../i18n/language_picker.dart';
 import '../widgets/jakob_icons.dart';
 
 /// A player's court record: rating, numbers, charts, badges, rivals and recent games.
@@ -302,6 +303,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   List<Widget> _account() => [
+        const Panel(child: LanguagePicker()),
+        const SizedBox(height: 14),
         const NotificationsPanel(),
         const SizedBox(height: 14),
         SoftButton(label: 'Abmelden', icon: Icons.logout_rounded, danger: true, onPressed: _signOut),

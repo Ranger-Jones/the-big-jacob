@@ -7,7 +7,10 @@ import '../api.dart';
 import '../game/models.dart';
 import '../theme.dart';
 import 'jakob_icons.dart';
+import '../i18n/i18n.dart';
 
+/// Short message at the bottom. Texts (also errors from the server) are translated here, so callers
+/// can pass the German text as it is.
 void toast(BuildContext context, String message, {bool error = false}) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   messenger?.hideCurrentSnackBar();
@@ -15,7 +18,7 @@ void toast(BuildContext context, String message, {bool error = false}) {
     content: Row(children: [
       Icon(error ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded, color: error ? C.wax : C.gold, size: 20),
       const SizedBox(width: 10),
-      Expanded(child: Text(message)),
+      Expanded(child: Text(t(message))),
     ]),
     duration: Duration(milliseconds: error ? 3200 : 2200),
   ));

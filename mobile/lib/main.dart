@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'i18n/i18n.dart';
 import 'push.dart';
 import 'screens/auth_screen.dart';
 import 'screens/gate_screen.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
   await Supabase.initialize(url: Config.supabaseUrl, publishableKey: Config.supabaseKey);
   // Listens for notification taps from the start, so one that launched the app is not lost.
   unawaited(Push.start());
+  await I18n.load();
   final prefs = await SharedPreferences.getInstance();
   if (Config.devEmail.isNotEmpty && Supabase.instance.client.auth.currentSession == null) {
     await prefs.setBool('gate_open', true);
@@ -49,6 +51,14 @@ class _JakobAppState extends State<JakobApp> {
 
   @override
   Widget build(BuildContext context) {
+    // A new language rebuilds the whole app (every screen calls t() while building).
+    return ValueListenableBuilder<String>(
+      valueListenable: I18n.language,
+      builder: (context, lang, _) => KeyedSubtree(key: ValueKey(lang), child: _app()),
+    );
+  }
+
+  Widget _app() {
     return MaterialApp(
       builder: Config.tapLog ? (context, child) => _TapLog(child: child!) : null,
       title: 'Der Große Jakob',

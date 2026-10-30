@@ -1,3 +1,4 @@
+import { EN } from '@/lib/i18n/en';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderArt, renderIcons, renderLoot } from '@/server/app-api/art';
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest, { params }: Route) {
   }
   // The UI icon set, bundled into the app by mobile/tool/sync_icons.sh.
   if (name === 'icons') return json({ ok: true, data: renderIcons() });
+  // The English dictionary (German text → English), bundled into the app by mobile/tool/sync_i18n.sh.
+  if (name === 'i18n') return json({ ok: true, data: EN });
   const handler = Object.hasOwn(GETS, name) ? GETS[name] : undefined;
   if (!handler) return json({ ok: false, error: 'Unbekannte Anfrage.' }, 404);
   const admin = createAdminClient();
